@@ -2,6 +2,10 @@
 
 #ifndef UTILS_H
 #define UTILS_H
+
+/**
+ * @brief Buffet ADT implementation
+*/
 #define BUFFER_CAP_S 256
 typedef struct buffer_t {
     char *bytes;
@@ -77,5 +81,46 @@ stack_ret_t Stack_Pop( Stack *, char * );
 stack_ret_t Stack_Push( Stack *, char );
 
 void Stack_Dispose( Stack * );
+
+/**
+ * @brief ADT Token implementation
+*/
+
+
+typedef union {
+    char* str;
+    double d;
+    int i;
+} tokenValue;
+
+typedef enum tokentype_e {
+    TOKEN_ZERO, // lze na nej inicializovat token
+    TOKEN_IDENTIFIER,
+    TOKEN_KEYWORD,
+    TOKEN_DATATYPE,
+    TOKEN_STRING, 
+    TOKEN_INTEGER, 
+    TOKEN_DECIMAL,
+    TOKEN_TERM,
+    TOKEN_LINE_COMMENT,
+    TOKEN_BLOCK_COMMENT,
+    TOKEN_EOF
+} TokenType;
+
+
+typedef enum {
+    INT_CONVERSION_FAIL,
+    INT_CONVERSION_SUCCES,
+    DOUBLE_CONVERTION_FAIL,
+    DOUBLE_CONVERTION_SUCCES,
+    VALUE_ASSIGNMENT_FAIL,
+    VALUE_ASSIGNMENT_SUCCES,
+} token_ret_t;
+typedef struct {
+    TokenType type;
+    tokenValue value;
+} TokenT;
+
+
 
 #endif

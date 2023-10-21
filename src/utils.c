@@ -102,3 +102,44 @@ void Stack_Dispose( Stack *stack ) {
 	free(stack->array);
 	stack->array = NULL;
 }
+
+
+
+
+token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
+    token->type = type;
+    char *token_value = buffer_export(buff);
+
+    if (token_value == NULL) {
+        return VALUE_ASSIGNMENT_FAIL;
+    }
+    char *ptr;
+    if (type = TOKEN_INTEGER) {
+        int ret_val = (int) strtol(token_value,&ptr,10);
+
+        if (ret_val == 0 && token_value != *ptr)
+            return INT_CONVERSION_FAIL;
+
+        return INT_CONVERSION_SUCCES;
+
+    }
+    else if (type = TOKEN_DECIMAL) {
+        double ret_val = strtod(token_value,&ptr);
+        
+        if (ret_val == 0.0 && token_value != *ptr)
+            return DOUBLE_CONVERTION_FAIL;
+
+        return DOUBLE_CONVERTION_SUCCES;
+    }
+
+    buffer_clear(buff);
+
+    token->value.str = token_value;
+    return VALUE_ASSIGNMENT_SUCCES;
+
+}
+
+void token_dtor(TokenT *token) {
+    free(token->value.str);
+    token->value.str = NULL;
+}
