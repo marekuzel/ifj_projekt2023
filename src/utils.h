@@ -23,29 +23,46 @@ typedef enum {
 
 
 /**
- * Initilaize ADT buffer
-*/
+ * @brief Initilaize ADT buffer
+ * 
+ * @param buffer pointer to buffer
+ * @retval ret_t BUFF_INIT_SUCCES if succesfull
+ * @retval ret_t BUFF_INIT_FAIL if failed
+ */
 buff_ret_t buffer_init(BufferT *buffer);
 
 /**
- * Appends ch to the end of buffer
-*/
+ * @brief Appends chr to the end of buffer 
+ * 
+ * @param buffer pointer to buffer
+ * @param chr character to be appended
+ * @retval ret_t BUFF_APPEND_SUCCES if succesfull
+ * @retval ret_t BUFF_APPEND_FAIL if failed
+ */
+
 buff_ret_t buffer_append(BufferT *buffer,const char chr);
 
 /**
- * Clears buffer 
-*/
+ * @brief Clears buffer
+ * 
+ * @param buffer pointer to buffer
+ */
 void buffer_clear(BufferT *buffer);
 
 
 /**
- * Exports data in buffer and returns pointer to it, to be freed
-*/
+ * @brief exports buffer to char* (chars needs to be freed after use)
+ * 
+ * @param buffer pointer to buffer
+ * @retval char* pointer to char array
+ */
 char *buffer_export(const BufferT *buffer);
 
 /**
- * Properly cleans up buffer fro memory
-*/
+ * @brief frees buffer from memory
+ * 
+ * @param buffer pointer to buffer
+ */
 void buffer_detor (BufferT *buffer);
 
 /**
@@ -69,18 +86,60 @@ typedef enum {
     STACK_PUSH_FAIL,
     } stack_ret_t;
 
+/**
+ * @brief Initialize stack
+ * 
+ * @param Stack pointer to stack
+ * @retval stack_ret_t STACK_INIT_SUCCES succesfull initialization of stack sturcture
+ * @retval stack_ret_t STACK_INIT_FAIL failed initialization of stack structure
+ */
+stack_ret_t Stack_Init(Stack *);
 
-stack_ret_t Stack_Init( Stack * );
+/**
+ * @brief If stack is empty return true, returns false otherwise
+ * 
+ * @param stack pointer to stack
+ * @retval true if empty
+ * @retval false if not empty
+ */
+bool Stack_IsEmpty(const Stack *);
 
-bool Stack_IsEmpty( const Stack * );
+/**
+ * @brief Returns true if stack is full, false otherwise
+ * @param stack pointer to stack
+ * @retval true if full
+ * @retval false if not full
+ */
+bool Stack_IsFull(const Stack *);
 
-bool Stack_IsFull( const Stack * );
+/**
+ * @brief Pops element from stack, assigns value to TokenT
+ * 
+ * @param stack pointer to stack
+ * @param TokenT pointer to token
+ * @retval stack_ret_t STACK_POP_SUCCES if succesfull
+ * @retval stack_ret_t STACK_POP_FAIL if failed
+ */
+stack_ret_t Stack_Pop(Stack *, TokenT*);
 
-stack_ret_t Stack_Pop( Stack *, char * );
+/**
+ * @brief Stack push operation
+ * 
+ * @param stack pointer to stack
+ * @param TokenT token to be pushed
+ * @return stack_ret_t STACK_PUSH_SUCCES if succesfull
+ * @return stack_ret_t STACK_PUSH_FAIL if failed
+ */
 
-stack_ret_t Stack_Push( Stack *, char );
+stack_ret_t Stack_Push(Stack *, TokenT);
 
-void Stack_Dispose( Stack * );
+
+/**
+ * @brief Cleans up stack from memory
+ * 
+ * @param stack pointer to stack
+ */
+void Stack_Dispose(Stack *);
 
 /**
  * @brief ADT Token implementation
@@ -94,7 +153,7 @@ typedef union {
 } tokenValue;
 
 typedef enum tokentype_e {
-    TOKEN_ZERO, // lze na nej inicializovat token
+    TOKEN_ZERO,
     TOKEN_IDENTIFIER,
     TOKEN_KEYWORD,
     TOKEN_DATATYPE,
