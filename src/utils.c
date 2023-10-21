@@ -126,7 +126,7 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
         return DOUBLE_CONVERTION_SUCCES;
     }
 
-    buffer_clear(buff);
+    buffer_detor(buff);
 
     token->value.str = token_value;
     return VALUE_ASSIGNMENT_SUCCES;
