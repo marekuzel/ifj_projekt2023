@@ -110,8 +110,6 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     token->type = type;
     char *token_value = buffer_export(buff);
 
-    fprintf(stderr, "%s \n", token_value);
-
     if (token_value == NULL) {
         return VALUE_ASSIGNMENT_FAIL;
     }
@@ -131,6 +129,20 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     token->value.str = token_value;
     return VALUE_ASSIGNMENT_SUCCES;
 
+}
+
+void print_Token(TokenT *token){
+    switch(token->type) {
+        case TOKEN_INTEGER:
+            printf("%d\n",token->value.i);
+            break;
+        case TOKEN_DECIMAL:
+            printf("%f\n",token->value.d);
+            break;
+        default:
+            printf("%s\n",token->value.str);
+            break;
+    }
 }
 
 void token_dtor(TokenT *token) {

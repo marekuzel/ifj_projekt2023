@@ -1,27 +1,18 @@
 #Makefile
-CC=gcc
-CFLAGS=-std=c11 -pedantic -Wall -Wextra -g
+EXECUTABLE = scanner
+CC = gcc
+CFLAGS = -g -Wall --std=c11 -g --pedantic -Wextra
 
-all: scanner.c
-	$(CC) $(CFLAGS) $^ -o $@
+all: $(EXECUTABLE)
 
+$(EXECUTABLE): scanner.o utils.o
+	$(CC) $(CFLAGS) -o $@ $^
 
-scanner.o: scanner.c scanner.h str.h error.h
-	$(CC) $(CFLAGS) -c $< -o $@
+%.o: %.c
+	$(CC) $(CFLAGS) -c $^
 
-.PHONY: clean
+.PHONY: clean, valgrind
 clean:
-	rm -f *.o *.d scanner#Makefile
-CC=gcc
-CFLAGS=-std=c11 -pedantic -Wall -Wextra -g
-
-all: scanner.c
-	$(CC) $(CFLAGS) $^ -o $@
-
-
-scanner.o: scanner.c scanner.h str.h error.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-.PHONY: clean
-clean:
-	rm -f *.o *.d scanner
+	rm -f $(EXECUTABLE) *.o
+valgrind: $(EXECUTABLE)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./$(EXECUTABLE)

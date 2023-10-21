@@ -20,27 +20,18 @@ bool check_for_datatype(char* text) {
     return false;
 }
 
-void print_Token(TokenT *token){
-    switch(token->type) {
-        case TOKEN_INTEGER:
-            printf("%d\n",token->value.i);
-        case TOKEN_DECIMAL:
-            printf("%f\n",token->value.d);
-        dafault:
-            printf("%s\n",token->value.str);
-    }
-}
 
 void append_and_check(BufferT *buffer, const char ch) {
     if (buffer_append(buffer, ch) != BUFF_APPEND_SUCCES) {
         fprintf(stderr, "Internal compiler error. \n");
         exit(INTERNAL_COMPILER_ERROR);
     }
-    fprintf(stderr, "%s \n", buffer->bytes);
 }
 
 void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
-    token_dtor(token); // free(token) bude v token_dtor 
+    token_dtor(token); 
+    free(token);
+    token = NULL;
     buffer_detor(buffer);
     fprintf(stderr, "%s.\n", message);
     exit(exit_code);
@@ -65,8 +56,6 @@ TokenT* generate_token() {
     // V pripade ze chci vratit charakter do stdin:
     // ungetc(ch, stream);
 
-    //token_init(token);
-
     int ch;
     while (true) {
         ch = fgetc(stream);
@@ -89,10 +78,6 @@ TokenT* generate_token() {
                 else if (ch == EOF) {
                     append_and_check(&buffer, ch);
                     token_init(token, TOKEN_EOF, &buffer);
-
-                    print_Token(token);
-                    fprintf(stderr, "TOKEN T%d VALUE %s  (eof) \n", token->type, token->value.str);
-
                     return token;
                 }
                 // ..
@@ -104,12 +89,10 @@ TokenT* generate_token() {
                 } else {
                     if (check_for_keyword(buffer.bytes)) {
                         token_init(token, TOKEN_KEYWORD, &buffer);
-                        print_Token(token);
                     } else if(check_for_datatype(buffer.bytes)) {
                         token_init(token, TOKEN_DATATYPE, &buffer);
                     } else {
                         token_init(token, TOKEN_IDENTIFIER, &buffer);
-                        print_Token(token);
                     }
 
                     return token;
@@ -190,8 +173,6 @@ TokenT* generate_token() {
                         buffer.bytes[buffer.length-3] = '\0';
 
                         token_init(token, TOKEN_STRING, &buffer);
-                        // token->type = TOKEN_STRING;
-                        // token->value = buffer;
                         return token;
                     }
                 } else {
@@ -208,12 +189,6 @@ TokenT* generate_token() {
                 }
                 
                 append_and_check(&buffer, ch);
-                // if (buffer.length > 0) {
-                //     buffer[buffer_index++] = ch;
-                // } else {
-                //     sprintf(buffer, "%c", ch);
-                // }
-
                 break;
         }
     }
@@ -224,6 +199,7 @@ int main() {
     while (true) {
         token = generate_token();
         if (token->type == TOKEN_EOF) {
+            free(token);
             break;
         }
 
@@ -232,6 +208,5 @@ int main() {
         token_dtor(token);
         free(token);
     }
-
     return 0;
 }
