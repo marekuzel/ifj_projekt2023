@@ -166,20 +166,34 @@ typedef enum tokentype_e {
     TOKEN_EOF
 } TokenType;
 
-
 typedef enum {
-    INT_CONVERSION_FAIL,
     INT_CONVERSION_SUCCES,
-    DOUBLE_CONVERTION_FAIL,
     DOUBLE_CONVERTION_SUCCES,
     VALUE_ASSIGNMENT_FAIL,
     VALUE_ASSIGNMENT_SUCCES,
 } token_ret_t;
+
 typedef struct {
     TokenType type;
     tokenValue value;
 } TokenT;
 
 
+/**
+ * @brief TokenT initialization
+ * 
+ * @param token: pointer to a token
+ * @param type: type of token
+ * @param buff: pointer to a buffer
+*/
+token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff);
+
+
+/**
+ * @brief Clears token from memory
+ * 
+ * @param token: pointer to a token
+*/
+void token_dtor(TokenT *token);
 
 #endif

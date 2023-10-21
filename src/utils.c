@@ -113,22 +113,14 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     if (token_value == NULL) {
         return VALUE_ASSIGNMENT_FAIL;
     }
-    char *ptr;
+
     if (type = TOKEN_INTEGER) {
-        int ret_val = (int) strtol(token_value,&ptr,10);
-
-        if (ret_val == 0 && token_value != *ptr)
-            return INT_CONVERSION_FAIL;
-
+        token->value.i = (int) strtol(token_value,NULL,10);
         return INT_CONVERSION_SUCCES;
 
     }
     else if (type = TOKEN_DECIMAL) {
-        double ret_val = strtod(token_value,&ptr);
-        
-        if (ret_val == 0.0 && token_value != *ptr)
-            return DOUBLE_CONVERTION_FAIL;
-
+        token->value.d = strtod(token_value,NULL);
         return DOUBLE_CONVERTION_SUCCES;
     }
 
