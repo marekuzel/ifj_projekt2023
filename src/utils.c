@@ -77,7 +77,7 @@ bool Stack_IsFull( const Stack *stack ) {
 	return false;
 }
 
-stack_ret_t Stack_Pop( Stack *stack, char * dataPtr) {
+stack_ret_t Stack_Pop( Stack *stack, TokenT * dataPtr) {
 	if (!Stack_IsEmpty(stack)){
         *dataPtr = stack->array[stack->topIndex];
 		stack->topIndex--;
@@ -86,7 +86,7 @@ stack_ret_t Stack_Pop( Stack *stack, char * dataPtr) {
     return STACK_POP_FAIL;
 }
 
-stack_ret_t Stack_Push( Stack *stack, char data ) {
+stack_ret_t Stack_Push( Stack *stack, TokenT data ) {
 	if (!Stack_IsFull(stack)) {
 		stack->topIndex++;
 		stack->array[stack->topIndex] = data;
@@ -110,16 +110,18 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     token->type = type;
     char *token_value = buffer_export(buff);
 
+    fprintf(stderr, "%s \n", token_value);
+
     if (token_value == NULL) {
         return VALUE_ASSIGNMENT_FAIL;
     }
 
-    if (type = TOKEN_INTEGER) {
+    if (type == TOKEN_INTEGER) {
         token->value.i = (int) strtol(token_value,NULL,10);
         return INT_CONVERSION_SUCCES;
 
     }
-    else if (type = TOKEN_DECIMAL) {
+    else if (type == TOKEN_DECIMAL) {
         token->value.d = strtod(token_value,NULL);
         return DOUBLE_CONVERTION_SUCCES;
     }

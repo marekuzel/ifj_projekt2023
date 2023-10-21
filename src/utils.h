@@ -65,6 +65,38 @@ char *buffer_export(const BufferT *buffer);
  */
 void buffer_detor (BufferT *buffer);
 
+typedef union {
+    char* str;
+    double d;
+    int i;
+} tokenValue;
+
+typedef enum tokentype_e {
+    TOKEN_ZERO,
+    TOKEN_IDENTIFIER,
+    TOKEN_KEYWORD,
+    TOKEN_DATATYPE,
+    TOKEN_STRING, 
+    TOKEN_INTEGER, 
+    TOKEN_DECIMAL,
+    TOKEN_TERM,
+    TOKEN_LINE_COMMENT,
+    TOKEN_BLOCK_COMMENT,
+    TOKEN_EOF
+} TokenType;
+
+typedef enum {
+    INT_CONVERSION_SUCCES,
+    DOUBLE_CONVERTION_SUCCES,
+    VALUE_ASSIGNMENT_FAIL,
+    VALUE_ASSIGNMENT_SUCCES,
+} token_ret_t;
+
+typedef struct {
+    TokenType type;
+    tokenValue value;
+} TokenT;
+
 /**
  * @brief Stack impementation
  * 
@@ -73,7 +105,7 @@ void buffer_detor (BufferT *buffer);
 #define STACK_SIZE 100 
 
 typedef struct {
-	char *array;
+	TokenT *array;
 	int topIndex;
 } Stack;
 
@@ -144,40 +176,6 @@ void Stack_Dispose(Stack *);
 /**
  * @brief ADT Token implementation
 */
-
-
-typedef union {
-    char* str;
-    double d;
-    int i;
-} tokenValue;
-
-typedef enum tokentype_e {
-    TOKEN_ZERO,
-    TOKEN_IDENTIFIER,
-    TOKEN_KEYWORD,
-    TOKEN_DATATYPE,
-    TOKEN_STRING, 
-    TOKEN_INTEGER, 
-    TOKEN_DECIMAL,
-    TOKEN_TERM,
-    TOKEN_LINE_COMMENT,
-    TOKEN_BLOCK_COMMENT,
-    TOKEN_EOF
-} TokenType;
-
-typedef enum {
-    INT_CONVERSION_SUCCES,
-    DOUBLE_CONVERTION_SUCCES,
-    VALUE_ASSIGNMENT_FAIL,
-    VALUE_ASSIGNMENT_SUCCES,
-} token_ret_t;
-
-typedef struct {
-    TokenType type;
-    tokenValue value;
-} TokenT;
-
 
 /**
  * @brief TokenT initialization
