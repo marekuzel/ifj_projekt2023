@@ -30,8 +30,6 @@ void append_and_check(BufferT *buffer, const char ch) {
 
 void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
     token_dtor(token); 
-    free(token);
-    token = NULL;
     buffer_detor(buffer);
     fprintf(stderr, "%s.\n", message);
     exit(exit_code);
@@ -199,14 +197,13 @@ int main() {
     while (true) {
         token = generate_token();
         if (token->type == TOKEN_EOF) {
-            free(token);
+            token_dtor(token);
             break;
         }
 
         printf("TOKEN T%d VALUE %s\n", token->type, token->value.str);
 
         token_dtor(token);
-        free(token);
     }
     return 0;
 }

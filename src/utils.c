@@ -35,7 +35,7 @@ void buffer_clear(BufferT *buffer) {
 }
 
 char *buffer_export(const BufferT *buffer) {
-    char * dst = (char * ) malloc(buffer->length);
+    char * dst = (char * ) calloc(1,buffer->length+1);
 
     if (dst == NULL)
         return NULL;
@@ -148,4 +148,5 @@ void print_Token(TokenT *token){
 void token_dtor(TokenT *token) {
     free(token->value.str);
     token->value.str = NULL;
+    free(token);
 }
