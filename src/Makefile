@@ -5,7 +5,7 @@ CFLAGS = -g -Wall --std=c11 -g --pedantic -Wextra
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): scanner.o utils.o
+$(EXECUTABLE): scanner.o utils.o symbolTable.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c

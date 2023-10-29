@@ -19,10 +19,16 @@ buff_ret_t buffer_init(BufferT *buffer) {
 
 buff_ret_t buffer_append(BufferT *buffer, const char chr) {
     if (buffer->length >= buffer->cap) {
-        buffer->bytes = realloc(buffer->bytes,buffer->cap * 2);
-        if (buffer->bytes == NULL)
+        char *new_buff = realloc(buffer->bytes,buffer->cap * 2); 
+
+        if (new_buff == NULL)
+        {
+            buffer_detor(buffer);
             return BUFF_APPEND_FAIL;
-        buffer->cap <<= 1; // buffer->cap *= 2;
+        }
+        
+        buffer->bytes = new_buff;
+        buffer->cap *= 2;
     }
 
     buffer->bytes[buffer->length++] = chr;
