@@ -44,26 +44,32 @@ int get_height(symbol_table_t *table)
     return table->height;
 }
 
-
-void table_rotate_right(symbol_table_t **target)
-{
-    symbol_table_t *tmp = (*target)->left;
-    (*target)->left = tmp->right;
-    tmp->right = *target;
-}
-
-
-void table_rotate_left(symbol_table_t **target)
-{
-    symbol_table_t *tmp = (*target)->right;
-    (*target)->right = tmp->left;
-    tmp->left = *target;
-}
-
-
 int max(int a, int b)
 {
     return (a > b) ? a : b;
+}
+
+symbol_table_t *table_rotate_right(symbol_table_t *target)
+{
+    symbol_table_t *tmp = target->left;
+    target->left = tmp->right;
+    tmp->right = target;
+
+    target->height = max(get_height(target->left), get_height(target->right)) + 1;
+    tmp->height = max(get_height(tmp->left), get_height(tmp->right)) + 1;
+    return tmp;
+}
+
+
+symbol_table_t *table_rotate_left(symbol_table_t *target)
+{
+    symbol_table_t *tmp = target->right;
+    target->right = tmp->left;
+    tmp->left = target;
+
+    target->height = max(get_height(target->left), get_height(target->right)) + 1;
+    tmp->height = max(get_height(tmp->left), get_height(tmp->right)) + 1;
+    return tmp;
 }
 
 
@@ -75,27 +81,51 @@ int balance_node(symbol_table_t *table)
     return get_height(table->left) - get_height(table->right);
 }
 
-void balance_table(symbol_table_t **table, const char key)
+void table_insert_balance(symbol_table_t **table, const char key)
 {
     (*table)->height = 1 + max(get_height((*table)->left), get_height((*table)->right));
     int balance = balance_node(*table);
 
     if (balance > 1 && key < (*table)->left->key)
     {
-        table_rotate_right(table);
+        (*table) = table_rotate_right(*table);
     } else if ( balance < -1 && key > (*table)->right->key)
     {
-        table_rotate_left(table);
+        (*table) = table_rotate_left(*table);
     } else if (balance > 1 && key > (*table)->left->key)
     {
-        table_rotate_left(&((*table)->left));
-        table_rotate_right(table);
+        (*table)->left = table_rotate_left((*table)->left);
+        (*table) = table_rotate_right(*table);
     } else if (balance < -1 && key < (*table)->right->key)
     {
-        table_rotate_right(&((*table)->right));
-        table_rotate_left(table);
+        (*table)->right = table_rotate_right((*table)->right);
+        *table = table_rotate_left(*table);
     }
 }
+
+void table_delte_balance(symbol_table_t **table)
+{
+    (*table)->height = 1 + max(get_height((*table)->left), get_height((*table)->right));
+    int balance = balance_node(*table);
+
+    if (balance > 1 && balance_node((*table)->left) >= 0)
+    {
+        (*table) = table_rotate_right(*table);
+    } else if ( balance < -1 && balance_node((*table)->right) <= 0)
+    {
+        (*table) = table_rotate_left(*table);
+    } else if (balance > 1 && balance_node((*table)->left) < 0)
+    {
+        (*table)->left = table_rotate_left((*table)->left);
+        (*table) = table_rotate_right(*table);
+    } else if (balance < -1 && balance_node((*table)->right) > 0)
+    {
+        (*table)->right = table_rotate_right((*table)->right);
+        *table = table_rotate_left(*table);
+    }
+}
+
+
 
 /*
 TBD
@@ -127,6 +157,7 @@ void table_insert(symbol_table_t **table, char key, int value) {
             (*table)->right = NULL;
             (*table)->height = 0;
         }
+        return;
     }
     //hľadanie vľavo
     else if (key < (*table)->key)
@@ -144,7 +175,7 @@ void table_insert(symbol_table_t **table, char key, int value) {
         (*table)->value = value;
     }
     
-    balance_table(table,key);
+    table_insert_balance(table,key);
 
 } //table_insert()
 
@@ -225,6 +256,8 @@ void table_delete(symbol_table_t **table, char key) {
             table_replace_by_rightmost(*table,&((*table)->left));
         }
     } //else if
+
+    table_delte_balance(table);
 
 } //table_delete()
 
