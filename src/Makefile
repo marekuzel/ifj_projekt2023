@@ -5,13 +5,15 @@ CFLAGS = -g -Wall --std=c11 -g --pedantic -Wextra
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): scanner.o utils.o symbolTable.o
+$(EXECUTABLE): scanner.o utils.o symtable.o
 	$(CC) $(CFLAGS) -o $@ $^
-
+test_table: symtable.o test.o test_util.o
+	$(CC) $(CFLAGS) $^ -o test_table
+	valgrind ./test_table
 %.o: %.c
 	$(CC) $(CFLAGS) -c $^
 
-.PHONY: clean, valgrind
+.PHONY: clean, valgrind, test_table
 clean:
 	rm -f $(EXECUTABLE) *.o
 valgrind: $(EXECUTABLE)
