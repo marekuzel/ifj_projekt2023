@@ -10,13 +10,13 @@ typedef enum {INT, STRING, DOUBLE, FUNC} entry_type;
 typedef struct  {
     char* name;
     entry_type type;
-} param;
+} param_t;
 
 typedef struct symtable_entry {
     entry_type type;
     bool dfined;
     bool declared;
-    param *params;
+    param_t *params;
 } symtable_entry_t;
 
 

@@ -1,15 +1,16 @@
 
-#include "symtable.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "string.h"
+#include <string.h>
+#include "symtable.h"
+#include "utils.h"
 
-
-int key_cmp(const char *key, const char *cmp)
-{
+/**
+ * 
+*/
+int key_cmp(const char *key, const char *cmp) {
     int key_idx;
-    for (key_idx = 0;key[key_idx] != '\0'; key_idx++)
-    {
+    for (key_idx = 0;key[key_idx] != '\0'; key_idx++) {
         if (key[key_idx] == cmp[key_idx])
             continue;
 
@@ -43,8 +44,7 @@ bool table_search(symtable_t *table, char *key, int *value) {
         return false;
 
     //prvok sa našiel
-    if (key_cmp(key,table->key) == 0)
-    {
+    if (key_cmp(key,table->key) == 0) {
         *value = table->value;
         return true;
     }
@@ -58,20 +58,17 @@ bool table_search(symtable_t *table, char *key, int *value) {
 }
 
 
-int get_height(symtable_t *table)
-{
+int get_height(symtable_t *table) {
     if (table == NULL)
         return 0;
     return table->height;
 }
 
-int max(int a, int b)
-{
+int max(int a, int b) {
     return (a > b) ? a : b;
 }
 
-symtable_t *table_rotate_right(symtable_t *target)
-{
+symtable_t *table_rotate_right(symtable_t *target) {
     symtable_t *tmp = target->left;
     target->left = tmp->right;
     tmp->right = target;
@@ -82,8 +79,7 @@ symtable_t *table_rotate_right(symtable_t *target)
 }
 
 
-symtable_t *table_rotate_left(symtable_t *target)
-{
+symtable_t *table_rotate_left(symtable_t *target) {
     symtable_t *tmp = target->right;
     target->right = tmp->left;
     tmp->left = target;
@@ -94,31 +90,25 @@ symtable_t *table_rotate_left(symtable_t *target)
 }
 
 
-int balance_node(symtable_t *table)
-{
+int balance_node(symtable_t *table) {
     if (table == NULL)
         return 0;
     
     return get_height(table->left) - get_height(table->right);
 }
 
-void table_balance(symtable_t **table, const char *key)
-{
+void table_balance(symtable_t **table, const char *key) {
     (*table)->height = 1 + max(get_height((*table)->left), get_height((*table)->right));
     int balance = balance_node(*table);
 
-    if (balance > 1 && key_cmp(key,(*table)->left->key) == -1)
-    {
+    if (balance > 1 && key_cmp(key,(*table)->left->key) == -1) {
         (*table) = table_rotate_right(*table);
-    } else if ( balance < -1 && key_cmp(key,(*table)->right->key) == 1)
-    {
+    } else if ( balance < -1 && key_cmp(key,(*table)->right->key) == 1) {
         (*table) = table_rotate_left(*table);
-    } else if (balance > 1 && key_cmp(key,(*table)->left->key) == 1)
-    {
+    } else if (balance > 1 && key_cmp(key,(*table)->left->key) == 1) {
         (*table)->left = table_rotate_left((*table)->left);
         (*table) = table_rotate_right(*table);
-    } else if (balance < -1 && key_cmp(key,(*table)->right->key) == 1)
-    {
+    } else if (balance < -1 && key_cmp(key,(*table)->right->key) == 1) {
         (*table)->right = table_rotate_right((*table)->right);
         *table = table_rotate_left(*table);
     }
@@ -138,15 +128,13 @@ void table_insert(symtable_t **table, char *key, int value) {
     */
 
     //našlo sa miesto na vloženie  
-    if (*table == NULL)
-    { 
+    if (*table == NULL) { 
         /*
         vloženie prvku
         */
        
         (*table) = malloc(sizeof(symtable_t));
-        if (*table != NULL)
-        {
+        if (*table != NULL) {
             char *tmp = calloc(30,sizeof(char));  
             sprintf(tmp,"%s",key);
             (*table)->key = tmp;
@@ -158,18 +146,15 @@ void table_insert(symtable_t **table, char *key, int value) {
         return;
     }
     //hľadanie vľavo
-    else if (key_cmp(key,(*table)->key) == -1)
-    {
+    else if (key_cmp(key,(*table)->key) == -1) {
         table_insert(&((*table)->left),key,value);
     }
     //hľadanie vpravo
-    else if (key_cmp(key,(*table)->key) == 1)
-    {
+    else if (key_cmp(key,(*table)->key) == 1) {
         table_insert(&((*table)->right),key,value);
     }
     //našiel som prvok => aktualizujem hodnotu
-    else if (key_cmp(key,(*table)->key) == 0)
-    {
+    else if (key_cmp(key,(*table)->key) == 0) {
         (*table)->value = value;
     }
     

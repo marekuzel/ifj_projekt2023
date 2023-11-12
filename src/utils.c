@@ -64,7 +64,7 @@ stack_ret_t Stack_Init( Stack *stack ) {
 	if (stack == NULL){
 		return STACK_INIT_FAIL;
 	}
-	stack->array = malloc(STACK_SIZE*sizeof(char));
+	stack->array = malloc(STACK_SIZE*sizeof(TokenT));
 	if (stack->array == NULL){
 		return STACK_INIT_FAIL;
 	}
