@@ -105,7 +105,7 @@ typedef struct {
 #define STACK_SIZE 100 
 
 typedef struct {
-	TokenT *array;
+	TokenT **array;
 	int topIndex;
 } Stack;
 
@@ -152,7 +152,7 @@ bool Stack_IsFull(const Stack *);
  * @retval stack_ret_t STACK_POP_SUCCES if succesfull
  * @retval stack_ret_t STACK_POP_FAIL if failed
  */
-stack_ret_t Stack_Pop(Stack *, TokenT*);
+stack_ret_t Stack_Pop(Stack *, TokenT**);
 
 /**
  * @brief Stack push operation
@@ -163,7 +163,7 @@ stack_ret_t Stack_Pop(Stack *, TokenT*);
  * @return stack_ret_t STACK_PUSH_FAIL if failed
  */
 
-stack_ret_t Stack_Push(Stack *, TokenT);
+stack_ret_t Stack_Push(Stack *, TokenT*);
 
 
 /**

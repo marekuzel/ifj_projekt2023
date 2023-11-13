@@ -60,11 +60,11 @@ void buffer_detor (BufferT *buffer) {
 
 
 
-stack_ret_t Stack_Init( Stack *stack ) {
+stack_ret_t Stack_Init(Stack *stack) {
 	if (stack == NULL){
 		return STACK_INIT_FAIL;
 	}
-	stack->array = malloc(STACK_SIZE*sizeof(TokenT));
+	stack->array = calloc(STACK_SIZE,sizeof(TokenT));
 	if (stack->array == NULL){
 		return STACK_INIT_FAIL;
 	}
@@ -72,18 +72,15 @@ stack_ret_t Stack_Init( Stack *stack ) {
     return STACK_INIT_SUCCES;
 }
 
-bool Stack_IsEmpty( const Stack *stack ) {
+bool Stack_IsEmpty(const Stack *stack) {
 	return stack->topIndex == -1;
 }
 
-bool Stack_IsFull( const Stack *stack ) {
-	if (stack->topIndex == STACK_SIZE-1){
-		return true;
-	}
-	return false;
+bool Stack_IsFull(const Stack *stack) {
+		return stack->topIndex == STACK_SIZE-1;
 }
 
-stack_ret_t Stack_Pop( Stack *stack, TokenT * dataPtr) {
+stack_ret_t Stack_Pop(Stack *stack, TokenT ** dataPtr) {
 	if (!Stack_IsEmpty(stack)){
         *dataPtr = stack->array[stack->topIndex];
 		stack->topIndex--;
@@ -92,7 +89,7 @@ stack_ret_t Stack_Pop( Stack *stack, TokenT * dataPtr) {
     return STACK_POP_FAIL;
 }
 
-stack_ret_t Stack_Push( Stack *stack, TokenT data ) {
+stack_ret_t Stack_Push( Stack *stack, TokenT *data ) {
 	if (!Stack_IsFull(stack)) {
 		stack->topIndex++;
 		stack->array[stack->topIndex] = data;

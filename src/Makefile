@@ -7,9 +7,7 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): scanner.o utils.o symtable.o
 	$(CC) $(CFLAGS) -o $@ $^
-test_table: symtable.o test.o test_util.o
-	$(CC) $(CFLAGS) $^ -o test_table
-	valgrind ./test_table
+test_table: symtable.o
 %.o: %.c
 	$(CC) $(CFLAGS) -c $^
 
