@@ -1,10 +1,48 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "symtable.h"
-#include "utils.h"
 #include "errors.h"
+
+/*
+*******************************
+Implementaion of symtalbe entry
+*******************************
+*/
+
+symtable_entry_t *entry_create(void) {
+    symtable_entry_t *new_entry = malloc(sizeof(symtable_entry_t));
+
+    if (new_entry == NULL)
+        exit(INTERNAL_COMPILER_ERROR);
+
+    new_entry->declared = 0;
+    new_entry->defined = 0;
+    new_entry->params = NULL;
+    return new_entry;
+}
+
+void entry_dispose(symtable_entry_t *entry) {
+    if (entry->params == NULL)
+        return;
+
+    int param_idx = 0;
+
+    while (entry->params[param_idx] != NULL) {
+        free(entry->params[param_idx]->id);
+        free(entry->params[param_idx]->name);
+        free(entry->params[param_idx]);
+        param_idx++;
+        free(entry->params);
+    }
+}
+
+
+/*
+*********************************************
+Implementatoin of awl tree - helper functions
+*********************************************
+*/
 
 int key_cmp(const char *key, const char *cmp) {
     int key_idx;
@@ -21,30 +59,30 @@ int key_cmp(const char *key, const char *cmp) {
     return cmp[key_idx] == '\0' ? 0 : -1;
 }
 
-
-
-symtable_entry_t *entry_create(void) {
-    symtable_entry_t *new_entry = malloc(sizeof(symtable_entry_t));
-
-    if (new_entry == NULL)
-        exit(INTERNAL_COMPILER_ERROR);
-
-    new_entry->declared = 0;
-    new_entry->defined = 0;
-    new_entry->params = NULL;
-    return new_entry;
+int get_height(awl_t *awl) {
+    if (awl == NULL)
+        return 0;
+    return awl->height;
 }
 
-void entry_dispose(symtable_entry_t *entry) {
-    int param_idx = 0;
-    while (entry->params[param_idx] != NULL) {
-        free(entry->params[param_idx]);
-        param_idx++;
-    }
+int max(int a, int b) {
+    return (a > b) ? a : b;
+}
 
-    free(entry->params);
+int balance_node(awl_t *awl) {
+    if (awl == NULL)
+        return 0;
     
+    return get_height(awl->left) - get_height(awl->right);
 }
+
+
+/*
+**************************
+Iplementation of awl tree
+**************************
+*/
+
 
 void awl_init(awl_t **awl) {
     if (awl == NULL)
@@ -55,34 +93,20 @@ void awl_init(awl_t **awl) {
 
 bool awl_search(awl_t *awl, char *key, symtable_entry_t **entry) {
 
-    //prázdny strom alebo sa prvok nenašiel
     if (awl == NULL)
         return false;
 
-    //prvok sa našiel
     if (key_cmp(key,awl->key) == 0) {
         *entry = awl->value;
         return true;
     }
 
-    //hľadanie vľavo
     if (key_cmp(key,awl->key) == -1)
         return awl_search(awl->left,key,entry);
 
-    //hľadanie vpravo
     return awl_search(awl->right,key,entry);
 }
 
-
-int get_height(awl_t *awl) {
-    if (awl == NULL)
-        return 0;
-    return awl->height;
-}
-
-int max(int a, int b) {
-    return (a > b) ? a : b;
-}
 
 awl_t *awl_rotate_right(awl_t *target) {
     awl_t *tmp = target->left;
@@ -105,15 +129,6 @@ awl_t *awl_rotate_left(awl_t *target) {
     return tmp;
 }
 
-
-int balance_node(awl_t *awl) {
-    if (awl == NULL)
-        return 0;
-    
-    return get_height(awl->left) - get_height(awl->right);
-}
-
-
 void awl_balance(awl_t **awl, const char *key) {
     (*awl)->height = 1 + max(get_height((*awl)->left), get_height((*awl)->right));
     int balance = balance_node(*awl);
@@ -134,20 +149,11 @@ void awl_balance(awl_t **awl, const char *key) {
 
 void awl_insert(awl_t **awl, char *key, symtable_entry_t *entry) {
 
-    //prázdny strom
     if (awl == NULL)
         return;
 
-    /*
-    Hľadanie prvku, alebo miesta na vloženie novhé prvku
-    */
-
-    //našlo sa miesto na vloženie  
     if (*awl == NULL) { 
-        /*
-        vloženie prvku
-        */
-       
+
         (*awl) = calloc(1,sizeof(awl_t));
 
         if (*awl == NULL) {
@@ -160,17 +166,12 @@ void awl_insert(awl_t **awl, char *key, symtable_entry_t *entry) {
         (*awl)->right = NULL;
         (*awl)->height = 0;
         return;
-    }
-    //hľadanie vľavo
-    else if (key_cmp(key,(*awl)->key) == -1) {
+
+    } else if (key_cmp(key,(*awl)->key) == -1) {
         awl_insert(&((*awl)->left),key,entry);
-    }
-    //hľadanie vpravo
-    else if (key_cmp(key,(*awl)->key) == 1) {
+    } else if (key_cmp(key,(*awl)->key) == 1) {
         awl_insert(&((*awl)->right),key,entry);
-    }
-    //našiel som prvok => aktualizujem hodnotu
-    else if (key_cmp(key,(*awl)->key) == 0) {
+    } else if (key_cmp(key,(*awl)->key) == 0) {
         (*awl)->value = entry;
     }
     
@@ -181,11 +182,9 @@ void awl_insert(awl_t **awl, char *key, symtable_entry_t *entry) {
 
 void awl_dispose(awl_t **awl) {
 
-    //prázdny strom
     if (awl == NULL || *awl == NULL)
         return;
 
-    //postorder prechod so uvoľnením prvku
     awl_dispose(&((*awl)->left));
     awl_dispose(&((*awl)->right));
     free((*awl)->key);
@@ -195,6 +194,11 @@ void awl_dispose(awl_t **awl) {
     *awl = NULL;
 }   
 
+/*
+***************************
+Implelentation of symtable
+***************************
+*/
 
 void table_init(symtable_t *table) {
     awl_t **new_tree_array = calloc(TABLE_SIZE,sizeof(awl_t*));
@@ -226,9 +230,28 @@ void table_remove_scope(symtable_t *table) {
     table->top_idx--;
 }
 
+void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
+    symtable_entry_t *new_entry = entry_create();
+    awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
+    *entry = new_entry;
+}
+
+void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry) {
+    symtable_entry_t *new_entry = entry_create();
+    awl_insert(&(table->global_table), key, new_entry);
+    *entry = new_entry;
+}
+
+void table_function_insert(symtable_t *table, char *key, param_t **params, func_ret_type_t return_type) {
+    symtable_entry_t *entry;
+    table_insert_global(table, key, &entry);
+    entry->type = FUNC_T;
+    entry->params = params;
+    entry->return_type = return_type;
+}
 
 bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
-    int found = false;
+    bool found = false;
     int table_idx = table->top_idx;
     while(table_idx > 0 && !found) {
         found = awl_search(table->table_stack[table_idx],key,entry);
@@ -237,34 +260,12 @@ bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
     return found;
 }
 
-
 bool table_search_global(symtable_t *table, char *key, symtable_entry_t **entry) {
     return awl_search(table->global_table,key,entry);
 }
 
-
-void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
-    symtable_entry_t *new_entry = entry_create();
-    awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
-    *entry = new_entry;
-}
-
-
-void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry) {
-    symtable_entry_t *new_entry = entry_create();
-    awl_insert(&(table->global_table), key, new_entry);
-    *entry = new_entry;
-}
-
-void table_function_insert(symtable_t *table, char *key, param_t **params) {
-    symtable_entry_t *entry;
-    table_insert_global(table, key, &entry);
-    entry->type = FUNC;
-    entry->params = params;
-}
-
 void table_dispose(symtable_t *table) {
-    for( int i =0; i <table->size; i++)
+    for(int i =0; table->table_stack[i] != NULL; i++)
         awl_dispose(&(table->table_stack[i]));
     free(table->table_stack);
     table->global_table = NULL;
