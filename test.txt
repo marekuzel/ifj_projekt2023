@@ -1,0 +1,9 @@
+let x : String = "Hello world"
+
+if 1 > 0 {
+    write("x is: ", x)
+    var x: Int = 500
+    write("now its: ", x)
+} else {
+    write("else is: ", x)
+}

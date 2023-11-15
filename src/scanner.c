@@ -57,6 +57,8 @@ TokenT* generate_token() {
     int ch;
     while (true) {
         ch = fgetc(stream);
+
+
         switch (state) {
             case STATE_START:
                 if (isalpha(ch) || ch == '_') {
@@ -68,7 +70,7 @@ TokenT* generate_token() {
                 }
                 else if (ch == '/') {
                     state = STATE_SLASH;
-                     append_and_check(&buffer, ch);
+                    append_and_check(&buffer, ch);
                 }
                 else if (ch == '"') {
                     state = STATE_STRING;
@@ -76,6 +78,57 @@ TokenT* generate_token() {
                 else if (ch == EOF) {
                     append_and_check(&buffer, ch);
                     token_init(token, TOKEN_EOF, &buffer);
+                    return token;
+                }
+                else if (ch == '+' || ch == '-' || ch == '*') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                    return token;
+                }
+                else if (ch == '!') {
+                    state = STATE_EXCLAMATION;
+                    append_and_check(&buffer, ch);
+                }
+                else if (ch == '=') {
+                    state = STATE_EQUALS;
+                    append_and_check(&buffer, ch);
+                }
+                else if (ch == '?') {
+                    state = STATE_QUESTION;
+                    append_and_check(&buffer, ch);
+                }
+                else if (ch == '<' || ch == '>') {
+                    state = STATE_RELATIONAL_OPERATOR;
+                    append_and_check(&buffer, ch);
+                }
+                else if (ch == '(') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_LEFT_ROUND_BRACKET, &buffer);
+                    return token;
+                }
+                else if (ch == ')') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_RIGHT_ROUND_BRACKET, &buffer);
+                    return token;
+                }
+                else if (ch == ':') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_RIGHT_ROUND_BRACKET, &buffer);
+                    return token;
+                }
+                else if (ch == '{') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_COLON, &buffer);
+                    return token;
+                }
+                else if (ch == '}') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_RIGHT_CURLY_BRACKET, &buffer);
+                    return token;
+                }
+                else if (ch == ',') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_COMMA, &buffer);
                     return token;
                 }
                 // ..
@@ -188,6 +241,51 @@ TokenT* generate_token() {
                 
                 append_and_check(&buffer, ch);
                 break;
+
+            case STATE_EXCLAMATION:
+                if (ch == "=") {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                    return token;
+                } else {
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                    ungetc(ch, stream);
+                    return token;
+                }
+
+            case STATE_EQUALS:
+                if (ch == "=") {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                    return token;
+                } else {
+                    token_init(token, TOKEN_ASSIGNMENT, &buffer);
+                    ungetc(ch, stream);
+                    return token;
+                }
+
+            case STATE_QUESTION:
+                if (ch == '?') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                    return token;
+                } else {
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                    ungetc(ch, stream);
+                    return token;
+                }
+
+            case STATE_RELATIONAL_OPERATOR:
+                if (ch == "=") {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                    return token;
+                } else {
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                    ungetc(ch, stream);
+                    return token;
+                }
+
         }
     }
 }
