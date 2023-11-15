@@ -23,6 +23,7 @@ typedef enum fsm_state_e {
     STATE_RELATIONAL_OPERATOR
 } ScannerState;
 
+#define MAX_STRLEN 255 // NENI OMEZENA, VYRESIT !!
 #define NOF_KEYWORDS 8
 #define NOF_DATATYPES 3
 

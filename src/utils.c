@@ -80,7 +80,7 @@ bool Stack_IsFull(const Stack *stack) {
 		return stack->topIndex == STACK_SIZE-1;
 }
 
-stack_ret_t Stack_Pop(Stack *stack, TokenT ** dataPtr) {
+stack_ret_t Stack_Pop( Stack *stack, TokenT * dataPtr) {
 	if (!Stack_IsEmpty(stack)){
         *dataPtr = stack->array[stack->topIndex];
 		stack->topIndex--;
@@ -89,7 +89,7 @@ stack_ret_t Stack_Pop(Stack *stack, TokenT ** dataPtr) {
     return STACK_POP_FAIL;
 }
 
-stack_ret_t Stack_Push( Stack *stack, TokenT *data ) {
+stack_ret_t Stack_Push( Stack *stack, TokenT data ) {
 	if (!Stack_IsFull(stack)) {
 		stack->topIndex++;
 		stack->array[stack->topIndex] = data;
@@ -112,6 +112,8 @@ void Stack_Dispose( Stack *stack ) {
 token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     token->type = type;
     char *token_value = buffer_export(buff);
+
+    fprintf(stderr, "%s \n", token_value);
 
     if (token_value == NULL) {
         return VALUE_ASSIGNMENT_FAIL;

@@ -20,16 +20,16 @@ bool check_for_datatype(char* text) {
     return false;
 }
 
-
 void append_and_check(BufferT *buffer, const char ch) {
     if (buffer_append(buffer, ch) != BUFF_APPEND_SUCCES) {
         fprintf(stderr, "Internal compiler error. \n");
         exit(INTERNAL_COMPILER_ERROR);
     }
+    fprintf(stderr, "%s \n", buffer->bytes);
 }
 
 void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
-    token_dtor(token); 
+    token_dtor(token); // free(token) bude v token_dtor 
     buffer_detor(buffer);
     fprintf(stderr, "%s.\n", message);
     exit(exit_code);
@@ -224,6 +224,8 @@ TokenT* generate_token() {
                         buffer.bytes[buffer.length-3] = '\0';
 
                         token_init(token, TOKEN_STRING, &buffer);
+                        // token->type = TOKEN_STRING;
+                        // token->value = buffer;
                         return token;
                     }
                 } else {
@@ -243,7 +245,7 @@ TokenT* generate_token() {
                 break;
 
             case STATE_EXCLAMATION:
-                if (ch == "=") {
+                if (ch == '=') {
                     append_and_check(&buffer, ch);
                     token_init(token, TOKEN_OPERATOR, &buffer);
                     return token;
@@ -254,7 +256,7 @@ TokenT* generate_token() {
                 }
 
             case STATE_EQUALS:
-                if (ch == "=") {
+                if (ch == '=') {
                     append_and_check(&buffer, ch);
                     token_init(token, TOKEN_OPERATOR, &buffer);
                     return token;
@@ -276,7 +278,7 @@ TokenT* generate_token() {
                 }
 
             case STATE_RELATIONAL_OPERATOR:
-                if (ch == "=") {
+                if (ch == '=') {
                     append_and_check(&buffer, ch);
                     token_init(token, TOKEN_OPERATOR, &buffer);
                     return token;
