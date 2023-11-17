@@ -156,3 +156,72 @@ void token_dtor(TokenT *token) {
     token->value.str = NULL;
     free(token);
 }
+
+
+ast_node_t *create_leaf(char *identifier, litValue value, ast_node_type_t val_type) {
+
+    ast_node_t *new_leaf = calloc(1,sizeof(ast_node_t));
+
+    if (new_leaf == NULL)
+        return NULL;
+    
+    if (identifier != NULL) {
+        new_leaf->identifier = identifier;
+        new_leaf->node_type = VARIABLE;
+    } else {
+        new_leaf->value = value;
+        new_leaf->node_type = val_type;
+    }
+
+    return new_leaf;   
+}
+
+
+ast_node_t *create_bin_op(char operator, ast_node_t *left, ast_node_t *right) {
+
+    ast_node_t *new_binop = calloc(1,sizeof(ast_node_t));
+
+    if (new_binop == NULL) {
+        return NULL;
+    }
+    
+    new_binop->operator = operator;
+    new_binop->left = left;
+    new_binop->right = right;
+    new_binop->node_type = BINARY_OPERATOR;
+
+    return new_binop;
+
+}
+
+ast_node_t *create_conversion(conv_type_t conv_type, ast_node_t* to_convert) {
+    
+    ast_node_t *new_conversion = calloc(1,sizeof(ast_node_t));
+
+    if (new_conversion == NULL) {
+        return NULL;
+    }
+
+    new_conversion->child = to_convert;
+    new_conversion->node_type = CONVERSION;
+    new_conversion->conversion_type = conv_type;
+
+    return new_conversion;
+
+}
+
+ast_node_t *create_cond(rel_op_t rel_op, ast_node_t *left, ast_node_t *right) {
+    
+    ast_node_t *new_cond = calloc(1,sizeof(ast_node_t));
+
+    if (new_cond == NULL) {
+        return NULL;
+    }
+
+    new_cond->relation_operator = rel_op;
+    new_cond->left = left;
+    new_cond->right = right;
+    new_cond->node_type = CONDITION;
+
+    return new_cond;
+}
