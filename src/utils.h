@@ -79,10 +79,13 @@ typedef enum tokentype_e {
     TOKEN_STRING, 
     TOKEN_INTEGER, 
     TOKEN_DECIMAL,
+    TOKEN_LET,
+    TOKEN_COLON,
     TOKEN_TERM,
     TOKEN_LINE_COMMENT,
     TOKEN_BLOCK_COMMENT,
-    TOKEN_EOF
+    TOKEN_EOF,
+    TOKEN_EOL
 } TokenType;
 
 typedef enum {
@@ -144,15 +147,25 @@ bool Stack_IsEmpty(const Stack *);
  */
 bool Stack_IsFull(const Stack *);
 
+TokenT Stack_peak(){
+    
+}
 /**
- * @brief Pops element from stack, assigns value to TokenT
+ * @brief Assigns value of the top element of stack to dataPtr
  * 
  * @param stack pointer to stack
- * @param TokenT pointer to token
+ * @param dataPtr pointer to TokenT
+ */
+void Stack_Top(const Stack *, TokenT *);
+
+/**
+ * @brief Pops element from stack
+ * 
+ * @param stack pointer to stack
  * @retval stack_ret_t STACK_POP_SUCCES if succesfull
  * @retval stack_ret_t STACK_POP_FAIL if failed
  */
-stack_ret_t Stack_Pop(Stack *, TokenT**);
+stack_ret_t Stack_Pop(Stack *);
 
 /**
  * @brief Stack push operation

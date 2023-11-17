@@ -80,9 +80,14 @@ bool Stack_IsFull(const Stack *stack) {
 		return stack->topIndex == STACK_SIZE-1;
 }
 
-stack_ret_t Stack_Pop(Stack *stack, TokenT ** dataPtr) {
-	if (!Stack_IsEmpty(stack)){
+void Stack_Top( const Stack *stack, TokenT *dataPtr ) {
+    if (!Stack_IsEmpty(stack)){
         *dataPtr = stack->array[stack->topIndex];
+    }
+}
+
+stack_ret_t Stack_Pop( Stack *stack) {
+	if (!Stack_IsEmpty(stack)){
 		stack->topIndex--;
         return STACK_POP_SUCCES;
 	}
@@ -105,8 +110,6 @@ void Stack_Dispose( Stack *stack ) {
 	free(stack->array);
 	stack->array = NULL;
 }
-
-
 
 
 token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
