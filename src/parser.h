@@ -4,7 +4,7 @@
 #include "scanner.h"
 #include "errors.h"
 #include "utils.h"
-#include "symbolTable.h"
+#include "symtable.h"
 #include <stdio.h>
 
 typedef struct Parser {

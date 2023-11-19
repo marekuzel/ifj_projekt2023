@@ -76,16 +76,31 @@ typedef enum tokentype_e {
     TOKEN_IDENTIFIER,
     TOKEN_KEYWORD,
     TOKEN_DATATYPE,
+
     TOKEN_STRING, 
     TOKEN_INTEGER, 
     TOKEN_DECIMAL,
+    TOKEN_NIL,
+
     TOKEN_LET,
-    TOKEN_COLON,
+    TOKEN_VAR,
+
+    TOKEN_COLON, //:
+    TOKEN_ASSIGN, //=
+    TOKEN_LC_BRACKET, //{
+    TOKEN_RC_BRACKET, //}
+    TOKEN_L_BRACKET, //(
+    TOKEN_R_BRACKET, //)
+
+    TOKEN_IF,
+    TOKEN_ELSE,
+    TOKEN_WHILE,
+    TOKEN_FUNC,
     TOKEN_TERM,
     TOKEN_LINE_COMMENT,
     TOKEN_BLOCK_COMMENT,
+
     TOKEN_EOF,
-    TOKEN_EOL
 } TokenType;
 
 typedef enum {
