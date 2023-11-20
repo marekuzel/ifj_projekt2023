@@ -80,8 +80,16 @@ typedef enum tokentype_e {
     TOKEN_INTEGER, 
     TOKEN_DECIMAL,
     TOKEN_TERM,
+    TOKEN_OPERATOR,
     TOKEN_LINE_COMMENT,
     TOKEN_BLOCK_COMMENT,
+    TOKEN_ASSIGNMENT,
+    TOKEN_LEFT_ROUND_BRACKET,
+    TOKEN_RIGHT_ROUND_BRACKET,
+    TOKEN_LEFT_CURLY_BRACKET,
+    TOKEN_RIGHT_CURLY_BRACKET,
+    TOKEN_COLON,
+    TOKEN_COMMA,
     TOKEN_EOF
 } TokenType;
 
@@ -105,7 +113,7 @@ typedef struct {
 #define STACK_SIZE 100 
 
 typedef struct {
-	TokenT **array;
+	TokenT *array;
 	int topIndex;
 } Stack;
 
@@ -152,7 +160,7 @@ bool Stack_IsFull(const Stack *);
  * @retval stack_ret_t STACK_POP_SUCCES if succesfull
  * @retval stack_ret_t STACK_POP_FAIL if failed
  */
-stack_ret_t Stack_Pop(Stack *, TokenT**);
+stack_ret_t Stack_Pop(Stack *, TokenT*);
 
 /**
  * @brief Stack push operation
@@ -163,7 +171,7 @@ stack_ret_t Stack_Pop(Stack *, TokenT**);
  * @return stack_ret_t STACK_PUSH_FAIL if failed
  */
 
-stack_ret_t Stack_Push(Stack *, TokenT*);
+stack_ret_t Stack_Push(Stack *, TokenT);
 
 
 /**

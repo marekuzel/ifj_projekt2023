@@ -1,8 +1,25 @@
 #include "prec_table.h"
-#include "utils.h"
 #include "errors.h"
 #include <string.h>
 #include <stdio.h>
+
+char precTable[TABLE_SIZE][TABLE_SIZE] = {
+   // +    -    *    /    (    )    i    $    ==  !=    <   <=    >   >=
+    {'>', '>', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'}, // +
+    {'>', '>', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'}, // -
+    {'>', '>', '>', '>', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'}, // *
+    {'>', '>', '>', '>', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'}, // /
+    {'<', '<', '<', '<', '<', '=', '<', ' ', '<', '<', '<', '<', '<', '<'}, // (
+    {'>', '>', '>', '>', ' ', '>', ' ', '>', '>', '>', '>', '>', '>', '>'}, // )
+    {'>', '>', '>', '>', ' ', '>', ' ', '>', '>', '>', '>', '>', '>', '>'}, // i
+    {'<', '<', '<', '<', '<', ' ', '<', ' ', '<', '<', '<', '<', '<', '<'}, // $
+    {'<', '<', '<', '<', '<', '>', '<', '>', ' ', ' ', ' ', ' ', ' ', ' '}, // == 
+    {'<', '<', '<', '<', '<', '>', '<', '>', ' ', ' ', ' ', ' ', ' ', ' '}, // !=
+    {'<', '<', '<', '<', '<', '>', '<', '>', ' ', ' ', ' ', ' ', ' ', ' '}, // <
+    {'<', '<', '<', '<', '<', '>', '<', '>', ' ', ' ', ' ', ' ', ' ', ' '}, // <=
+    {'<', '<', '<', '<', '<', '>', '<', '>', ' ', ' ', ' ', ' ', ' ', ' '}, // >
+    {'<', '<', '<', '<', '<', '>', '<', '>', ' ', ' ', ' ', ' ', ' ', ' '}  // >=
+};
 
 Error op_to_symbol(char *op, PrecSymbol* symbol) {
     if (!strcmp(op, "+")) {
@@ -37,7 +54,7 @@ Error op_to_symbol(char *op, PrecSymbol* symbol) {
         *symbol = PREC_SYMBOL_NULLISH;
     } else {
         fprintf(stderr, "ERROR in op_to_symbol in prec_table.c file: wrong value %s\n", op);
-        return INTERNAL_COMPILER_ERROR; // TODO check me
+        return SYNTAX_ERROR; // TODO check me
     }
 
     return SUCCESS;
@@ -57,7 +74,15 @@ Error get(char* leftOperator, char* rightOperator, PrecAction* act) {
         return result;
     } 
     
-    *act = precTable[left][right];
+    if (precTable[left][right] == '<') {
+        *act = PREC_ACTION_SHIFT;
+    } else if (precTable[left][right] == '>') {
+        *act = PREC_ACTION_REDUCE;
+    } else if (precTable[left][right] == '=') {
+        *act = PREC_ACTION_EQ;
+    } else {
+        *act = PREC_ACTION_ERROR;
+    }
+
     return SUCCESS;
 }
-
