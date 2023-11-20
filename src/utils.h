@@ -98,10 +98,17 @@ typedef enum tokentype_e {
     TOKEN_WHILE,
     TOKEN_FUNC,
     TOKEN_TERM,
+    TOKEN_OPERATOR,
     TOKEN_LINE_COMMENT,
     TOKEN_BLOCK_COMMENT,
-
-    TOKEN_EOF,
+    TOKEN_ASSIGNMENT,
+    TOKEN_LEFT_ROUND_BRACKET,
+    TOKEN_RIGHT_ROUND_BRACKET,
+    TOKEN_LEFT_CURLY_BRACKET,
+    TOKEN_RIGHT_CURLY_BRACKET,
+    TOKEN_COLON,
+    TOKEN_COMMA,
+    TOKEN_EOF
 } TokenType;
 
 typedef enum {
@@ -124,7 +131,7 @@ typedef struct {
 #define STACK_SIZE 100 
 
 typedef struct {
-	TokenT **array;
+	TokenT *array;
 	int topIndex;
 } Stack;
 
