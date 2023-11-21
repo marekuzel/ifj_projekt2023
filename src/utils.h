@@ -202,26 +202,6 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff);
 */
 void token_dtor(TokenT *token);
 
-
-typedef enum ast_node_type {
-    BINARY_OPERATOR,
-    EXPRESION,
-    CONDITION,
-    ASSIGNEMENT,
-    DECLARATION,
-    FUNCTION_CALL,
-    CONVERSION,
-    IF_ELSE,
-    WHILE_LOOP,
-    INT_LITERAL,
-    DOUBLE_LITERAL,
-    STRING_LITERAL,
-    NILL,
-    PROGRAM,
-    VARIABLE,
-    STRING_OP,
-} ast_node_type_t;
-
 typedef enum conv_type {
     FI,
     IF,
@@ -238,34 +218,6 @@ typedef enum rel_op {
     NEQ
 } rel_op_t;
 
-typedef struct ast_node {
-    ast_node_type_t node_type; //type of node
-    litValue value; //value of literal
-    char *identifier; //identifier of a variable
-    char operator; //arithmetic operator 
-    conv_type_t conversion_type; //type of conversoin necesary
-    rel_op_t relation_operator; //reation operator
-    bool has_else; //flag if_branch containing else
-    struct ast_node *next; 
-    struct ast_node *last;
-    struct ast_node *left; 
-    struct ast_node *right;
-    struct ast_node *child;
-
-} ast_node_t;
-
-
-#define New_node(name) ast_node_t *name = calloc(1,sizeof(ast_node_t)); \
-    \
-    if (name == NULL) { \
-        return NULL;     \
-    }                     \
-
-void ast_dispose(ast_node_t *ast);
-ast_node_t *create_cond(rel_op_t rel_op, ast_node_t *left, ast_node_t *right);
-ast_node_t *create_conversion(conv_type_t conv_type, ast_node_t* to_convert);
-ast_node_t *create_bin_op(char operator, ast_node_t *left, ast_node_t *right);
-ast_node_t *create_leaf(char *identifier, litValue value, ast_node_type_t val_type);
 
 
 
