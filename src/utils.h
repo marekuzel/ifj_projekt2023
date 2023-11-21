@@ -92,6 +92,7 @@ typedef enum tokentype_e {
     TOKEN_L_BRACKET, //(
     TOKEN_R_BRACKET, //)
 
+    TOKEN_RETURN,
     TOKEN_IF,
     TOKEN_ELSE,
     TOKEN_WHILE,

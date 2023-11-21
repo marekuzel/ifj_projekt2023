@@ -55,7 +55,6 @@
    | [expr] ?? [expr]
    | [id]
    | [literal]
-   | [callFunction]
 
 [id] → *id*
 

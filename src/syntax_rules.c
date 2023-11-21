@@ -179,17 +179,6 @@ rule_ret_t parser_rule_type(Parser_t *parser){
         default:
             return RULE_FAIL;
     }
-    //type -> int
-}
-
-rule_ret_t parser_rule_stmtSeqFunc(Parser_t *parser){
-    bool returnCheck = false;
-    while (parser->token_current->type != TOKEN_RC_BRACKET){
-        if (parser->token_current->type == TOKEN_RETURN){
-            returnCheck = true;
-        }
-        GET_NEXT_AND_CALL_RULE(parser, stmt);
-    }
 }
 
 rule_ret_t parser_rule_stmtSeq(Parser_t *parser){
