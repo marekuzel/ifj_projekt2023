@@ -287,21 +287,19 @@ typedef struct ast_node {
 
 } ast_node_t;
 
-void ast_dispose(ast_node_t *ast) {
 
-    if (ast == NULL)
-        return
+#define New_node(name) ast_node_t *name = calloc(1,sizeof(ast_node_t)); \
+    \
+    if (name == NULL) { \
+        return NULL;     \
+    }                     \
 
-    ast_dispose(ast->left);
-    ast_dispose(ast->right);
-    ast_dispose(ast->child);
-    ast_dispose(ast->next);
+void ast_dispose(ast_node_t *ast);
+ast_node_t *create_cond(rel_op_t rel_op, ast_node_t *left, ast_node_t *right);
+ast_node_t *create_conversion(conv_type_t conv_type, ast_node_t* to_convert);
+ast_node_t *create_bin_op(char operator, ast_node_t *left, ast_node_t *right);
+ast_node_t *create_leaf(char *identifier, litValue value, ast_node_type_t val_type);
 
-    free(ast->value.str);
-    free(ast->identifier);
-    free(ast);
-    
-}
 
 
 #endif
