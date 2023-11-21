@@ -1,7 +1,6 @@
 #include "utils.h"
 #include "prec_table.h"
 #include "bu_analysis.h"
-#include "stack.h"
 #include "code_gen.h"
 #include "errors.h"
 #include "scanner.h"
@@ -9,11 +8,11 @@
 #include <string.h>
 #include <stdbool.h>
 
-char* check_symbol(TokenT* symbol, TokenT* next) {
+char* check_symbol(TokenT* symbol, TokenT** next) {
     if (symbol->type == TOKEN_EOF || symbol->type == TOKEN_KEYWORD || symbol->type == TOKEN_DATATYPE || 
     symbol->type == TOKEN_LEFT_CURLY_BRACKET || symbol->type == TOKEN_RIGHT_CURLY_BRACKET ||
     symbol->type == TOKEN_COLON || symbol->type == TOKEN_COMMA) {
-        *next = *symbol;
+        *next = symbol;
         return "$";
     }
 
@@ -82,8 +81,8 @@ Error find_rule(stack_char_t* stack) {
     return SYNTAX_ERROR;
 }
 
-// (lok symtable)
-Error bu_read(TokenT* next) {
+// TODO (lok symtable) 
+Error bu_read(TokenT** next) {
     stack_char_t stack;
     stack_char_init(&stack);
     stack_char_push(&stack, "$");
@@ -104,7 +103,7 @@ Error bu_read(TokenT* next) {
                     }
                     stack_char_push(&stack, symbol);
 
-                    if (next->type == TOKEN_ZERO) {
+                    if ((*next)->type == TOKEN_ZERO) {
                         token = generate_token();
                         symbol = check_symbol(token, next);
                     }
@@ -119,7 +118,7 @@ Error bu_read(TokenT* next) {
                 case PREC_ACTION_EQ:
                     stack_char_push(&stack, symbol);
 
-                    if (next->type == TOKEN_ZERO) {
+                    if ((*next)->type == TOKEN_ZERO) {
                         token = generate_token();
                         symbol = check_symbol(token, next);
                     }
@@ -139,8 +138,8 @@ Error bu_read(TokenT* next) {
 }
 
 int main() {
-    TokenT next = {.type=TOKEN_ZERO};
+    TokenT *next = malloc(sizeof(TokenT));
+    next->type = TOKEN_ZERO;
     Error err = bu_read(&next);
-    printf("ERROR: %d\nNEXT = %d\n", err, next.type);
     return 0;
 }

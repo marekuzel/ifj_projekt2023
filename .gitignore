@@ -2,3 +2,6 @@ src/*.o
 src/*.exe
 src/scanner
 src/test_table
+src/*.txt
+src/prec
+src/bu
