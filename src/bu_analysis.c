@@ -9,15 +9,16 @@
 #include <stdbool.h>
 
 char* check_symbol(TokenT* symbol, TokenT** next) {
-    if (symbol->type == TOKEN_EOF || symbol->type == TOKEN_KEYWORD || symbol->type == TOKEN_DATATYPE || 
-    symbol->type == TOKEN_LEFT_CURLY_BRACKET || symbol->type == TOKEN_RIGHT_CURLY_BRACKET ||
-    symbol->type == TOKEN_COLON || symbol->type == TOKEN_COMMA) {
+    if (symbol->type == TOKEN_EOF || symbol->type == TOKEN_DT_DOUBLE || symbol->type == TOKEN_DT_INT || 
+    symbol->type == TOKEN_LC_BRACKET || symbol->type == TOKEN_RC_BRACKET ||
+    symbol->type == TOKEN_COLON || symbol->type == TOKEN_COMMA || symbol->type == TOKEN_DT_STRING ||
+    symbol->type == TOKEN_LET || symbol->type == TOKEN_VAR || symbol->type == TOKEN_RETURN) { // TODO od token return
         *next = symbol;
         return "$";
     }
 
     if (symbol->type == TOKEN_IDENTIFIER || symbol->type == TOKEN_STRING || symbol->type == TOKEN_INTEGER ||
-    symbol->type == TOKEN_DECIMAL) {
+    symbol->type == TOKEN_DOUBLE) {
         return "i";
     }
 
