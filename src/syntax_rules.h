@@ -43,6 +43,7 @@ rule_ret_t parser_rule_expr(Parser_t *);
         } \
         parser_rule_rule(parser); \
     } while(0)
+
 #define GET_NEXT_AND_CHECK_TYPE(parser, expected_type) \
     do { \
         Parser_getNewToken(parser); \

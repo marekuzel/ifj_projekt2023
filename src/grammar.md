@@ -1,14 +1,13 @@
-[prog] → [stmt]*
+[prog] → [stmt_seq]
 
 [stmt] →
    | let [id] [stmt_assign]
    | var [id] [stmt_assign]
-   | if [expr] { [stmt_seq] } [stmt_else]
+   | if [expr] { [stmt_seqFunc] } [stmt_else]
    | if let [id] = [expr] [stmt_else]
-   | while [expr] { [stmt_seq] }
+   | while [expr] { [stmt_seqFunc] }
    | [def_func]
    | [callFunction]
-   | return [expr]
 
 [stmt_assign]-> 
    | = [expr]
@@ -16,7 +15,7 @@
    | : [type]
    
 [stmt_else] →
-   | else { [stmt_seq] }
+   | else { [stmt_seqFunc] }
    | // empty
 
 [stmt_seq] → [stmt]*
@@ -24,11 +23,11 @@
 [callFunction] → [functId] ([parameters])
 
 [def_func] →
-   | func [funcId] ([parameters]) [func_ret] { [stmt_seq] }
+   | func [funcId] ([parameters]) [func_ret]
    
 
 [parameters] →
-   | [id] : [type] [parameters_seq]*
+   | [id] : [type] ( [parameters_seq]* )
    | // empty
 
 [parameters_seq] →
@@ -36,8 +35,13 @@
    | // empty
 
 [func_ret] →
-   | -> [type]
-   | // empty
+   | -> [type] { [stmt_seqFuncRet] }
+   | { [stmt_seqFunc] }
+
+[stmt_seqFunc] → 
+   | [stmt]*
+   | return [expr]
+   | return
 
 [expr_seq] → [expr]*
 
@@ -51,6 +55,7 @@
    | [expr] ?? [expr]
    | [id]
    | [literal]
+   | [callFunction]
 
 [id] → *id*
 
