@@ -37,7 +37,7 @@ void append_and_check(BufferT *buffer, const char ch) {
         fprintf(stderr, "Internal compiler error. \n");
         exit(INTERNAL_COMPILER_ERROR);
     }
-    // fprintf(stderr, "%s \n", buffer->bytes);
+    fprintf(stderr, "%s \n", buffer->bytes);
 }
 
 void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
@@ -125,12 +125,12 @@ TokenT* generate_token() {
                 }
                 else if (ch == ':') {
                     append_and_check(&buffer, ch);
-                    token_init(token, TOKEN_COLON, &buffer);
+                    token_init(token, TOKEN_RIGHT_ROUND_BRACKET, &buffer);
                     return token;
                 }
                 else if (ch == '{') {
                     append_and_check(&buffer, ch);
-                    token_init(token, TOKEN_LEFT_CURLY_BRACKET, &buffer);
+                    token_init(token, TOKEN_COLON, &buffer);
                     return token;
                 }
                 else if (ch == '}') {

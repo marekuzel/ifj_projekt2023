@@ -18,7 +18,6 @@ typedef struct buffer_t {
 
 
 typedef enum buffer_ret{
-typedef enum buffer_ret{
     BUFF_INIT_FAIL,
     BUFF_INIT_SUCCES,
     BUFF_APPEND_SUCCES,
@@ -110,7 +109,6 @@ typedef enum tokentype_e {
     TOKEN_RIGHT_ROUND_BRACKET,
     TOKEN_LEFT_CURLY_BRACKET,
     TOKEN_RIGHT_CURLY_BRACKET,
-    TOKEN_COLON,
     TOKEN_COMMA,
     TOKEN_EOF
 } TokenType;
@@ -174,16 +172,14 @@ bool Stack_IsEmpty(const Stack *);
  */
 bool Stack_IsFull(const Stack *);
 
-TokenT Stack_peak(){
-    
-}
+TokenT Stack_peak();
 /**
  * @brief Assigns value of the top element of stack to dataPtr
  * 
  * @param stack pointer to stack
  * @param dataPtr pointer to TokenT
  */
-void Stack_Top(const Stack *, TokenT *);
+void Stack_Top(const Stack *, TokenT **);
 
 /**
  * @brief Pops element from stack
@@ -192,7 +188,7 @@ void Stack_Top(const Stack *, TokenT *);
  * @retval stack_ret_t STACK_POP_SUCCES if succesfull
  * @retval stack_ret_t STACK_POP_FAIL if failed
  */
-stack_ret_t Stack_Pop(Stack *, TokenT*);
+stack_ret_t Stack_Pop(Stack *);
 
 /**
  * @brief Stack push operation

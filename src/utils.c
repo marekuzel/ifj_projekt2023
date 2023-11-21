@@ -87,7 +87,7 @@ void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
     }
 }
 
-stack_ret_t Stack_Pop( Stack *stack, TokenT *token) {
+stack_ret_t Stack_Pop( Stack *stack) {
 	if (!Stack_IsEmpty(stack)){
 		stack->topIndex--;
         return STACK_POP_SUCCES;
@@ -116,6 +116,8 @@ void Stack_Dispose( Stack *stack ) {
 token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     token->type = type;
     char *token_value = buffer_export(buff);
+
+    fprintf(stderr, "%s \n", token_value);
 
     if (token_value == NULL) {
         return VALUE_ASSIGNMENT_FAIL;
