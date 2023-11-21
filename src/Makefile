@@ -5,7 +5,7 @@ CFLAGS = -g -Wall --std=c11 -g --pedantic -Wextra
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): scanner.o utils.o symtable.o code_gen.o bu_analysis.o stack.o prec_table.o
+$(EXECUTABLE): scanner.o utils.o symtable.o code_gen.o bu_analysis.o prec_table.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 .PHONY: clean, valgrind, test_table
