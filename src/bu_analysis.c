@@ -2,6 +2,7 @@
 #include "prec_table.h"
 #include "bu_analysis.h"
 #include "stack.h"
+#include "code_gen.h"
 #include "errors.h"
 #include "scanner.h"
 #include <stdio.h>
@@ -24,6 +25,16 @@ char* check_symbol(TokenT* symbol, TokenT* next) {
     return (symbol->value.str);
 }
 
+void gen_code(char* stackRule) {
+    if(!strcmp(stackRule, "i")) {
+        push_var("a", false);
+    } else if (!strcmp(stackRule, "E+E")) {
+        gen_expr_binop('+');
+    } else if (!strcmp(stackRule, "E*E")) {
+        gen_expr_binop('*');
+    }
+}
+
 Error check_rule(char* stackRule, stack_char_t* stack) {
     char expr[NUM_OF_EXPR][MAX_EXP_LEN] = {
     "i", "(E)", "E+E", "E-E", "E*E", "E/E", "E==E", "E!=E", "E<E", "E<=E", "E>E", "E>=E", "E??E", "E!"
@@ -33,6 +44,7 @@ Error check_rule(char* stackRule, stack_char_t* stack) {
         if (!strcmp(stackRule, expr[i])) {
             printf("rule: %s\n", expr[i]);
             stack_char_push(stack, "E");
+            gen_code(stackRule);
             return SUCCESS;
         }
     }
@@ -96,7 +108,6 @@ Error bu_read(TokenT* next) {
                         token = generate_token();
                         symbol = check_symbol(token, next);
                     }
-
                     break;
                 case PREC_ACTION_REDUCE:
                     err = find_rule(&stack);
@@ -120,7 +131,7 @@ Error bu_read(TokenT* next) {
         } else {
             return err;
         }
-        stackTerminal = stack_topTerminal(&stack);
+        stack_topTerminal(&stack, &stackTerminal);
         err = get(stackTerminal, symbol, &action);
     }
 

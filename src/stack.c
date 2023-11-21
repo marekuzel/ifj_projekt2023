@@ -150,7 +150,7 @@ int stack_numOfElem(stack_char_t* stack) {
   return count;
 }
 
-char* stack_topTerminal(stack_char_t* stack) {
+void stack_topTerminal(stack_char_t* stack, char **term) {
   stack_char_t tmp;
   stack_char_init(&tmp);
 
@@ -163,8 +163,8 @@ char* stack_topTerminal(stack_char_t* stack) {
         stack_char_push(stack, insert);
         stack_char_pop(&tmp);
       }
-      
-      return top;
+      *term = top;
+      return;
     } else {
       stack_char_push(&tmp, top);
       stack_char_pop(stack);

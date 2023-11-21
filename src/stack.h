@@ -25,6 +25,6 @@ STACKDEC(char*, char)
 bool stack_char_2oftop(stack_char_t *stack);
 Error stack_insertAfterTerminal(stack_char_t* stack);
 int stack_numOfElem(stack_char_t* stack);
-char* stack_topTerminal(stack_char_t* stack);
+void stack_topTerminal(stack_char_t* stack, char **term);
 void print_stack(stack_char_t* stack);
 #endif

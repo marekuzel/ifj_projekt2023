@@ -171,7 +171,7 @@ stack_ret_t Stack_Pop(Stack *, TokenT*);
  * @return stack_ret_t STACK_PUSH_FAIL if failed
  */
 
-stack_ret_t Stack_Push(Stack *, TokenT);
+stack_ret_t Stack_Push(Stack *, TokenT*);
 
 
 /**
