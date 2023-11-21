@@ -14,7 +14,7 @@ typedef struct buffer_t {
 } BufferT;
 
 
-typedef enum {
+typedef enum buffer_ret{
     BUFF_INIT_FAIL,
     BUFF_INIT_SUCCES,
     BUFF_APPEND_SUCCES,
@@ -69,7 +69,7 @@ typedef union {
     char* str;
     double d;
     int i;
-} tokenValue;
+} litValue;
 
 typedef enum tokentype_e {
     TOKEN_ZERO,
@@ -93,16 +93,16 @@ typedef enum tokentype_e {
     TOKEN_EOF
 } TokenType;
 
-typedef enum {
+typedef enum token_ret{
     INT_CONVERSION_SUCCES,
     DOUBLE_CONVERTION_SUCCES,
     VALUE_ASSIGNMENT_FAIL,
     VALUE_ASSIGNMENT_SUCCES,
 } token_ret_t;
 
-typedef struct {
+typedef struct token{
     TokenType type;
-    tokenValue value;
+    litValue value;
 } TokenT;
 
 /**
@@ -112,12 +112,12 @@ typedef struct {
 
 #define STACK_SIZE 100 
 
-typedef struct {
-	TokenT *array;
+typedef struct stack{
+	TokenT **array;
 	int topIndex;
 } Stack;
 
-typedef enum {
+typedef enum stack_ret{
     STACK_INIT_SUCCES,
     STACK_INIT_FAIL,
     STACK_POP_SUCCES,
@@ -201,5 +201,72 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff);
  * @param token: pointer to a token
 */
 void token_dtor(TokenT *token);
+
+
+typedef enum ast_node_type {
+    BINARY_OPERATOR,
+    EXPRESION,
+    CONDITION,
+    ASSIGNEMENT,
+    DECLARATION,
+    FUNCTION_CALL,
+    CONVERSION,
+    IF_ELSE,
+    WHILE_LOOP,
+    INT_LITERAL,
+    DOUBLE_LITERAL,
+    STRING_LITERAL,
+    NILL,
+    PROGRAM,
+    VARIABLE,
+    STRING_OP,
+} ast_node_type_t;
+
+typedef enum conv_type {
+    FI,
+    IF,
+    IC,
+    CI,
+} conv_type_t;
+
+typedef enum rel_op {
+    LT,
+    LTE,
+    GT,
+    GTE,
+    EQ,
+    NEQ
+} rel_op_t;
+
+typedef struct ast_node {
+    ast_node_type_t node_type; //type of node
+    litValue value; //value of literal
+    char *identifier; //identifier of a variable
+    char operator; //arithmetic operator 
+    conv_type_t conversion_type; //type of conversoin necesary
+    rel_op_t relation_operator; //reation operator
+    bool has_else; //flag if_branch containing else
+    struct ast_node *next; 
+    struct ast_node *last;
+    struct ast_node *left; 
+    struct ast_node *right;
+    struct ast_node *child;
+
+} ast_node_t;
+
+
+#define New_node(name) ast_node_t *name = calloc(1,sizeof(ast_node_t)); \
+    \
+    if (name == NULL) { \
+        return NULL;     \
+    }                     \
+
+void ast_dispose(ast_node_t *ast);
+ast_node_t *create_cond(rel_op_t rel_op, ast_node_t *left, ast_node_t *right);
+ast_node_t *create_conversion(conv_type_t conv_type, ast_node_t* to_convert);
+ast_node_t *create_bin_op(char operator, ast_node_t *left, ast_node_t *right);
+ast_node_t *create_leaf(char *identifier, litValue value, ast_node_type_t val_type);
+
+
 
 #endif
