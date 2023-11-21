@@ -23,6 +23,9 @@ void gen_expr_conv(conv_type_t conversion_type);
 */
 void gen_cond(rel_op_t relation_operator);
 
+void push_var(char *id, bool global);
+void push_literal(litValue value, lit_type_t type);
+void clear_expr_stack();
 
 // void gen_statement(ast_node_t *ast);
 

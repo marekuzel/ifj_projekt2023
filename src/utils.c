@@ -86,7 +86,7 @@ void Stack_Top( const Stack *stack, TokenT *dataPtr ) {
     }
 }
 
-stack_ret_t Stack_Pop( Stack *stack) {
+stack_ret_t Stack_Pop( Stack *stack, TokenT *token) {
 	if (!Stack_IsEmpty(stack)){
 		stack->topIndex--;
         return STACK_POP_SUCCES;
