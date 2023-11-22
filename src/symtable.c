@@ -270,3 +270,18 @@ void table_dispose(symtable_t *table) {
     table->size = 0;
     table->top_idx = -1;
 }
+
+
+void awl_traverse(awl_t* awl, action_t action){
+    if(awl == NULL) {
+        return;
+    } 
+
+    action(awl);
+    awl_traverse(awl->left,action);
+    awl_traverse(awl->right,action);
+}
+
+void table_copy_local(symtable_t *table) {
+    awl_traverse(table->table_stack[table->top_idx],&var_copy);
+}
