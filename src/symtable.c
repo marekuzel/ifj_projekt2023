@@ -207,8 +207,7 @@ void table_init(symtable_t *table) {
     }
     table->size = TABLE_SIZE;
     table->top_idx = -1;
-    table->global_table = table->table_stack[0];
-    awl_init(&(table->global_table));
+    table_add_scope(table);
 }
 
 
@@ -238,7 +237,7 @@ void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
 
 void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry) {
     symtable_entry_t *new_entry = entry_create();
-    awl_insert(&(table->global_table), key, new_entry);
+    awl_insert(&(table->table_stack[0]), key, new_entry);
     *entry = new_entry;
 }
 
@@ -261,14 +260,13 @@ bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
 }
 
 bool table_search_global(symtable_t *table, char *key, symtable_entry_t **entry) {
-    return awl_search(table->global_table,key,entry);
+    return awl_search(table->table_stack[0],key,entry);
 }
 
 void table_dispose(symtable_t *table) {
     for(int i =0; table->table_stack[i] != NULL; i++)
         awl_dispose(&(table->table_stack[i]));
     free(table->table_stack);
-    table->global_table = NULL;
     table->size = 0;
     table->top_idx = -1;
 }
