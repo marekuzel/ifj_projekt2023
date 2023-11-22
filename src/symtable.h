@@ -1,6 +1,6 @@
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
-#define TABLE_SIZE 256
+#define SYMTABLE_SIZE 256
 #include <stdbool.h>
 #include "utils.h"
 
