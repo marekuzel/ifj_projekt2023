@@ -1,3 +1,6 @@
+#ifndef IFJ__ERRORS_H__
+#define IFJ__ERRORS_H__
+
 typedef enum error_e {
     SUCCESS=0,
     LEXICAL_ERROR=1,
@@ -11,3 +14,5 @@ typedef enum error_e {
     ANOTHER_SEMANTIC_ERROR=9,            // other semantic errors
     INTERNAL_COMPILER_ERROR=99
 } Error;
+
+#endif
