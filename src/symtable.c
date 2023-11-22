@@ -201,18 +201,18 @@ Implelentation of symtable
 */
 
 void table_init(symtable_t *table) {
-    awl_t **new_tree_array = calloc(TABLE_SIZE,sizeof(awl_t*));
+    awl_t **new_tree_array = calloc(SYMTABLE_SIZE,sizeof(awl_t*));
     if (new_tree_array == NULL) {
         exit(INTERNAL_COMPILER_ERROR);
     }
-    table->size = TABLE_SIZE;
+    table->size = SYMTABLE_SIZE;
     table->top_idx = -1;
     table_add_scope(table);
 }
 
 
 void table_add_scope(symtable_t *table) {
-    if (table->top_idx >= TABLE_SIZE - 1) {
+    if (table->top_idx >= SYMTABLE_SIZE - 1) {
         exit(INTERNAL_COMPILER_ERROR);
     }
 
