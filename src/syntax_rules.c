@@ -183,6 +183,13 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
     return SUCCESS;
 }
 
+Error parser_rule_callFunc(Parser_t *parser){
+    //[callFunction] → [functId] ([parameters])
+    GET_NEXT_AND_CALL_RULE(parser, funcID);
+    GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
+    GET_NEXT_AND_CALL_RULE(parser, params);
+    return SUCCESS;
+}
 
 Error parser_rule_params(Parser_t *parser){
     //[parameters] →
