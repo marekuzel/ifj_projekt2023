@@ -1,5 +1,22 @@
 #include "utils.h"
 
+typedef enum conv_type {
+    FI,
+    IF,
+    IC,
+    CI,
+} conv_type_t;
+
+typedef enum rel_op {
+    LT,
+    LTE,
+    GT,
+    GTE,
+    EQ,
+    NEQ
+} rel_op_t;
+
+
 typedef enum lit_type { 
     INT_T, 
     STRING_T,

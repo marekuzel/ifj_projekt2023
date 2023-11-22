@@ -91,7 +91,6 @@ typedef struct awl_tree {
  * @brief struct representing a symtable
 */
 typedef struct symtable{
-    awl_t *global_table; //pointer to a global table same as table_stack[0]
     awl_t **table_stack; //stack of symtables
     int size; //size of table_stack
     int top_idx; //current index to the table_stack
