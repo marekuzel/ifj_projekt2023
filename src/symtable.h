@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include "utils.h"
 
-
 /*
 ***************
 Symtable entry 
@@ -96,7 +95,7 @@ typedef struct symtable{
     int top_idx; //current index to the table_stack
 } symtable_t;
 
-
+typedef void (*action_t) (awl_t *awl);
 /*
 ***************************
 awl tree -helper functions
@@ -301,4 +300,7 @@ bool table_search_global(symtable_t *table, char *key, symtable_entry_t **entry)
 */
 void table_dispose(symtable_t *table);
 
+void table_copy_local(symtable_t *table);
+
+extern void var_copy(awl_t *awl);
 #endif

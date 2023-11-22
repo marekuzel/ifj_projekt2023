@@ -77,4 +77,6 @@ void gen_func_call(char *name);
 
 int get_new_var();
 
+
+void var_copy(awl_t *awl);
 // void gen_cond_branch(ast_node_t *ast);

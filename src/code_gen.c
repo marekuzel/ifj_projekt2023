@@ -197,9 +197,16 @@ void gen_loop_label(int loop_label_num) {
     printf("LABEL Loop%d\n",loop_label_num);
 }
 
+void gen_cond_else_label(int cond_label_num) {
+    printf("LABEL IF_ELSE%d\n",cond_label_num);
+}
+
+void gen_cond_end_label(int cond_label_num) {
+    printf("LABEL IF_END%d\n",cond_label_num);
+}
 
 void gen_cnd_jump(char *dest_type, int dest_number) {
-    printf("PUSHS bool@true");
+    printf("PUSHS bool@true\n");
     printf("JUMPIFNQS %s%d\n",dest_type, dest_number);
 }
 
@@ -212,6 +219,13 @@ void gen_func_return() {
     printf("POPFRAME\n");
     printf("RETURN\n");
 }
+
+void gen_local_scope(symtable_t *table) {
+    printf("CREATEFRAME\n");
+    table_copy_local(table);
+    printf("PUSHFRAME");
+}
+
 
 void gen_func_pre_call(param_t **params) {
     printf("CREATEFRAME\n");
@@ -320,4 +334,9 @@ void gen_string_op(const char operator) {
     default:
         break;
     }
+}
+
+void var_copy(awl_t *awl) {
+    printf("DEFVAR TF@%s\n",awl->key);
+    printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
 }
