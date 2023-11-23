@@ -1,4 +1,3 @@
-#include "scanner.c"
 #include "scanner.h"
 #include "errors.h"
 #include "utils.h"
@@ -28,17 +27,17 @@ void parser_getNewToken(Parser_t *parser){
     }
     else{
         parser->token_current = generate_token();
+    }
 }
+
+void parser_initlocalSymtable(Parser_t *parser){
+    table_add_scope(parser->symtable);
+    //TODO: buffer for parameters
 }
 
 void parser_dtor(Parser_t * parser){
     table_dispose(parser->symtable);
     Stack_Dispose(parser->stack);
+    parser->current_entry = NULL;
     free(parser);
 }
-
-Error parser_addLocalSymtable(Parser_t *parser){
-    table_add_scope(parser->symtable);
-    return SUCCESS;
-}
-
