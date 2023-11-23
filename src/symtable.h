@@ -39,7 +39,7 @@ typedef struct symtable_entry {
     TokenType type; //type of entry
     bool defined; //flag for symbol definition
     bool declared; //flag for symbol declaration
-    bool redclared; //flag for symbol redeclaration
+    bool redeclared; //flag for symbol redeclaration
     param_t **params; // NULL termianted array of function parameters
     func_ret_type_t return_type; //return type of a function
     litValue value; // value of a variable
