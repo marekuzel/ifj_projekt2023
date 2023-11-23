@@ -14,6 +14,7 @@ typedef struct Parser {
 
     Stack *stack;
     symtable_t *symtable;
+    symtable_entry_t *current_entry;
 }Parser_t;
 
 typedef enum {
@@ -23,14 +24,16 @@ typedef enum {
     PARSER_INVALID_TOKEN,
     } parser_ret_t;
 
-void parser_init(Parser_t *parser);
+void parser_init(Parser_t *);
 
 void parser_dtor(Parser_t*);
 
-void parser_getNewToken(Parser_t *parser);
+void parser_getNewToken(Parser_t *);
 
-Error parser_addLocalSymtable(Parser_t *parser);
+void parser_stashExtraToken(Parser_t *, TokenT *);
 
-void parser_stashExtraToken(Parser_t *parser, TokenT *);
+void parser_symtableEntry(Parser_t *);
+
+void parser_initlocalSymtable(Parser_t *);
 
 #endif
