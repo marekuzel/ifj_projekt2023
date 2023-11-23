@@ -6,32 +6,41 @@
 #include "utils.h"
 #include "symtable.h"
 #include "parser.h"
+#include "bu_analysis.h"
 #include <stdio.h>
 
-typedef enum rule_ret{
-    RULE_SUCCESS,
-    RULE_FAIL,
-}rule_ret_t;
+Error parser_rule_id(Parser_t *);
 
-rule_ret_t parser_rule_id(Parser_t *)
+Error parser_rule_funcID(Parser_t *);
 
-rule_ret_t parser_rule_funcID(Parser_t *)
+Error parser_rule_stmt(Parser_t *);
 
-rule_ret_t parser_rule_stmt(Parser_t *);
+Error parser_rule_stmtAssign(Parser_t *);
 
-rule_ret_t parser_rule_stmtAssign(Parser_t *);
+Error parser_rule_elseF(Parser_t *);
 
-rule_ret_t parser_rule_defFunc(Parser_t *);
+Error parser_rule_defFunc(Parser_t *);
 
-rule_ret_t parser_rule_elseF(Parser_t *);
+Error parser_rule_funcRet(Parser_t *);
 
-rule_ret_t parser_rule_expr(Parser_t *);
+Error parser_rule_params(Parser_t *);
+
+Error parser_rule_elseF(Parser_t *);
+
+Error parser_rule_type(Parser_t *);
+
+Error parser_rule_stmtSeq(Parser_t *);
+
+Error parser_rule_stmtSeqRet(Parser_t *);
+
+Error parser_rule_expr(Parser_t *);
+
 
 
 #define CHECK_TOKEN_TYPE(parser, expected_type) \
     do { \
         if ((parser)->token_current->type != (expected_type)) { \
-            return RULE_FAIL; \
+            return SYNTAX_ERROR; \
         } \
     } while(0)
 
@@ -39,9 +48,9 @@ rule_ret_t parser_rule_expr(Parser_t *);
     do { \
         Parser_getNewToken(parser); \
         if (parser->token_current->type == TOKEN_EOF) { \
-            return RULE_FAIL; \
+            return SYNTAX_ERROR; \
         } \
-        parser_rule_rule(parser); \
+        return parser_rule_##rule(parser); \
     } while(0)
 
 #define GET_NEXT_AND_CHECK_TYPE(parser, expected_type) \

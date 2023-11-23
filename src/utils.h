@@ -227,23 +227,6 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff);
 */
 void token_dtor(TokenT *token);
 
-typedef enum conv_type {
-    FI,
-    IF,
-    IC,
-    CI,
-} conv_type_t;
-
-typedef enum rel_op {
-    LT,
-    LTE,
-    GT,
-    GTE,
-    EQ,
-    NEQ
-} rel_op_t;
-
-
 #define MAXSTACK 100
 
 #define STACKDEC(T, TNAME)                                                     \

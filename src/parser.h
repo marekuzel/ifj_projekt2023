@@ -24,15 +24,10 @@ typedef enum {
     PARSER_INVALID_TOKEN,
     } parser_ret_t;
 
-void Parser_init();
+void Parser_init(Parser_t *parser);
 
 parser_ret_t Parser_dtor(Parser_t*);
 
-void Parser_getNewToken(Parser_t *parser){
-
-typedef enum{
-    PARSER_RULE_STATEMENT,
-    PARSER_RULE_FAIL,
-} parser_rule_t;
+void Parser_getNewToken(Parser_t *parser);
 
 #endif

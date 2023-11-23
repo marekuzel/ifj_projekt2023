@@ -1,26 +1,14 @@
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
-#define TABLE_SIZE 256
+#define SYMTABLE_SIZE 256
 #include <stdbool.h>
 #include "utils.h"
 
-
 /*
-***************
+**************
 Symtable entry 
 **************
 */
-
-/**
- * @brief enum represeinting type of entry in the symtable
-*/
-typedef enum entry_type{ 
-    INT_T, 
-    STRING_T,
-    DOUBLE_T,
-    FUNC_T
-} entry_type_t;
-
 
 /**
  * @brief struct representing a function parameter
@@ -28,7 +16,7 @@ typedef enum entry_type{
 typedef struct  param{
     char *name; //parameter name
     char *id; //parameter identifier
-    entry_type_t type; //parameter type
+    TokenType type; //parameter type
 } param_t;
 
 
@@ -48,9 +36,10 @@ typedef enum func_ret_type{
  * @brief struct representing a sytable entry
 */
 typedef struct symtable_entry {
-    entry_type_t type; //type of entry
+    TokenType type; //type of entry
     bool defined; //flag for symbol definition
     bool declared; //flag for symbol declaration
+    bool redeclared; //flag for symbol redeclaration
     param_t **params; // NULL termianted array of function parameters
     func_ret_type_t return_type; //return type of a function
     litValue value; // value of a variable
@@ -91,13 +80,12 @@ typedef struct awl_tree {
  * @brief struct representing a symtable
 */
 typedef struct symtable{
-    awl_t *global_table; //pointer to a global table same as table_stack[0]
     awl_t **table_stack; //stack of symtables
     int size; //size of table_stack
     int top_idx; //current index to the table_stack
 } symtable_t;
 
-
+typedef void (*action_t) (awl_t *awl);
 /*
 ***************************
 awl tree -helper functions
@@ -302,4 +290,5 @@ bool table_search_global(symtable_t *table, char *key, symtable_entry_t **entry)
 */
 void table_dispose(symtable_t *table);
 
+void table_traverse(symtable_t *table, action_t action);
 #endif
