@@ -319,7 +319,7 @@ buff_ret_t insert_param(ParamBufferT *buffer, param_t *param) {
 
         if (new_buff == NULL)
         {
-            buffer_detor(buffer);
+            param_buffer_detor(buffer);
             return BUFF_APPEND_FAIL;
         }
         
