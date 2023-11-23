@@ -291,4 +291,37 @@ bool table_search_global(symtable_t *table, char *key, symtable_entry_t **entry)
 void table_dispose(symtable_t *table);
 
 void table_traverse(symtable_t *table, action_t action);
+
+
+typedef struct param_buffer_t {
+    param_t **bytes;
+    int cap;
+    int length;
+} ParamBufferT;
+
+/**
+ * @brief Initilaize ADT buffer
+ * 
+ * @param buffer pointer to buffer
+ * @retval ret_t BUFF_INIT_SUCCES if succesfull
+ * @retval ret_t BUFF_INIT_FAIL if failed
+ */
+buff_ret_t param_buffer_init(ParamBufferT *buffer);
+
+/**
+ * @brief Appends chr to the end of buffer 
+ * 
+ * @param buffer pointer to buffer
+ * @param param malloced param
+ * @retval ret_t BUFF_APPEND_SUCCES if succesfull
+ * @retval ret_t BUFF_APPEND_FAIL if failed
+ */
+
+buff_ret_t insert_param(ParamBufferT *buffer, param_t *param);
+
+
+void param_buffer_detor(ParamBufferT *buffer);
+
+void param_list_insert(ParamBufferT *buffer, symtable_entry_t *entry);
+
 #endif
