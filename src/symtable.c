@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "symtable.h"
 #include "errors.h"
+#include "utils.h"
 
 /*
 *******************************
@@ -233,6 +234,12 @@ void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
     symtable_entry_t *new_entry = entry_create();
     awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
     *entry = new_entry;
+    symtable_entry_t *tmp_entry;
+    table->top_idx--;
+    if (table_search(table,key,&tmp_entry)){
+        new_entry->declared = true;
+    }
+    table->top_idx++;
 }
 
 void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry) {
@@ -244,7 +251,7 @@ void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry)
 void table_function_insert(symtable_t *table, char *key, param_t **params, func_ret_type_t return_type) {
     symtable_entry_t *entry;
     table_insert_global(table, key, &entry);
-    entry->type = FUNC_T;
+    entry->type = TOKEN_FUNC;
     entry->params = params;
     entry->return_type = return_type;
 }
@@ -282,6 +289,8 @@ void awl_traverse(awl_t* awl, action_t action){
     awl_traverse(awl->right,action);
 }
 
-void table_copy_local(symtable_t *table) {
-    awl_traverse(table->table_stack[table->top_idx],&var_copy);
+void table_traverse(symtable_t *table, action_t action) {
+    for (int table_idx = table->top_idx; table_idx >= 0; table_idx--) {
+        awl_traverse(table->table_stack[table_idx],action);
+    }
 }

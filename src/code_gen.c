@@ -222,7 +222,7 @@ void gen_func_return() {
 
 void gen_local_scope(symtable_t *table) {
     printf("CREATEFRAME\n");
-    table_copy_local(table);
+    table_traverse(table,&gen_var_copy);
     printf("PUSHFRAME");
 }
 
@@ -336,7 +336,27 @@ void gen_string_op(const char operator) {
     }
 }
 
-void var_copy(awl_t *awl) {
+
+void gen_var_copy(awl_t *awl) {
+    if (awl->value->redclared || awl->value->type == TOKEN_FUNC)
+        return;
+
     printf("DEFVAR TF@%s\n",awl->key);
     printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
+}
+
+void gen_var_val_move(awl_t *awl) {
+    if (awl->value->redclared || awl->value->type == TOKEN_FUNC)
+        return;
+
+    printf("MOVE TF@%s LF@%s\n",awl->key,awl->key);
+}
+
+void gen_drop_local_scope(symtable_t *table) {
+    printf("POPFRAME\n");
+    table_traverse(table,&gen_var_val_move);
+}
+
+void gen_prog() {
+    printf(".IFJcode23\n");
 }
