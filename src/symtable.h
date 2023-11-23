@@ -5,21 +5,10 @@
 #include "utils.h"
 
 /*
-***************
+**************
 Symtable entry 
 **************
 */
-
-/**
- * @brief enum represeinting type of entry in the symtable
-*/
-typedef enum entry_type{ 
-    INT_T, 
-    STRING_T,
-    DOUBLE_T,
-    FUNC_T
-} entry_type_t;
-
 
 /**
  * @brief struct representing a function parameter
@@ -27,7 +16,7 @@ typedef enum entry_type{
 typedef struct  param{
     char *name; //parameter name
     char *id; //parameter identifier
-    entry_type_t type; //parameter type
+    TokenType type; //parameter type
 } param_t;
 
 
@@ -47,9 +36,10 @@ typedef enum func_ret_type{
  * @brief struct representing a sytable entry
 */
 typedef struct symtable_entry {
-    entry_type_t type; //type of entry
+    TokenType type; //type of entry
     bool defined; //flag for symbol definition
     bool declared; //flag for symbol declaration
+    bool redclared; //flag for symbol redeclaration
     param_t **params; // NULL termianted array of function parameters
     func_ret_type_t return_type; //return type of a function
     litValue value; // value of a variable
@@ -300,7 +290,5 @@ bool table_search_global(symtable_t *table, char *key, symtable_entry_t **entry)
 */
 void table_dispose(symtable_t *table);
 
-void table_copy_local(symtable_t *table);
-
-extern void var_copy(awl_t *awl);
+void table_traverse(symtable_t *table, action_t action);
 #endif
