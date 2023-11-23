@@ -1,14 +1,31 @@
 #include "utils.h"
 #include "prec_table.h"
 #include "bu_analysis.h"
-#include "code_gen.h"
+// #include "code_gen.h"
+#include "symtable.h"
 #include "errors.h"
 #include "scanner.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 
-char* check_symbol(TokenT* symbol, TokenT** next) {
+void types_in_expr(stack_char_t* varStack) { // TODO func type = used_types_t
+    int numOfElem = stack_numOfElem(varStack);
+    
+    while (numOfElem > 0) {
+        char* elem = stack_bottom_read(varStack);
+        printf("%s\n", elem);
+        stack_char_push(varStack, elem);
+        numOfElem--;
+    }
+}
+
+Error check_semantic(stack_char_t* varStack, stack_char_t* ruleStack) {
+    types_in_expr(varStack);
+    return SUCCESS;
+}
+
+char* check_symbol(TokenT* symbol, TokenT** next, stack_char_t* varStack) {
     if (symbol->type == TOKEN_EOF || symbol->type == TOKEN_DT_DOUBLE || symbol->type == TOKEN_DT_INT || 
     symbol->type == TOKEN_LC_BRACKET || symbol->type == TOKEN_RC_BRACKET ||
     symbol->type == TOKEN_COLON || symbol->type == TOKEN_COMMA || symbol->type == TOKEN_DT_STRING ||
@@ -19,23 +36,27 @@ char* check_symbol(TokenT* symbol, TokenT** next) {
 
     if (symbol->type == TOKEN_IDENTIFIER || symbol->type == TOKEN_STRING || symbol->type == TOKEN_INTEGER ||
     symbol->type == TOKEN_DOUBLE) {
+        if (symbol->type == TOKEN_IDENTIFIER) {
+            stack_char_push(varStack, symbol->value.str);
+        }
+
         return "i";
     }
 
     return (symbol->value.str);
 }
 
-void gen_code(char* stackRule) {
-    if(!strcmp(stackRule, "i")) {
-        push_var("a", false);
-    } else if (!strcmp(stackRule, "E+E")) {
-        gen_expr_binop('+');
-    } else if (!strcmp(stackRule, "E*E")) {
-        gen_expr_binop('*');
-    }
-}
+// void gen_code(char* stackRule) {
+//     if(!strcmp(stackRule, "i")) {
+//         push_var("a", false);
+//     } else if (!strcmp(stackRule, "E+E")) {
+//         gen_expr_binop('+');
+//     } else if (!strcmp(stackRule, "E*E")) {
+//         gen_expr_binop('*');
+//     }
+// }
 
-Error check_rule(char* stackRule, stack_char_t* stack) {
+Error check_rule(char* stackRule, stack_char_t* stack, stack_char_t* ruleStack) {
     char expr[NUM_OF_EXPR][MAX_EXP_LEN] = {
     "i", "(E)", "E+E", "E-E", "E*E", "E/E", "E==E", "E!=E", "E<E", "E<=E", "E>E", "E>=E", "E??E", "E!"
     };
@@ -44,7 +65,8 @@ Error check_rule(char* stackRule, stack_char_t* stack) {
         if (!strcmp(stackRule, expr[i])) {
             printf("rule: %s\n", expr[i]);
             stack_char_push(stack, "E");
-            gen_code(stackRule);
+            stack_char_push(ruleStack, stackRule);
+            // gen_code(stackRule);
             return SUCCESS;
         }
     }
@@ -52,7 +74,7 @@ Error check_rule(char* stackRule, stack_char_t* stack) {
     return SYNTAX_ERROR;
 }
 
-Error find_rule(stack_char_t* stack) {
+Error find_rule(stack_char_t* stack, stack_char_t* ruleStack) {
     stack_char_t tmp;
     stack_char_init(&tmp);
 
@@ -71,7 +93,7 @@ Error find_rule(stack_char_t* stack) {
                 strcat(stackRule, stackChar);
                 stack_char_pop(&tmp);
             }
-            Error err = check_rule(stackRule, stack);
+            Error err = check_rule(stackRule, stack, ruleStack);
             return err;
         } else {
             stack_char_push(&tmp, stackTop);
@@ -88,9 +110,15 @@ Error bu_read(TokenT** next) {
     stack_char_init(&stack);
     stack_char_push(&stack, "$");
 
+    stack_char_t varStack;
+    stack_char_init(&varStack);
+
+    stack_char_t ruleStack;
+    stack_char_init(&ruleStack);
+
     char* stackTerminal = stack_char_top(&stack);
     TokenT* token = generate_token();
-    char* symbol = check_symbol(token, next);
+    char* symbol = check_symbol(token, next, &varStack);
     PrecAction action;
     Error err = get(stackTerminal, symbol, &action);
 
@@ -106,11 +134,11 @@ Error bu_read(TokenT** next) {
 
                     if ((*next)->type == TOKEN_ZERO) {
                         token = generate_token();
-                        symbol = check_symbol(token, next);
+                        symbol = check_symbol(token, next, &varStack);
                     }
                     break;
                 case PREC_ACTION_REDUCE:
-                    err = find_rule(&stack);
+                    err = find_rule(&stack, &ruleStack);
 
                     if (err == SYNTAX_ERROR) {
                         return SYNTAX_ERROR;
@@ -121,7 +149,7 @@ Error bu_read(TokenT** next) {
 
                     if ((*next)->type == TOKEN_ZERO) {
                         token = generate_token();
-                        symbol = check_symbol(token, next);
+                        symbol = check_symbol(token, next, &varStack);
                     }
 
                     break;
@@ -134,6 +162,12 @@ Error bu_read(TokenT** next) {
         stack_topTerminal(&stack, &stackTerminal);
         err = get(stackTerminal, symbol, &action);
     }
+    
+    err = check_semantic(&varStack, &ruleStack); // TODO lok table
+
+    if (err != SUCCESS) { // TODO UNDEFINED_VARIABLE_ERROR
+        return TYPE_COMPATIBILITY_ERROR;
+    } 
 
     return SUCCESS;
 }

@@ -3,7 +3,7 @@
 
 #include "errors.h"
 
-#define TABLE_SIZE 14
+#define PREC_TABLE_SIZE 14
 // TODO unary op ! change table size when added
 // TODO add ?? to prec table 
 // char precTable[TABLE_SIZE][TABLE_SIZE] = {

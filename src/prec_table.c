@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-char precTable[TABLE_SIZE][TABLE_SIZE] = {
+char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
    // +    -    *    /    (    )    i    $    ==  !=    <   <=    >   >=
     {'>', '>', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'}, // +
     {'>', '>', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'}, // -
