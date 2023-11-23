@@ -244,7 +244,7 @@ typedef enum rel_op {
 } rel_op_t;
 
 
-#define MAXSTACK 30
+#define MAXSTACK 100
 
 #define STACKDEC(T, TNAME)                                                     \
   typedef struct {                                                             \
@@ -264,7 +264,8 @@ bool stack_char_2oftop(stack_char_t *stack);
 Error stack_insertAfterTerminal(stack_char_t* stack);
 int stack_numOfElem(stack_char_t* stack);
 void stack_topTerminal(stack_char_t* stack, char **term);
-//void print_stack(stack_char_t* stack);
+char* stack_bottom_read(stack_char_t* stack);
+void print_stack(stack_char_t* stack);
 
 
 #endif

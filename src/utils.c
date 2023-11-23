@@ -323,20 +323,44 @@ void stack_topTerminal(stack_char_t* stack, char **term) {
   }
 }
 
-// void print_stack(stack_char_t* stack) {
-//   stack_char_t tmp;
-//   stack_char_init(&tmp);
+char* stack_bottom_read(stack_char_t* stack) {
+  stack_char_t tmp;
+  stack_char_init(&tmp);
+  char* bottom = "";
 
-//   while (!stack_char_empty(stack)) {
-//     char* item = stack_char_top(stack);
-//     printf("%s\n", item);
-//     stack_char_push(&tmp, item);
-//     stack_char_pop(stack);
-//   }
+  while (!stack_char_empty(stack)) {
+    bottom = stack_char_top(stack);
+    stack_char_push(&tmp, bottom);
+    stack_char_pop(stack); 
+  }
 
-//   while (!stack_char_empty(&tmp)) {
-//     char* insert = stack_char_top(&tmp);
-//     stack_char_push(stack, insert);
-//     stack_char_pop(&tmp);
-//   }
-// }
+  if (!stack_char_empty(&tmp)) {
+    stack_char_pop(&tmp);
+  }
+
+  while (!stack_char_empty(&tmp)) {
+    char* chr = stack_char_top(&tmp);
+    stack_char_push(stack, chr);
+    stack_char_pop(&tmp);
+  }
+
+  return bottom;
+}
+
+void print_stack(stack_char_t* stack) {
+  stack_char_t tmp;
+  stack_char_init(&tmp);
+
+  while (!stack_char_empty(stack)) {
+    char* item = stack_char_top(stack);
+    printf("%s\n", item);
+    stack_char_push(&tmp, item);
+    stack_char_pop(stack);
+  }
+
+  while (!stack_char_empty(&tmp)) {
+    char* insert = stack_char_top(&tmp);
+    stack_char_push(stack, insert);
+    stack_char_pop(&tmp);
+  }
+}
