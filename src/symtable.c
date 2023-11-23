@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "symtable.h"
 #include "errors.h"
 #include "utils.h"
@@ -293,4 +294,70 @@ void table_traverse(symtable_t *table, action_t action) {
     for (int table_idx = table->top_idx; table_idx >= 0; table_idx--) {
         awl_traverse(table->table_stack[table_idx],action);
     }
+}
+
+
+
+
+
+buff_ret_t param_buffer_init(ParamBufferT *buffer) {
+    buffer->length = 0;
+    buffer->cap = BUFFER_CAP_S * sizeof(param_t *);
+
+    buffer->bytes = calloc(buffer->cap,1);
+    
+    if (buffer->bytes == NULL) 
+        return BUFF_INIT_FAIL;
+
+    return BUFF_INIT_SUCCES;
+}
+
+
+buff_ret_t insert_param(ParamBufferT *buffer, param_t *param) {
+    if (buffer->length >= buffer->cap) {
+        param_t **new_buff = realloc(buffer->bytes,buffer->cap * 2); 
+
+        if (new_buff == NULL)
+        {
+            buffer_detor(buffer);
+            return BUFF_APPEND_FAIL;
+        }
+        
+        buffer->bytes = new_buff;
+        buffer->cap *= 2;
+    }
+
+    buffer->bytes[buffer->length++] = param;
+    return BUFF_APPEND_SUCCES;  
+
+}
+
+param_t **param_buffer_export(ParamBufferT *buffer) {
+    param_t **dst = calloc(sizeof(param_t*),buffer->length+1);
+
+    if (dst == NULL)
+        return NULL;
+
+    memcpy(dst,buffer->bytes,buffer->length);
+    
+    return dst;
+}
+
+void param_buffer_detor(ParamBufferT *buffer) {
+    free(buffer->bytes);
+    buffer->bytes = NULL;
+    buffer->cap = 0;
+    buffer->length = 0;
+}
+
+
+void param_list_insert(ParamBufferT *buffer, symtable_entry_t *entry) {
+    entry->params = param_buffer_export(buffer);
+
+    if (entry->params == NULL) {
+        exit(INTERNAL_COMPILER_ERROR);
+    }
+    buffer->length = 0;
+    
+    
 }
