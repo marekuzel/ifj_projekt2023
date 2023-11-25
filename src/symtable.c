@@ -13,14 +13,11 @@ Implementaion of symtalbe entry
 */
 
 symtable_entry_t *entry_create(void) {
-    symtable_entry_t *new_entry = malloc(sizeof(symtable_entry_t));
+    symtable_entry_t *new_entry = calloc(1,sizeof(symtable_entry_t));
 
     if (new_entry == NULL)
         exit(INTERNAL_COMPILER_ERROR);
-
-    new_entry->declared = 0;
-    new_entry->defined = 0;
-    new_entry->params = NULL;
+        
     return new_entry;
 }
 
@@ -209,6 +206,7 @@ void table_init(symtable_t *table) {
     }
     table->size = SYMTABLE_SIZE;
     table->top_idx = -1;
+    table->table_stack = new_tree_array;
     table_add_scope(table);
 }
 
