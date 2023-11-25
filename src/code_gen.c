@@ -4,10 +4,18 @@
 #include "code_gen.h"
 #include "symtable.h"
 
+
+void gen_prog() {
+    printf(".IFJcode23\n");
+}
+void gen_prog_end(int exit_code) {
+    printf("EXIT int@%d\n",exit_code);
+}
+
 void gen_assignment(char *identifier, bool global) {
     char *scope = global ? "GF" : "LF";
     printf("POPS %s@%s\n",scope,identifier);
-    printf("CLEARS\n");
+    //printf("CLEARS\n");
 }
 
 void gen_def_var(char *id, bool global, TokenType type) {
@@ -23,7 +31,7 @@ void gen_def_var(char *id, bool global, TokenType type) {
         printf("MOVE %s@%s float@%a\n",scope, id, 0.0);
         break;
     case TOKEN_DT_STRING:
-        printf("MOVE %s@%s string@0\n",scope, id);
+        printf("MOVE %s@%s string@\n",scope, id);
         break;
     default:
         printf("MOVE %s@%s nil@nil\n",scope, id);
@@ -38,8 +46,7 @@ void push_var(char *id, bool global){
 
 
 void push_literal(litValue value, lit_type_t type) {
-    switch (type)
-    {
+    switch (type) {
     case INT_LIT:
         printf("PUSHS int@%d\n",value.i);
         break;
@@ -64,6 +71,21 @@ void push_literal(litValue value, lit_type_t type) {
 
 void clear_expr_stack() {
     printf("CLEARS\n");
+}
+
+void gen_var_copy(awl_t *awl) {
+    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
+        return;
+
+    printf("DEFVAR TF@%s\n",awl->key);
+    printf("MOVE TF@%s LF@%s\n",awl->key,awl->key);
+}
+
+void gen_var_val_move(awl_t *awl) {
+    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
+        return;
+
+    printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
 }
 
 void gen_expr_binop(const char operator) {
@@ -188,119 +210,6 @@ void gen_cond(rel_op_t relation_operator) {
     }
 }
 
-int get_loop_label_num() {
-    static int loop_label_num = 0;
-    loop_label_num++;
-    return loop_label_num;
-}
-
-
-int get_cond_label() {
-    static int cond_label_num = 0;
-    cond_label_num ++;
-    return cond_label_num;
-}
-
-void gen_loop_label(int loop_label_num) {
-    printf("LABEL Loop%d\n",loop_label_num);
-}
-
-void gen_cond_else_label(int cond_label_num) {
-    printf("LABEL IF_ELSE%d\n",cond_label_num);
-}
-
-void gen_cond_end_label(int cond_label_num) {
-    printf("LABEL IF_END%d\n",cond_label_num);
-}
-
-void gen_cnd_jump(char *dest_type, int dest_number) {
-    printf("PUSHS bool@true\n");
-    printf("JUMPIFNEQS %s%d\n",dest_type, dest_number);
-}
-
-void gen_func_def(char *name) {
-    printf("LABEL %s\n",name);
-    printf("PUSHFRAME\n");
-}
-
-void gen_func_return() {
-    printf("POPFRAME\n");
-    printf("RETURN\n");
-}
-
-void gen_local_scope(symtable_t *table) {
-    printf("CREATEFRAME\n");
-    table_traverse(table,&gen_var_copy);
-    printf("PUSHFRAME\n");
-}
-
-
-void gen_func_pre_call(param_t **params) {
-    printf("CREATEFRAME\n");
-    for (int param_idx = 0; params[param_idx] != NULL; param_idx++) {
-        printf("DEFVAR TF@%s",params[param_idx]->id);
-    }
-}
-
-void add_func_arg(char *name) {
-    printf("POPS TF@n%s\n",name);
-    clear_expr_stack();
-}
-
-void gen_func_call(char *name) {
-    printf("CALL %s\n",name);
-}
-
-// void gen_cond_branch(ast_node_t* ast) {
-//     static int cond_label_num = 0;
-//     cond_label_num++;
-
-//     gen_cond(ast->left,"If", cond_label_num);
-//     printf("LABEL If%d\n", cond_label_num);
-//     gen_statements(ast->next);
-//     printf("JUMP End_if%d\n",cond_label_num);
-    
-//     if (ast->has_else) {
-//         gen_statements(ast->right);
-//     }
-
-//     printf("LABEL End_if%d\n", cond_label_num);
-    
-// }
-
-int get_new_var() {
-    static int var_number = 0;
-    var_number++;
-    return var_number;
-}
-
-void gen_read(char *identifier, bool global, const char *type) {
-    const char *scope = global ? "GF" : "LF";
-    printf("READ %s@%s %s\n",scope,identifier, type);
-}
-
-void gen_write_var(char *identifier, bool global) {
-    const char *scope = global ? "GF" : "LF";
-    printf("WRITE %s@%s \n",scope,identifier);
-}
-
-void gen_write_lit(litValue value, lit_type_t type) {
-    switch (type) {
-        case INT_LIT:
-            printf("WRITE int@%d\n",value.i);
-            break;
-
-        case DOUBLE_LIT:
-            printf("WRITE float@%a\n",value.d);
-            break;
-        case STRING_LIT:
-            printf("WRITE string@%s\n",value.str);
-            break;
-    default:
-        break;
-    }
-}
-
 void gen_string_op(const char operator) {
 
     int dest = get_new_var();
@@ -363,20 +272,10 @@ void gen_string_op(const char operator) {
     printf("POPFRAME\n");
 }
 
-
-void gen_var_copy(awl_t *awl) {
-    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
-        return;
-
-    printf("DEFVAR TF@%s\n",awl->key);
-    printf("MOVE TF@%s LF@%s\n",awl->key,awl->key);
-}
-
-void gen_var_val_move(awl_t *awl) {
-    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
-        return;
-
-    printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
+void gen_local_scope(symtable_t *table) {
+    printf("CREATEFRAME\n");
+    table_traverse(table,&gen_var_copy);
+    printf("PUSHFRAME\n");
 }
 
 void gen_drop_local_scope(symtable_t *table) {
@@ -384,11 +283,103 @@ void gen_drop_local_scope(symtable_t *table) {
     table_traverse(table,&gen_var_val_move);
 }
 
-void gen_prog() {
-    printf(".IFJcode23\n");
+void gen_cnd_jump(char *dest_type, int dest_number) {
+    printf("PUSHS bool@true\n");
+    printf("JUMPIFNEQS %s%d\n",dest_type, dest_number);
 }
 
+int get_cond_label() {
+    static int cond_label_num = 0;
+    cond_label_num ++;
+    return cond_label_num;
+}
+
+void gen_cond_else_label(int cond_label_num) {
+    printf("LABEL IF_ELSE%d\n",cond_label_num);
+}
+
+void gen_loop_label(int loop_label_num) {
+    printf("LABEL Loop%d\n",loop_label_num);
+}
+
+int get_loop_label_num() {
+    static int loop_label_num = 0;
+    loop_label_num++;
+    return loop_label_num;
+}
+
+void gen_cond_end_label(int cond_label_num) {
+    printf("LABEL IF_END%d\n",cond_label_num);
+}
 
 void gen_jmp(int label_num) {
     printf("JUMP IF_END%d\n",label_num);
+}
+
+void gen_func_def(param_t **params,char *name) {
+    printf("LABEL %s\n",name);
+    for (int param_idx = 0; params[param_idx] != NULL; param_idx++) {
+        printf("DEFVAR LF@%s\n",params[param_idx]->id);
+        printf("MOVE LF@%s TF@%s\n",params[param_idx]->id,params[param_idx]->id);
+    }
+    printf("PUSHFRAME\n");
+
+}
+
+void gen_func_return() {
+    printf("POPFRAME\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+}
+
+
+void gen_func_pre_call(param_t **params) {
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("CREATEFRAME\n");
+    for (int param_idx = 0; params[param_idx] != NULL; param_idx++) {
+        printf("DEFVAR TF@%s\n",params[param_idx]->id);
+    }
+}
+
+void add_func_arg(char *name) {
+    printf("POPS TF@%s\n",name);
+}
+
+void gen_func_call(char *name) {
+    printf("CALL %s\n",name);
+}
+
+int get_new_var() {
+    static int var_number = 0;
+    var_number++;
+    return var_number;
+}
+
+void gen_read(char *identifier, bool global, const char *type) {
+    const char *scope = global ? "GF" : "LF";
+    printf("READ %s@%s %s\n",scope,identifier, type);
+}
+
+void gen_write_var(char *identifier, bool global) {
+    const char *scope = global ? "GF" : "LF";
+    printf("WRITE %s@%s \n",scope,identifier);
+}
+
+void gen_write_lit(litValue value, lit_type_t type) {
+    switch (type) {
+        case INT_LIT:
+            printf("WRITE int@%d\n",value.i);
+            break;
+
+        case DOUBLE_LIT:
+            printf("WRITE float@%a\n",value.d);
+            break;
+        case STRING_LIT:
+            printf("WRITE string@%s\n",value.str);
+            break;
+    default:
+        break;
+    }
+    printf("POPFRAME\n");
 }
