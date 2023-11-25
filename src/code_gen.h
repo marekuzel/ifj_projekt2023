@@ -63,7 +63,7 @@ void gen_loop_label(int loop_label_num);
 
 void gen_cnd_jump(char *dest_type, int dest_number);
 
-void gen_func_def(char *name);
+void gen_func_def(param_t **params, char *name);
 
 void gen_func_return();
 
@@ -92,3 +92,5 @@ void gen_cond_else_label(int label_num);
 void gen_cond_end_label(int label_num);
 
 void gen_jmp(int label_num);
+
+void gen_prog_end(int exit_code);

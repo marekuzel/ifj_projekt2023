@@ -32,8 +32,8 @@ void entry_dispose(symtable_entry_t *entry) {
         free(entry->params[param_idx]->name);
         free(entry->params[param_idx]);
         param_idx++;
-        free(entry->params);
     }
+    free(entry->params);
 }
 
 
