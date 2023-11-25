@@ -49,13 +49,11 @@ void clear_expr_stack();
 
 void gen_string_op(const char operator);
 
-void gen_write(char *srtring);
-
 void gen_read(char *identifier, bool global, const char *type);
 
 void gen_assignment(char *identifier, bool global);
 
-void gen_def_var(char *id, bool global);
+void gen_def_var(char *id, bool global, TokenType type);
 
 int get_loop_label_num();
 
@@ -77,6 +75,20 @@ void gen_func_call(char *name);
 
 int get_new_var();
 
-
 void gen_var_copy(awl_t *awl);
-// void gen_cond_branch(ast_node_t *ast);
+
+void gen_prog();
+
+void gen_drop_local_scope(symtable_t *table);
+
+void gen_local_scope(symtable_t *table);
+
+void gen_write_lit(litValue value, lit_type_t type);
+
+void gen_write_var(char *identifier, bool global);
+
+void gen_cond_else_label(int label_num);
+
+void gen_cond_end_label(int label_num);
+
+void gen_jmp(int label_num);

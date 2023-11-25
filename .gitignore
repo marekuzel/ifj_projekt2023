@@ -5,3 +5,5 @@ src/test_table
 src/*.txt
 src/prec
 src/bu
+src/test_code_gen
+interpreter/*.txt

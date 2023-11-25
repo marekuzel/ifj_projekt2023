@@ -8,8 +8,13 @@ all: $(EXECUTABLE)
 $(EXECUTABLE): scanner.o utils.o symtable.o code_gen.o bu_analysis.o prec_table.o parser.o syntax_rules.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-.PHONY: clean, valgrind, test_table
+.PHONY: clean, valgrind, test_code_gen
 clean:
-	rm -f $(EXECUTABLE) *.o
+	rm -f $(EXECUTABLE) *.o test_code_gen bu
 valgrind: $(EXECUTABLE)
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./$(EXECUTABLE)
+
+test_code_gen: code_gen.o symtable.o code_gen_test.o utils.o
+	$(CC) $(CFLAGS) -o $@ $^
+	valgrind --leak-check=full --track-origins=yes -s ./test_code_gen > ../interpreter/test_code.txt
+	../interpreter/ic23int ../interpreter/test_code.txt
