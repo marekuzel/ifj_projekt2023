@@ -296,7 +296,11 @@ void table_traverse(symtable_t *table, action_t action) {
 
 
 
-
+/*
+*********************************
+Implementation of parram buttfer
+*********************************
+*/
 
 buff_ret_t param_buffer_init(ParamBufferT *buffer) {
     buffer->length = 0;
@@ -351,8 +355,8 @@ void param_buffer_detor(ParamBufferT *buffer) {
 
 void param_list_insert(ParamBufferT *buffer, symtable_entry_t *entry) {
     entry->params = param_buffer_export(buffer);
-
-    if (entry->params == NULL) {
+    
+    if (entry->params == NULL) {    
         exit(INTERNAL_COMPILER_ERROR);
     }
     buffer->length = 0;

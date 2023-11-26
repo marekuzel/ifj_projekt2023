@@ -290,17 +290,25 @@ bool table_search_global(symtable_t *table, char *key, symtable_entry_t **entry)
 */
 void table_dispose(symtable_t *table);
 
+/**
+ * @brief function for traversing the table and preforming an action
+ * 
+ * @param table: a pointer to a symtable
+ * @param action: action to be performend (function pointer)
+*/
 void table_traverse(symtable_t *table, action_t action);
 
-
+/**
+ * @brief ADT for dynamiclaly growing array of function parameters
+*/
 typedef struct param_buffer_t {
-    param_t **bytes;
-    int cap;
-    int length;
+    param_t **bytes; //array of params
+    int cap; //max capacity
+    int length; //total length
 } ParamBufferT;
 
 /**
- * @brief Initilaize ADT buffer
+ * @brief Initilaize ADT paramBuffer
  * 
  * @param buffer pointer to buffer
  * @retval ret_t BUFF_INIT_SUCCES if succesfull
@@ -309,7 +317,7 @@ typedef struct param_buffer_t {
 buff_ret_t param_buffer_init(ParamBufferT *buffer);
 
 /**
- * @brief Appends chr to the end of buffer 
+ * @brief Appends a param_t to paramBuffer 
  * 
  * @param buffer pointer to buffer
  * @param param malloced param
@@ -319,9 +327,19 @@ buff_ret_t param_buffer_init(ParamBufferT *buffer);
 
 buff_ret_t insert_param(ParamBufferT *buffer, param_t *param);
 
-
+/**
+ * @brief disposes of ParamBuffer
+ * 
+ * @param buffer: pointer to a ParamBuffer
+*/
 void param_buffer_detor(ParamBufferT *buffer);
 
+/**
+ * @brief exports the list of parameters into a NULL terminated array
+ * 
+ * @param buffer: pointer to a ParamBuffer
+ * @param entry: pointe to a symtable entry
+*/
 void param_list_insert(ParamBufferT *buffer, symtable_entry_t *entry);
 
 #endif
