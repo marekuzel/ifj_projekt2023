@@ -22,27 +22,27 @@ void test_condition() {
 
     // 2 + 3 != 69
     litValue value = {.i = 2};
-    push_literal(value,INT_LIT);
+    gen_push_lit(value,INT_LIT);
     value.i = 3;
-    push_literal(value,INT_LIT);
+    gen_push_lit(value,INT_LIT);
     gen_expr_binop('+');
     value.i = 69;
-    push_literal(value, INT_LIT);
+    gen_push_lit(value, INT_LIT);
     gen_cond(NEQ);
     //{
     gen_local_scope(&table);
     gen_cnd_jump("IF_ELSE",if_ln);
     //palti
     value.str = "yeeey";
-    push_literal(value, STRING_LIT);
+    gen_push_lit(value, STRING_LIT);
     gen_assignment("a",false);
-    gen_jmp(if_ln);
+    gen_jmp("IF_END",if_ln);
     //neplati
     gen_cond_else_label(if_ln);
     value.str = "boo";
-    push_literal(value, STRING_LIT);
+    gen_push_lit(value, STRING_LIT);
     gen_assignment("a",false);
-    gen_cond_end_label(if_ln);
+    gen_end_label("IF",if_ln);
     gen_drop_local_scope(&table);
     //}
     //printf("%s\n",a);
@@ -57,9 +57,6 @@ void test_condition() {
 void test_fun() {
     symtable_t table;
     table_init(&table);
-
-    symtable_entry_t *entry;
-    table_insert(&table,"a",&entry);
     param_t **params = calloc(3,sizeof(param_t*));
     param_t *param1 = calloc(1,sizeof(param_t));
     param1->id = "x";
@@ -72,89 +69,31 @@ void test_fun() {
 
     gen_def_var("a",true,TOKEN_DT_INT);
     litValue value = {.i = 3};
-    push_literal(value,INT_LIT);
+    gen_push_lit(value,INT_LIT);
     gen_assignment("a",true);
     gen_def_var("b",true,TOKEN_DT_INT);
     value.i = 7;
-    push_literal(value,INT_LIT);
+    gen_push_lit(value,INT_LIT);
     gen_assignment("b",true);
-
+    gen_local_scope(&table);
+    int ln = get_loop_label();
+    gen_loop_label(ln);
+    gen_push_var("a",true);
+    value.i = 1000;
+    gen_push_lit(value,INT_LIT);
+    gen_cond(LTE);
+    gen_cnd_jump("LOOP_END",ln);
     gen_func_pre_call(params);
-    push_var("a",true);
-    add_func_arg("x");
-    push_var("b",true);
-    add_func_arg("y");
+    add_var_arg("x","a",true);
+    add_var_arg("y","b",true);
     gen_func_call("func1");
     gen_assignment("a",true);
     gen_write_var("a",true);
     value.str = "\\010";
     gen_write_lit(value,STRING_LIT);
-
-    gen_func_pre_call(params);
-    push_var("a",true);
-    add_func_arg("x");
-    push_var("b",true);
-    add_func_arg("y");
-    gen_func_call("func1");
-    gen_assignment("a",true);
-    gen_write_var("a",true);
-    value.str = "\\010";
-    gen_write_lit(value,STRING_LIT);
-
-    gen_func_pre_call(params);
-    push_var("a",true);
-    add_func_arg("x");
-    push_var("b",true);
-    add_func_arg("y");
-    gen_func_call("func1");
-    gen_assignment("a",true);
-    gen_write_var("a",true);
-    value.str = "\\010";
-    gen_write_lit(value,STRING_LIT);
-
-    gen_func_pre_call(params);
-    push_var("a",true);
-    add_func_arg("x");
-    push_var("b",true);
-    add_func_arg("y");
-    gen_func_call("func1");
-    gen_assignment("a",true);
-    gen_write_var("a",true);
-    value.str = "\\010";
-    gen_write_lit(value,STRING_LIT);
-
-    gen_func_pre_call(params);
-    push_var("a",true);
-    add_func_arg("x");
-    push_var("b",true);
-    add_func_arg("y");
-    gen_func_call("func1");
-    gen_assignment("a",true);
-    gen_write_var("a",true);
-    value.str = "\\010";
-    gen_write_lit(value,STRING_LIT);
-
-    gen_func_pre_call(params);
-    push_var("a",true);
-    add_func_arg("x");
-    push_var("b",true);
-    add_func_arg("y");
-    gen_func_call("func1");
-    gen_assignment("a",true);
-    gen_write_var("a",true);
-    value.str = "\\010";
-    gen_write_lit(value,STRING_LIT);
-
-    gen_func_pre_call(params);
-    push_var("a",true);
-    add_func_arg("x");
-    push_var("b",true);
-    add_func_arg("y");
-    gen_func_call("func1");
-    gen_assignment("a",true);
-    gen_write_var("a",true);
-    value.str = "\\010";
-    gen_write_lit(value,STRING_LIT);
+    gen_jmp("LOOP",ln);
+    gen_end_label("LOOP",ln);
+    gen_drop_local_scope(&table);
     gen_prog_end(0);
 
 
@@ -162,8 +101,8 @@ void test_fun() {
     value.i = 1;
     gen_def_var("a", false, TOKEN_DT_INT);
     gen_def_var("b", false, TOKEN_DT_STRING);
-    push_var("x",false);
-    push_var("y",false);
+    gen_push_var("x",false);
+    gen_push_var("y",false);
     gen_expr_binop('+');
     gen_func_return();
 
@@ -172,7 +111,8 @@ void test_fun() {
 }
 
 int main() {
-   // test_condition();
+    /*bud jeden alebo druhy test ak to budete spustat*/
+//    test_condition();
     test_fun();
     return 0;
 }
