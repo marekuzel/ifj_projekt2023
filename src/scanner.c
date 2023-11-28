@@ -114,6 +114,8 @@ TokenT* generate_token() {
     int multiline_string_counter = 0;
     bool multiline_string_ok = false;
     bool escape_next = false;
+    bool exp_sign = false;
+    bool empty_exp = true;
     // V pripade ze chci vratit charakter do stdin:
     // ungetc(ch, stream);
 
@@ -389,7 +391,12 @@ TokenT* generate_token() {
                 }
                 else if (isdigit(ch) || ch == '0') {
                     append_and_check(&buffer, ch);
-                } else {
+                } 
+                else if (ch == 'e' || ch == 'E') {
+                    state = STATE_EXPONENT;
+                    append_and_check(&buffer, ch);
+                }
+                else {
                     token_init(token, TOKEN_INTEGER, &buffer);
                     ungetc(ch, stream);
                     return token;
@@ -398,7 +405,7 @@ TokenT* generate_token() {
 
             case STATE_DECIMAL_POINT:
                 if (!(isdigit(ch) || ch == '0')) {
-                    error_exit(token, &buffer, "Lexical error", LEXICAL_ERROR);
+                    error_exit(token, &buffer, "Invalid decimal number", LEXICAL_ERROR);
                 }
                 else {
                     state = STATE_DECIMAL;
@@ -407,13 +414,37 @@ TokenT* generate_token() {
                 break;
 
             case STATE_DECIMAL:
-                if (!(isdigit(ch) || ch == '0')) {
+                if (isdigit(ch) || ch == '0') {
+                    append_and_check(&buffer, ch);
+                }
+                else if (ch == 'e' || ch == 'E') {
+                    state = STATE_EXPONENT;
+                    append_and_check(&buffer, ch);
+                }
+                else {
                     token_init(token, TOKEN_DOUBLE, &buffer);
                     ungetc(ch, stream);
                     return token;
                 }
-                append_and_check(&buffer, ch);
                 break;
+       
+            case STATE_EXPONENT:
+                if ((ch == '+' || ch == '-') && exp_sign == false) {
+                    exp_sign = true;
+                    append_and_check(&buffer, ch);
+                } 
+                else if (isdigit(ch) || ch == '0') {
+                    empty_exp = false;
+                    append_and_check(&buffer, ch);
+                }
+                else {
+                    if (empty_exp) {
+                        error_exit(token, &buffer, "Invalid exponent", LEXICAL_ERROR);
+                    }
+                    token_init(token, TOKEN_DOUBLE, &buffer);
+                    ungetc(ch, stream);
+                    return token;
+                }
 
         }
     }
