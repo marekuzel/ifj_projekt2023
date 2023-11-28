@@ -7,7 +7,11 @@
 #include "symtable.h"
 #include "parser.h"
 #include "bu_analysis.h"
-#include <stdio.h>
+/*
+*****************************
+Implementaion of syntax rules
+*****************************
+*/
 
 Error parser_rule_id(Parser_t *);
 
@@ -25,6 +29,8 @@ Error parser_rule_funcRet(Parser_t *);
 
 Error parser_rule_params(Parser_t *);
 
+Error parser_rule_paramsSeq(Parser_t *);
+
 Error parser_rule_elseF(Parser_t *);
 
 Error parser_rule_type(Parser_t *);
@@ -35,7 +41,9 @@ Error parser_rule_stmtSeqRet(Parser_t *);
 
 Error parser_rule_expr(Parser_t *);
 
+Error parser_rule_stmtVoidSeqRet(Parser_t *);
 
+Error parser_rule_callFunc(Parser_t *);
 
 #define CHECK_TOKEN_TYPE(parser, expected_type) \
     do { \
@@ -46,16 +54,18 @@ Error parser_rule_expr(Parser_t *);
 
 #define GET_NEXT_AND_CALL_RULE(parser, rule) \
     do { \
-        Parser_getNewToken(parser); \
+        parser_getNewToken(parser); \
         if (parser->token_current->type == TOKEN_EOF) { \
             return SYNTAX_ERROR; \
         } \
-        return parser_rule_##rule(parser); \
+        if (parser_rule_##rule(parser) == SYNTAX_ERROR){ \
+            return SYNTAX_ERROR; \
+        } \
     } while(0)
 
 #define GET_NEXT_AND_CHECK_TYPE(parser, expected_type) \
     do { \
-        Parser_getNewToken(parser); \
+        parser_getNewToken(parser); \
         CHECK_TOKEN_TYPE(parser, expected_type); \
     } while(0)
 #endif

@@ -13,14 +13,11 @@ Implementaion of symtalbe entry
 */
 
 symtable_entry_t *entry_create(void) {
-    symtable_entry_t *new_entry = malloc(sizeof(symtable_entry_t));
+    symtable_entry_t *new_entry = calloc(1,sizeof(symtable_entry_t));
 
     if (new_entry == NULL)
         exit(INTERNAL_COMPILER_ERROR);
-
-    new_entry->declared = 0;
-    new_entry->defined = 0;
-    new_entry->params = NULL;
+        
     return new_entry;
 }
 
@@ -35,8 +32,8 @@ void entry_dispose(symtable_entry_t *entry) {
         free(entry->params[param_idx]->name);
         free(entry->params[param_idx]);
         param_idx++;
-        free(entry->params);
     }
+    free(entry->params);
 }
 
 
@@ -209,6 +206,7 @@ void table_init(symtable_t *table) {
     }
     table->size = SYMTABLE_SIZE;
     table->top_idx = -1;
+    table->table_stack = new_tree_array;
     table_add_scope(table);
 }
 
@@ -298,7 +296,11 @@ void table_traverse(symtable_t *table, action_t action) {
 
 
 
-
+/*
+*********************************
+Implementation of parram buttfer
+*********************************
+*/
 
 buff_ret_t param_buffer_init(ParamBufferT *buffer) {
     buffer->length = 0;
@@ -319,7 +321,7 @@ buff_ret_t insert_param(ParamBufferT *buffer, param_t *param) {
 
         if (new_buff == NULL)
         {
-            buffer_detor(buffer);
+            param_buffer_detor(buffer);
             return BUFF_APPEND_FAIL;
         }
         
@@ -353,8 +355,8 @@ void param_buffer_detor(ParamBufferT *buffer) {
 
 void param_list_insert(ParamBufferT *buffer, symtable_entry_t *entry) {
     entry->params = param_buffer_export(buffer);
-
-    if (entry->params == NULL) {
+    
+    if (entry->params == NULL) {    
         exit(INTERNAL_COMPILER_ERROR);
     }
     buffer->length = 0;

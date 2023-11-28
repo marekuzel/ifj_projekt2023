@@ -1,4 +1,3 @@
-#include "scanner.c"
 #include "scanner.h"
 #include "errors.h"
 #include "utils.h"
@@ -11,19 +10,34 @@ void Parser_init(Parser_t *parser){
     parser->token_topOfStack = NULL;
     Stack *stack = malloc(sizeof(Stack));
     Stack_Init(stack);
+    symtable_t *symtable = malloc(sizeof(symtable_t));
+    table_init(symtable);
 }
 
-void Parser_getNewToken(Parser_t *parser){
-    Stack *stack = parser->stack;
-    Stack_Push(stack, parser->token_current);
+void parser_stashExtraToken(Parser_t *parser, TokenT *token){
+    parser->token_extraToken = token;
+}
+
+void parser_getNewToken(Parser_t *parser){
+    Stack_Push(parser->stack, parser->token_current);
     parser->token_topOfStack = parser->token_current;
-    parser->token_current = generate_token();
+    if (parser->token_extraToken != NULL){
+        parser->token_current = parser->token_extraToken;
+        parser->token_extraToken = NULL;
+    }
+    else{
+        parser->token_current = generate_token();
+    }
 }
 
-parser_ret_t Parser_dtor(Parser_t * parser){
-    if (parser == NULL)
-        return PARSER_DTOR_FAIL;
+void parser_initlocalSymtable(Parser_t *parser){
+    table_add_scope(parser->symtable);
+    //TODO: buffer for parameters
+}
+
+void parser_dtor(Parser_t * parser){
+    table_dispose(parser->symtable);
     Stack_Dispose(parser->stack);
+    parser->current_entry = NULL;
     free(parser);
-    return PARSER_DTOR_SUCCES;
 }

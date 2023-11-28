@@ -4,68 +4,69 @@
 #include "code_gen.h"
 #include "symtable.h"
 
+
+void gen_prog() {
+    printf(".IFJcode23\n");
+}
+void gen_prog_end(int exit_code) {
+    printf("EXIT int@%d\n",exit_code);
+    gen_ord();
+    gen_chr();
+    gen_substring();
+}
+
 void gen_assignment(char *identifier, bool global) {
-    if (global) {
-        printf("POPS GF@%s\n",identifier);
-    } else {
-        printf("POPS LF@%s\n",identifier);
-    }
-    printf("CLEARS\n");
+    char *scope = global ? "GF" : "LF";
+    printf("POPS %s@%s\n",scope,identifier);
 }
 
-void gen_def_var(char *id, bool global) {
-    if (global) {
-        printf("DEFVAR GF@%s\n",id);
-    } else {
-        printf("DEFVAR LF@%s\n",id);
-    }
-}
+void gen_def_var(char *id, bool global, TokenType type) {
+    char *scope = global ? "GF" : "LF";
 
-void push_var(char *id, bool global){
-
-    if (global){
-        printf("PUSHS GF@%s\n",id);
-    } else {
-        printf("PUSHS LF@%s\n",id);
-    }
-}
-
-
-void push_literal(litValue value, lit_type_t type) {
-    switch (type)
-    {
-    case INT_LIT:
-        printf("PUSHS int@%d\n",value.i);
-        break;
-    
-    case DOUBLE_LIT:
-        printf("PUSHS float@%lf\n",value.d);
+    printf("DEFVAR %s@%s\n",scope,id);
+    switch (type) {
+    case TOKEN_DT_INT:
+        printf("MOVE %s@%s int@0\n",scope, id);
         break;
 
-    case STRING_LIT:
-        printf("PUSH string@%s\n",value.str);
+    case TOKEN_DT_DOUBLE:
+        printf("MOVE %s@%s float@%a\n",scope, id, 0.0);
         break;
-
-    case NILL:
-        printf("PUSHS nil@nil\n");
+    case TOKEN_DT_STRING:
+        printf("MOVE %s@%s string@\n",scope, id);
         break;
-
     default:
+        printf("MOVE %s@%s nil@nil\n",scope, id);
         break;
     }
 }
 
+void gen_push_var(char *id, bool global){
+    const char *scope = global ? "GF" : "LF";
+    printf("PUSHS %s@%s\n",scope,id);
+}
 
-void clear_expr_stack() {
-    printf("CLEARS\n");
+
+LIT_OP(push,"PUSHS")
+
+void gen_var_copy(awl_t *awl) {
+    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
+        return;
+
+    printf("DEFVAR TF@%s\n",awl->key);
+    printf("MOVE TF@%s LF@%s\n",awl->key,awl->key);
+}
+
+void gen_var_val_move(awl_t *awl) {
+    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
+        return;
+
+    printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
 }
 
 void gen_expr_binop(const char operator) {
 
     int label_num;
-    int var1;
-    int var2;
-
     switch (operator) {
         
     case '+':
@@ -77,7 +78,7 @@ void gen_expr_binop(const char operator) {
         break;
 
     case '*':
-        printf("MULTS\n");
+        printf("MULS\n");
         break;
 
     case '/':
@@ -89,32 +90,23 @@ void gen_expr_binop(const char operator) {
         break;
 
     case '?':
-
+        printf("CREATEFRAME\n");
+        printf("PSUHFRAME\n");
         label_num = get_cond_label();
-        var1 = get_new_var();
-        var2 = get_new_var();
 
-        printf("DEFVAR LF@var%d\n",var1);
-        printf("DEFVAR LF@var%d\n",var2);
+        printf("DEFVAR LF@va\n");
+        printf("DEFVAR LF@vb\n");
+        printf("DEFVAR LF@result\n");
 
-        printf("POPS LF@var%d\n",var2); //b
-        printf("POPS LF@var%d\n",var1); //a
+        printf("POPS LF@b\n");
+        printf("POPS LF@a\n");
+        printf("MOVE LF@result LF@a\n");
 
+        printf("JUMPIFEQ dubquestion%d LF@a nil@nil",label_num);
+        printf("MOVE LF@result LF@b\n");
 
-        printf("PUSHS LF@var%d",var1);
-        printf("PUSHS nil@nil\n");
-        gen_cond(EQ);
-
-        
-        gen_cnd_jump("IF_ELSE", label_num);
-
-        printf("PUSHS LF@var%d\n",var2);
-        printf("JUMP IF_END%d\n",label_num);
-
-        printf("LABEL IF_ELSE%d\n",label_num);
-        printf("PUSHS LF@var%d\n",var1);
-
-        printf("LABEL IF_END\n");
+        printf("PUSHS LF@result\n");
+        printf("POPFRAME\n");
         break;
 
     default:
@@ -135,11 +127,11 @@ void gen_expr_conv(conv_type_t conversion_type) {
         break;
 
     case IC:
-        printf("INT2CAHRS\n");
+        printf("CALL ord\n");
         break;
 
     case CI:
-        printf("SRING2INTS");
+        printf("CALL chr\n");
         break;
     default:
         break;
@@ -160,7 +152,7 @@ void gen_cond(rel_op_t relation_operator) {
         break;
 
     case GT:
-        printf("GT\n");
+        printf("GTS\n");
         break;
 
     case GTE:
@@ -174,182 +166,64 @@ void gen_cond(rel_op_t relation_operator) {
 
     case NEQ:
         printf("EQS\n");
-        printf("NOTS");
+        printf("NOTS\n");
     default:
         break;
     }
 }
 
-int get_loop_label_num() {
-    static int loop_label_num = 0;
-    loop_label_num++;
-    return loop_label_num;
-}
+void gen_string_op(const char operator) {
 
-
-int get_cond_label() {
-    static int cond_label_num = 0;
-    cond_label_num ++;
-    return cond_label_num;
-}
-
-void gen_loop_label(int loop_label_num) {
-    printf("LABEL Loop%d\n",loop_label_num);
-}
-
-void gen_cond_else_label(int cond_label_num) {
-    printf("LABEL IF_ELSE%d\n",cond_label_num);
-}
-
-void gen_cond_end_label(int cond_label_num) {
-    printf("LABEL IF_END%d\n",cond_label_num);
-}
-
-void gen_cnd_jump(char *dest_type, int dest_number) {
-    printf("PUSHS bool@true\n");
-    printf("JUMPIFNQS %s%d\n",dest_type, dest_number);
-}
-
-void gen_func_def(char *name) {
-    printf("LABEL %s\n",name);
+    printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
-}
 
-void gen_func_return() {
+    printf("DEFVAR LF@dest\n");
+    printf("DEFVAR LF@op1\n");
+
+    printf("POPS LF@op1\n");
+
+    switch (operator) {
+    case 'l':
+        printf("POPS LF@dest\n");
+        printf("STRLEN LF@dest LF@op1\n");
+        break;
+
+    case '|':
+        printf("DEFVAR LF@op2\n");
+
+        printf("POPS LF@op2\n"); 
+        printf("POPS LF@dest\n");
+
+        printf("CONCAT LF@dest LF@op1 LF@op2\n");
+        break;
+    case 'g':
+        printf("DEFVAR LF@op2\n");
+
+        printf("POPS LF@op2\n"); 
+        printf("POPS LF@dest\n");
+
+        printf("GETCHAR LF@dest LF@op1 LF@op2\n");
+        break;
+    
+    case 's':
+        printf("DEFVAR LF@op2\n");
+
+        printf("POPS LF@op2\n"); 
+        printf("POPS LF@dest\n");
+
+        printf("SETCHAR LF@dest LF@op1 LF@op2\n");
+    default:
+        break;
+    }
+
+    printf("PUSHS LF@dest\n");
     printf("POPFRAME\n");
-    printf("RETURN\n");
 }
 
 void gen_local_scope(symtable_t *table) {
     printf("CREATEFRAME\n");
     table_traverse(table,&gen_var_copy);
-    printf("PUSHFRAME");
-}
-
-
-void gen_func_pre_call(param_t **params) {
-    printf("CREATEFRAME\n");
-    for (int param_idx = 0; params[param_idx] != NULL; param_idx++) {
-        printf("DEFVAR TF@%s",params[param_idx]->id);
-    }
-}
-
-void add_func_arg(char *name) {
-    printf("POPS TF@n%s\n",name);
-    clear_expr_stack();
-}
-
-void gen_func_call(char *name) {
-    printf("CALL %s\n",name);
-}
-
-// void gen_cond_branch(ast_node_t* ast) {
-//     static int cond_label_num = 0;
-//     cond_label_num++;
-
-//     gen_cond(ast->left,"If", cond_label_num);
-//     printf("LABEL If%d\n", cond_label_num);
-//     gen_statements(ast->next);
-//     printf("JUMP End_if%d\n",cond_label_num);
-    
-//     if (ast->has_else) {
-//         gen_statements(ast->right);
-//     }
-
-//     printf("LABEL End_if%d\n", cond_label_num);
-    
-// }
-
-int get_new_var() {
-    static int var_number = 0;
-    var_number++;
-    return var_number;
-}
-
-void gen_read(char *identifier, bool global, const char *type) {
-    if (global) {
-        printf("READ GF@%s %s\n",identifier, type);
-    } else {
-        printf("READ LF@%s %s\n",identifier, type);
-    }
-}
-
-void gen_write(char *string) {
-    printf("WRITE %s\n",string);
-}
-
-void gen_string_op(const char operator) {
-
-    int var_number1 = get_new_var();
-    int var_number2 = get_new_var();
-    int var_number3 = get_new_var();
-
-    switch (operator) {
-    case 'l':
-        printf("DEFVAR LF@var%d\n",var_number1);
-        printf("DEFVAR LF@var%d\n",var_number2);
-
-        printf("POPS LF@var%d\n",var_number2);  
-        printf("POPS LF@var%d\n",var_number1);
-
-        printf("STRLEN LF@var%d LF@var%d\n",var_number1,var_number2);
-        printf("PUSHS LF@var%d\n",var_number1);
-        break;
-    case '|':
-        printf("DEFVAR LF@var%d\n",var_number1);
-        printf("DEFVAR LF@var%d\n",var_number2);
-        printf("DEFVAR LF@var%d\n",var_number3);
-
-        printf("POPS LF@var%d\n",var_number3);  
-        printf("POPS LF@var%d\n",var_number2);  
-        printf("POPS LF@var%d\n",var_number1);
-
-        printf("CONCAT LF@var%d LF@var%d LF@var%d\n",var_number1, var_number2, var_number3);
-        printf("PUSHS LF@var%d\n",var_number3);
-        break;
-    case 'g':
-        printf("DEFVAR LF@var%d\n",var_number1);
-        printf("DEFVAR LF@var%d\n",var_number2);
-        printf("DEFVAR LF@var%d\n",var_number3);
-
-        printf("POPS LF@var%d\n",var_number3);  
-        printf("POPS LF@var%d\n",var_number2);  
-        printf("POPS LF@var%d\n",var_number1);
-
-        printf("GETCHAR LF@var%d LF@var%d LF@var%d\n",var_number1, var_number2, var_number3);
-        printf("PUSHS LF@var%d\n",var_number3);
-        break;
-    
-    case 's':
-        printf("DEFVAR LF@var%d\n",var_number1);
-        printf("DEFVAR LF@var%d\n",var_number2);
-        printf("DEFVAR LF@var%d\n",var_number3);
-
-        printf("POPS LF@var%d\n",var_number3);  
-        printf("POPS LF@var%d\n",var_number2);  
-        printf("POPS LF@var%d\n",var_number1);
-
-        printf("SETCHAR LF@var%d LF@var%d LF@var%d\n",var_number1, var_number2, var_number3);
-        printf("PUSHS LF@var%d\n",var_number3);
-    default:
-        break;
-    }
-}
-
-
-void gen_var_copy(awl_t *awl) {
-    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
-        return;
-
-    printf("DEFVAR TF@%s\n",awl->key);
-    printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
-}
-
-void gen_var_val_move(awl_t *awl) {
-    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
-        return;
-
-    printf("MOVE TF@%s LF@%s\n",awl->key,awl->key);
+    printf("PUSHFRAME\n");
 }
 
 void gen_drop_local_scope(symtable_t *table) {
@@ -357,6 +231,187 @@ void gen_drop_local_scope(symtable_t *table) {
     table_traverse(table,&gen_var_val_move);
 }
 
-void gen_prog() {
-    printf(".IFJcode23\n");
+void gen_cnd_jump(char *dest_type, int dest_number) {
+    printf("PUSHS bool@true\n");
+    printf("JUMPIFNEQS %s%d\n",dest_type, dest_number);
+}
+
+int get_cond_label() {
+    static int cond_label_num = 0;
+    cond_label_num ++;
+    return cond_label_num;
+}
+
+void gen_cond_else_label(int cond_label_num) {
+    printf("LABEL IF_ELSE%d\n",cond_label_num);
+}
+
+void gen_loop_label(int loop_label_num) {
+    printf("LABEL LOOP%d\n",loop_label_num);
+}
+
+int get_loop_label() {
+    static int loop_label_num = 0;
+    loop_label_num++;
+    return loop_label_num;
+}
+
+void gen_end_label(char *des_type, int label_num) {
+    printf("LABEL %s_END%d\n",des_type,label_num);
+}
+
+void gen_jmp(char* label_type, int label_num) {
+    printf("JUMP %s%d\n",label_type,label_num);
+}
+
+void gen_func_def(param_t **params,char *name) {
+    printf("LABEL %s\n",name);
+    for (int param_idx = 0; params[param_idx] != NULL; param_idx++) {
+        printf("DEFVAR LF@%s\n",params[param_idx]->id);
+        printf("MOVE LF@%s TF@%s\n",params[param_idx]->id,params[param_idx]->id);
+    }
+    printf("PUSHFRAME\n");
+
+}
+
+void gen_func_return() {
+    printf("POPFRAME\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+}
+
+
+void gen_func_pre_call(param_t **params) {
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("CREATEFRAME\n");
+    for (int param_idx = 0; params[param_idx] != NULL; param_idx++) {
+        printf("DEFVAR TF@%s\n",params[param_idx]->id);
+    }
+}
+
+void add_lit_arg(char *id, litValue value, lit_type_t type) {
+    switch (type) {
+    case INT_LIT:
+        printf("MOVE TF@%s int@%d\n", id, value.i);
+        break;
+    case DOUBLE_LIT:
+        printf("MOVE TF@%s float@%a\n", id, value.d);
+        break;
+    case STRING_LIT:
+        printf("MOVE TF@%s string@%s\n", id, value.str);
+        break;    
+    default:
+        printf("MOVE TF@%s nil@nil\n",id);
+    }
+}
+
+void add_var_arg(char *arg_id, char *var_id, bool global) {
+    const char *scope = global ? "GF" : "LF";
+    printf("MOVE TF@%s %s@%s\n",arg_id,scope,var_id);
+}
+
+void gen_func_call(char *name) {
+    printf("CALL %s\n",name);
+}
+
+
+void gen_read(char *identifier, bool global, const char *type) {
+    const char *scope = global ? "GF" : "LF";
+    printf("READ %s@%s %s\n",scope,identifier, type);
+}
+
+void gen_write_var(char *identifier, bool global) {
+    const char *scope = global ? "GF" : "LF";
+    printf("WRITE %s@%s \n",scope,identifier);
+}
+
+LIT_OP(write,"WRITE")
+
+
+void gen_substring() {
+    printf("LABEL substring\n");
+    printf("PUSHFRAME\n");
+
+    printf("DEFVAR LF@boolflag\n");
+    printf("DEFVAR LF@strlen\n");
+    printf("DEFVAR LF@result\n");
+    printf("MOVE LF@result nil@nil\n");
+    printf("DEFVAR LF@tmp\n");
+
+    printf("LT LF@boolflag LF@i int@0\n");
+    printf("JUMPIFEQ substringend LF@boolflag bool@true\n");
+
+    printf("LT LF@boolfalg LF@j int@0\n");
+    printf("JUMPIFEQ substringend LF@boolflag bool@true\n");
+
+    printf("STRLEN LF@strlen LF@s\n");
+    printf("LT LF@boolflag LF@i LF@strlen\n");
+    printf("JUMPIFNEQ substringend LF@boolflag bool@true\n");
+
+    printf("LT LF@boolflag LF@j LF@strlen\n");
+    printf("JUMPIFNEQ substringend LF@boolflag bool@true\n");
+
+    printf("MOVE LF@result string@\n");
+
+    printf("LABEL substringloop\n");
+    printf("LT LF@boolflag LF@i LF@j\n");
+    printf("JUMPIFNEQ substringloopend LF@boolflag bool@true\n");
+    printf("GETCHAR LF@tmp LF@s LF@i\n");
+    printf("CONCAT LF@result LF@result LF@tmp\n");
+    printf("ADD LF@i LF@i int@1\n");
+    printf("JUMP substringloop\n");
+
+    printf("PUSHS LF@result\n");
+    printf("LABEL substingend\n");
+    printf("POPFRAME\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+}
+
+void gen_ord() {
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+
+    printf("DEFVAR LF@c\n");
+    printf("DEFVAR LF@strlen\n");
+    printf("DEFVAR LF@boolfag\n");
+    printf("DEFVAR LF@result\n");
+    printf("POPS LF@c\n");
+
+
+    printf("MOVE LF@result int@0\n");
+    printf("GT LF@boolflag LF@strlen int@0\n");
+    printf("JUMPIFEQ ordend LF@boolflag bool@false\n");
+
+    printf("STRI2INT LF@result LF@c int@0\n");
+
+    printf("LABEL ordend\n");
+    printf("PUSHS LF@result\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+}
+
+
+void gen_chr() {
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+
+    printf("DEFVAR LF@i\n");
+    printf("DEFVAR LF@boolflag\n");
+    printf("DEFVAR LF@result\n");
+    printf("POPS LF@i\n");
+
+    printf("MOVE LF@result LF@i\n");
+    printf("GT LF@boolflag LF@i int@255\n");
+    printf("JUMPIFEQ chrend LF@boolflag bool@true\n");
+    printf("LT LF@boolflag LF@i int@0\n");
+    printf("JUMPIFEQ chrend LF@boolflag bool@true\n");
+
+    printf("INT2CHAR LF@reuslt LF@i\n");
+
+    printf("LABEL chrend\n");
+    printf("PUSHS LF@result\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
 }
