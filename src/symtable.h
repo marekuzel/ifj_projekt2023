@@ -332,4 +332,14 @@ void param_buffer_detor(ParamBufferT *buffer);
 */
 void param_list_insert(ParamBufferT *buffer, symtable_entry_t *entry);
 
+param_t *create_param(char *id, char *name, TokenType type);
+
+int table_insert_builtin_funcs(symtable_t *table);
+
+char *lit2ptr(char *lit);
+
+#define CHECK_ERR(err) \
+    if (ret != 0)      \
+        goto err;       \
+
 #endif

@@ -7,6 +7,11 @@
 
 void gen_prog() {
     printf(".IFJcode23\n");
+    printf("DEFVAR GF@$type\n");
+    printf("DEFVAR GF@$dest\n");
+    printf("DEFVAR GF@$op1\n");
+    printf("DEFVAR GF@$op2\n");
+
 }
 void gen_prog_end(int exit_code) {
     printf("EXIT int@%d\n",exit_code);
@@ -47,7 +52,25 @@ void gen_push_var(char *id, bool global){
 }
 
 
-LIT_OP(push,"PUSHS")
+void  gen_push_lit(litValue value, TokenType type) {
+        switch (type) {
+            case TOKEN_INTEGER:
+                printf("PUSHS int@%d\n",value.i);
+                break;
+
+            case TOKEN_DOUBLE:
+                printf("PUSHS float@%a\n",value.d);
+                break;
+
+            case TOKEN_STRING:
+                printf("PUSHS string@%s\n",value.str);
+                break;
+
+            default:
+                printf("PUSHS nil@nil\n");
+                break;
+        }
+    }
 
 void gen_var_copy(awl_t *awl) {
     if (awl->value->redclared || awl->value->type == TOKEN_FUNC)
@@ -82,31 +105,30 @@ void gen_expr_binop(char operator) {
         break;
 
     case '/':
-        printf("IDIVS\n");
-        break;
+        label_num =  get_cond_label();
+        printf("POPS GF@$op1\n");
+        printf("PUSHS GF@$op1\n");
+        printf("TYPE GF@$type GF@$op1\n");
 
-    case '\\': //ak delia floaty 
+        printf("JUMPIFEQ division%d GF@$type string@float\n",label_num);
+        printf("IDIVS\n");
+        printf("JUMP divisionend%d\n",label_num);
+        printf("LABEL division%d\n",label_num);
         printf("DIVS\n");
+        printf("LABEL divisionend%d\n",label_num);
+        printf("POPFRAME\n");
         break;
 
     case '?':
-        printf("CREATEFRAME\n");
-        printf("PSUHFRAME\n");
         label_num = get_cond_label();
+        printf("POPS GF@$op2\n");
+        printf("POPS GF@$op1\n");
+        printf("MOVE GF@$dest GF@$op1\n");
 
-        printf("DEFVAR LF@va\n");
-        printf("DEFVAR LF@vb\n");
-        printf("DEFVAR LF@result\n");
+        printf("JUMPIFEQ dubquestion%d GF@$op1 nil@nil\n",label_num);
+        printf("MOVE GF@$dest GF@$op2\n");
 
-        printf("POPS LF@b\n");
-        printf("POPS LF@a\n");
-        printf("MOVE LF@result LF@a\n");
-
-        printf("JUMPIFEQ dubquestion%d LF@a nil@nil",label_num);
-        printf("MOVE LF@result LF@b\n");
-
-        printf("PUSHS LF@result\n");
-        printf("POPFRAME\n");
+        printf("PUSHS GF@$dest\n");
         break;
 
     default:
@@ -164,51 +186,39 @@ void gen_cond(rel_op_t relation_operator) {
 }
 
 void gen_string_op(const char operator) {
-
-    printf("CREATEFRAME\n");
-    printf("PUSHFRAME\n");
-
-    printf("DEFVAR LF@dest\n");
-    printf("DEFVAR LF@op1\n");
-
-    printf("POPS LF@op1\n");
-
     switch (operator) {
     case 'l':
-        printf("POPS LF@dest\n");
-        printf("STRLEN LF@dest LF@op1\n");
+        printf("POPS GF@$dest\n");
+        printf("POPS GF@$op1\n");
+        printf("STRLEN GF@$dest GF@$op1\n");
         break;
 
     case '|':
-        printf("DEFVAR LF@op2\n");
+        printf("POPS GF@$op2\n"); 
+        printf("POPS GF@$op1\n");
+        printf("POPS GF@$dest\n");
 
-        printf("POPS LF@op2\n"); 
-        printf("POPS LF@dest\n");
-
-        printf("CONCAT LF@dest LF@op1 LF@op2\n");
+        printf("CONCAT GF@$dest GF@$op1 GF@$op2\n");
         break;
     case 'g':
-        printf("DEFVAR LF@op2\n");
+        printf("POPS GF@$op2\n");
+        printf("POPS GF@$op1\n"); 
+        printf("POPS GF@$dest\n");
 
-        printf("POPS LF@op2\n"); 
-        printf("POPS LF@dest\n");
-
-        printf("GETCHAR LF@dest LF@op1 LF@op2\n");
+        printf("GETCHAR GF@$dest GF@$op1 GF@$op2\n");
         break;
     
     case 's':
-        printf("DEFVAR LF@op2\n");
+        printf("POPS GF@$op2\n");
+        printf("POPS GF@$op1\n"); 
+        printf("POPS GF@$dest\n");
 
-        printf("POPS LF@op2\n"); 
-        printf("POPS LF@dest\n");
-
-        printf("SETCHAR LF@dest LF@op1 LF@op2\n");
+        printf("SETCHAR GF@$dest GF@$op1 GF@$op2\n");
     default:
         break;
     }
 
-    printf("PUSHS LF@dest\n");
-    printf("POPFRAME\n");
+    printf("PUSHS GF@$dest\n");
 }
 
 void gen_local_scope(symtable_t *table) {
@@ -255,19 +265,15 @@ void gen_jmp(char* label_type, int label_num) {
     printf("JUMP %s%d\n",label_type,label_num);
 }
 
-void gen_func_def(param_t **params,char *name) {
+void gen_func_def(char *name) {
     printf("LABEL %s\n",name);
-    for (int param_idx = 0; params[param_idx] != NULL; param_idx++) {
-        printf("DEFVAR LF@%s\n",params[param_idx]->id);
-        printf("MOVE LF@%s TF@%s\n",params[param_idx]->id,params[param_idx]->id);
-    }
     printf("PUSHFRAME\n");
 
 }
 
 void gen_func_return() {
     printf("POPFRAME\n");
-    printf("POPFRAME\n");
+    printf("CREATEFRAME\n");
     printf("RETURN\n");
 }
 
@@ -293,10 +299,7 @@ void add_arg(param_t *param) {
     }
 }
 
-void gen_func_call(char *name, symtable_entry_t *entry) {
-
-    printf("CREATEFRAME\n");
-    printf("PUSHFRAME\n");
+void gen_general_func_call(char *name, symtable_entry_t *entry) {
     printf("CREATEFRAME\n");
     param_t *param;
     for (int param_idx = 0; entry->params[param_idx] != NULL; param_idx++) {
@@ -307,18 +310,45 @@ void gen_func_call(char *name, symtable_entry_t *entry) {
     printf("CALL %s\n",name);
 }
 
+void gen_func_call(char *name, symtable_entry_t *entry) {
+    if (strcmp(name,"readString") == 0) {
+        gen_read(entry->params[0]->id,entry->params[0]->global,"string");
+    } else if (strcmp(name, "readInt") == 0) {
+        gen_read(entry->params[0]->id,entry->params[0]->global,"int");
+    } else if (strcmp(name, "readDouble") == 0) {
+        gen_read(entry->params[0]->id,entry->params[0]->global,"float");
+    } else {
+        gen_general_func_call(name,entry);
+    }
+}
+
 
 void gen_read(char *identifier, bool global, char *type) {
     const char *scope = global ? "GF" : "LF";
     printf("READ %s@%s %s\n",scope,identifier, type);
 }
 
-void gen_write_var(char *identifier, bool global) {
-    const char *scope = global ? "GF" : "LF";
-    printf("WRITE %s@%s \n",scope,identifier);
+void gen_write_arg(param_t *param) {
+    const char *scope;
+    switch (param->type) {
+    case TOKEN_INTEGER:
+        printf("WRITE int@%d\n",param->value.i);
+        break;
+    case TOKEN_DOUBLE:
+        printf("WRITE float@%a\n",param->value.d);
+        break;
+    case TOKEN_STRING:
+        printf("WRITE string@%s\n",param->value.str);
+        break;
+    case TOKEN_NIL:
+        printf("WRITE nil@nil\n");
+        break;
+    default:
+        scope = param->global ? "GF" : "LF";
+        printf("WRITE %s@%s\n",scope,param->value.str);
+        break;
+    }
 }
-
-LIT_OP(write,"WRITE")
 
 
 void gen_substring() {
@@ -356,14 +386,11 @@ void gen_substring() {
 
     printf("PUSHS LF@result\n");
     printf("LABEL substingend\n");
-    printf("POPFRAME\n");
-    printf("POPFRAME\n");
-    printf("RETURN\n");
+    gen_func_return();
 }
 
 void gen_ord() {
     printf("LABEL ord\n");
-    printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
 
     printf("DEFVAR LF@strlen\n");
@@ -379,14 +406,12 @@ void gen_ord() {
 
     printf("LABEL ordend\n");
     printf("PUSHS LF@result\n");
-    printf("POPFRAME\n");
-    printf("RETURN\n");
+    gen_func_return();
 }
 
 
 void gen_chr() {
     printf("LABEL chr\n");
-    printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
 
     printf("DEFVAR LF@boolflag\n");
@@ -402,6 +427,5 @@ void gen_chr() {
 
     printf("LABEL chrend\n");
     printf("PUSHS LF@result\n");
-    printf("POPFRAME\n");
-    printf("RETURN\n");
+    gen_func_return();
 }

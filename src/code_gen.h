@@ -26,30 +26,6 @@ typedef enum rel_op {
 /**
  * @brief enum for types of literals
 */
-
-/*
-Macro for generating repetatinve code
-*/
-#define LIT_OP(func_name, op)                                 \
-    void  gen_##func_name##_lit(litValue value, TokenType type) { \
-        switch (type) {                                       \
-            case TOKEN_INTEGER:                               \
-                printf("%s int@%d\n",op,value.i);             \
-                break;                                        \
-                                                              \
-            case TOKEN_DOUBLE:                                \
-                printf("%s float@%a\n",op,value.d);           \
-                break;                                        \
-                                                              \
-            case TOKEN_STRING:                                \
-                printf("%s string@%s\n",op,value.str);        \
-                break;                                        \
-                                                              \
-            default:                                          \
-                printf("%s nil@nil\n",op);                    \
-                break;                                        \
-        }                                                     \
-    }
     
 /**
  * @brief function generating code for binary operation
@@ -167,11 +143,10 @@ void gen_cnd_jump(char *dest_type, int dest_number);
 /**
  * @brief function generates code for dunction definition
  * 
- * @param params: NULL terminated array of function parameters
  * @param name: function name
  * 
 */
-void gen_func_def(param_t **params, char *name);
+void gen_func_def(char *name);
 
 /**
  * @brief function generates code for function return
@@ -182,7 +157,7 @@ void gen_func_return();
  * @brief function generates code for function calls
  * 
  * @param name: funcion name
- * @param entry: symtabel entry for function
+ * @param entry: symtable entry for funcion
 */
 void gen_func_call(char *name, symtable_entry_t *entry);
 
@@ -213,20 +188,14 @@ void gen_drop_local_scope(symtable_t *table);
 */
 void gen_local_scope(symtable_t *table);
 
-/**
- * @brief function generates code for writing a literal to stdout
- * 
- * @param vlaue: value of a literal @see litVlaue
-*/
-void gen_write_lit(litValue value, TokenType type);
 
 /**
- * @brief function generates code for writing the contets od a varible to stdout
+ * @brief function generates code for write function call
  * 
- * @param identifies: varible identifier
- * @param global: boolean flag
+ * @param entry: a pointer to a symtable entry
 */
-void gen_write_var(char *identifier, bool global);
+
+void gen_write_arg(param_t *param);
 
 /**
  * @brief function generates unique if_else label
