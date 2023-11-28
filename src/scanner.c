@@ -8,6 +8,20 @@ char datatypes[NOF_DATATYPES][MAX_DTT_KWD_LEN] = {
     "Double", "Int", "String"
 };
 
+void append_and_check(BufferT *buffer, const char ch) {
+    if (buffer_append(buffer, ch) != BUFF_APPEND_SUCCES) {
+        fprintf(stderr, "Internal compiler error. \n");
+        exit(INTERNAL_COMPILER_ERROR);
+    }
+}
+
+void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
+    token_dtor(token); // free(token) bude v token_dtor 
+    buffer_detor(buffer);
+    fprintf(stderr, "%s.\n", message);
+    exit(exit_code);
+}
+
 bool check_for_keyword(char* text) {
     for(int i = 0; i < NOF_KEYWORDS; i++) {
         if (strcmp(keywords[i], text) == 0) {
@@ -50,36 +64,37 @@ TokenType keyword_to_token(char* keyword) {
     }
     else if (strcmp(keyword, "while") == 0) {
         return TOKEN_WHILE;
-    } else {
+    } 
+    else {
         return TOKEN_ZERO;
     }
 }
 
-TokenType datatype_to_token(char* datatype) {
-    if (strcmp(datatype, "Double") == 0) {
+TokenType datatype_to_token(BufferT* buffer, int ch) {
+    if (ch == '?') {
+        append_and_check(buffer, ch);
+    }
+    if (strcmp(buffer->bytes, "Double") == 0) {
         return TOKEN_DT_DOUBLE;
-    } else if (strcmp(datatype, "Int") == 0) {
+    }
+    else if (strcmp(buffer->bytes, "Double?") == 0) {
+        return TOKEN_DT_DOUBLE_NIL;
+    }
+    else if (strcmp(buffer->bytes, "Int") == 0) {
         return TOKEN_DT_INT;
-    } else if (strcmp(datatype, "String") == 0) {
+    }
+    else if (strcmp(buffer->bytes, "Int?") == 0) {
+        return TOKEN_DT_INT_NIL;
+    }
+    else if (strcmp(buffer->bytes, "String") == 0) {
         return TOKEN_DT_STRING;
-    } else {
+    } 
+    else if (strcmp(buffer->bytes, "String?") == 0) {
+        return TOKEN_DT_DOUBLE_NIL;
+    }
+    else {
         return TOKEN_ZERO;
     }
-}
-
-
-void append_and_check(BufferT *buffer, const char ch) {
-    if (buffer_append(buffer, ch) != BUFF_APPEND_SUCCES) {
-        fprintf(stderr, "Internal compiler error. \n");
-        exit(INTERNAL_COMPILER_ERROR);
-    }
-}
-
-void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
-    token_dtor(token); // free(token) bude v token_dtor 
-    buffer_detor(buffer);
-    fprintf(stderr, "%s.\n", message);
-    exit(exit_code);
 }
     
 TokenT* generate_token() {
@@ -191,12 +206,13 @@ TokenT* generate_token() {
                 } else {
                     if (check_for_keyword(buffer.bytes)) {
                         token_init(token, keyword_to_token(buffer.bytes), &buffer);
+                        ungetc(ch, stream);
                     } else if(check_for_datatype(buffer.bytes)) {
-                        token_init(token, datatype_to_token(buffer.bytes), &buffer);
+                        token_init(token, datatype_to_token(&buffer, ch), &buffer);
                     } else {
                         token_init(token, TOKEN_IDENTIFIER, &buffer);
+                        ungetc(ch, stream);
                     }
-                    ungetc(ch, stream);
                     return token;
                 }
                 break;
@@ -348,7 +364,6 @@ TokenT* generate_token() {
                     return token;
                 } 
                 else {
-                    token_init(token, TOKEN_NULLABLE, &buffer);
                     ungetc(ch, stream);
                     return token;
                 }
