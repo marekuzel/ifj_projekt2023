@@ -26,28 +26,22 @@ typedef enum rel_op {
 /**
  * @brief enum for types of literals
 */
-typedef enum lit_type { 
-    INT_LIT, //integer literal
-    STRING_LIT, //srting literal
-    DOUBLE_LIT, //double literal
-    NILL //nil literal
-} lit_type_t;
 
 /*
 Macro for generating repetatinve code
 */
 #define LIT_OP(func_name, op)                                 \
-    void  gen_##func_name##_lit(litValue value, lit_type_t type) { \
+    void  gen_##func_name##_lit(litValue value, TokenType type) { \
         switch (type) {                                       \
-            case INT_LIT:                                     \
+            case TOKEN_INTEGER:                               \
                 printf("%s int@%d\n",op,value.i);             \
                 break;                                        \
                                                               \
-            case DOUBLE_LIT:                                  \
+            case TOKEN_DOUBLE:                                \
                 printf("%s float@%a\n",op,value.d);           \
                 break;                                        \
                                                               \
-            case STRING_LIT:                                  \
+            case TOKEN_STRING:                                \
                 printf("%s string@%s\n",op,value.str);        \
                 break;                                        \
                                                               \
@@ -64,8 +58,8 @@ Macro for generating repetatinve code
  *      '+'  - adition
  *      '-'  - subtraction
  *      '*'  - multiplication
- *      '/'  - division between floats
- *      '\\' - division between ints
+ *      '/'  - division between ints
+ *      '\\' - division between floats
  *      '?'  - ??
 */
 void gen_expr_binop(const char operator);
@@ -99,7 +93,7 @@ void gen_push_var(char *id, bool global);
  * @param value: value of literal @see litValue
  * @param type: type of lieral @see lit_type_t
 */
-void gen_push_lit(litValue value, lit_type_t type);
+void gen_push_lit(litValue value, TokenType type);
 
 /**
  * @brief function generates code for string operations
@@ -122,7 +116,7 @@ void gen_string_op(const char operator);
  *          "float" - float
  *          "sting" - string 
 */
-void gen_read(char *identifier, bool global, const char *type);
+void gen_read(char *identifier, bool global, char *type);
 
 /**
  * @brief function generates code assigning a value to a variable
@@ -185,35 +179,12 @@ void gen_func_def(param_t **params, char *name);
 void gen_func_return();
 
 /**
- * @brief fucntion generates code for prepairing function parameters
- * 
- * @param params:  NULL terminated array of function parameters
-*/
-void gen_func_pre_call(param_t **params);
-
-/**
- * @brief function adds variable argument
- * 
- * @param arg_id: argument identifier
- * @param var_id: variable identifier
- * @param global: boolean flag
-*/
-void add_var_arg(char *arg_id, char *var_id, bool global);
-/**
- * @brief function adds literal argument
- * 
- * @param id: arguemnt identifier
- * @param value: literal value @see litValue
- * @param type: type of literal @see lit_value_t
-*/
-void add_lit_arg(char *id, litValue value, lit_type_t type);
-
-/**
  * @brief function generates code for function calls
  * 
  * @param name: funcion name
+ * @param entry: symtabel entry for function
 */
-void gen_func_call(char *name);
+void gen_func_call(char *name, symtable_entry_t *entry);
 
 /**
  * @brief function used for copying variables between scopes
@@ -247,7 +218,7 @@ void gen_local_scope(symtable_t *table);
  * 
  * @param vlaue: value of a literal @see litVlaue
 */
-void gen_write_lit(litValue value, lit_type_t type);
+void gen_write_lit(litValue value, TokenType type);
 
 /**
  * @brief function generates code for writing the contets od a varible to stdout

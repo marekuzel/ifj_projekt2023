@@ -64,7 +64,7 @@ void gen_var_val_move(awl_t *awl) {
     printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
 }
 
-void gen_expr_binop(const char operator) {
+void gen_expr_binop(char operator) {
 
     int label_num;
     switch (operator) {
@@ -85,7 +85,7 @@ void gen_expr_binop(const char operator) {
         printf("IDIVS\n");
         break;
 
-    case '\\':
+    case '\\': //ak delia floaty 
         printf("DIVS\n");
         break;
 
@@ -117,21 +117,12 @@ void gen_expr_binop(const char operator) {
 void gen_expr_conv(conv_type_t conversion_type) {
 
     switch (conversion_type){
-
     case FI:
         printf("FLOAT2INTS\n");
         break;
 
     case IF:
         printf("INT2FLOATS\n");
-        break;
-
-    case IC:
-        printf("CALL ord\n");
-        break;
-
-    case CI:
-        printf("CALL chr\n");
         break;
     default:
         break;
@@ -280,43 +271,44 @@ void gen_func_return() {
     printf("RETURN\n");
 }
 
+void add_arg(param_t *param) {
+    const char *scope;
+    switch (param->type) {
+    case TOKEN_INTEGER:
+        printf("MOVE TF@%s int@%d\n", param->id, param->value.i);
+        break;
+    case TOKEN_DOUBLE:
+        printf("MOVE TF@%s float@%a\n", param->id, param->value.d);
+        break;
+    case TOKEN_STRING:
+        printf("MOVE TF@%s string@%s\n", param->id, param->value.str);
+        break;
+    case TOKEN_NIL:
+        printf("MOVE TF@%s nil@nil\n",param->id);
+        break;
+    default:
+        scope = param->global ? "GF" : "LF";
+        printf("MOVE TF@%s %s@%s\n",param->id,scope,param->value.str);
+        break;
+    }
+}
 
-void gen_func_pre_call(param_t **params) {
+void gen_func_call(char *name, symtable_entry_t *entry) {
+
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("CREATEFRAME\n");
-    for (int param_idx = 0; params[param_idx] != NULL; param_idx++) {
-        printf("DEFVAR TF@%s\n",params[param_idx]->id);
+    param_t *param;
+    for (int param_idx = 0; entry->params[param_idx] != NULL; param_idx++) {
+        param = entry->params[param_idx];
+        printf("DEFVAR TF@%s\n",param->id);
+        add_arg(param);
     }
-}
-
-void add_lit_arg(char *id, litValue value, lit_type_t type) {
-    switch (type) {
-    case INT_LIT:
-        printf("MOVE TF@%s int@%d\n", id, value.i);
-        break;
-    case DOUBLE_LIT:
-        printf("MOVE TF@%s float@%a\n", id, value.d);
-        break;
-    case STRING_LIT:
-        printf("MOVE TF@%s string@%s\n", id, value.str);
-        break;    
-    default:
-        printf("MOVE TF@%s nil@nil\n",id);
-    }
-}
-
-void add_var_arg(char *arg_id, char *var_id, bool global) {
-    const char *scope = global ? "GF" : "LF";
-    printf("MOVE TF@%s %s@%s\n",arg_id,scope,var_id);
-}
-
-void gen_func_call(char *name) {
     printf("CALL %s\n",name);
 }
 
 
-void gen_read(char *identifier, bool global, const char *type) {
+void gen_read(char *identifier, bool global, char *type) {
     const char *scope = global ? "GF" : "LF";
     printf("READ %s@%s %s\n",scope,identifier, type);
 }
@@ -370,14 +362,13 @@ void gen_substring() {
 }
 
 void gen_ord() {
+    printf("LABEL ord\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
 
-    printf("DEFVAR LF@c\n");
     printf("DEFVAR LF@strlen\n");
     printf("DEFVAR LF@boolfag\n");
     printf("DEFVAR LF@result\n");
-    printf("POPS LF@c\n");
 
 
     printf("MOVE LF@result int@0\n");
@@ -394,13 +385,12 @@ void gen_ord() {
 
 
 void gen_chr() {
+    printf("LABEL chr\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
 
-    printf("DEFVAR LF@i\n");
     printf("DEFVAR LF@boolflag\n");
     printf("DEFVAR LF@result\n");
-    printf("POPS LF@i\n");
 
     printf("MOVE LF@result LF@i\n");
     printf("GT LF@boolflag LF@i int@255\n");

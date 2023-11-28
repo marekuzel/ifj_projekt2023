@@ -247,7 +247,7 @@ void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry)
     *entry = new_entry;
 }
 
-void table_function_insert(symtable_t *table, char *key, param_t **params, func_ret_type_t return_type) {
+void table_function_insert(symtable_t *table, char *key, param_t **params, TokenType return_type) {
     symtable_entry_t *entry;
     table_insert_global(table, key, &entry);
     entry->type = TOKEN_FUNC;
@@ -257,8 +257,9 @@ void table_function_insert(symtable_t *table, char *key, param_t **params, func_
 
 bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
     bool found = false;
-    int table_idx = table->top_idx;
-    while(table_idx > 0 && !found) {
+    int table_idx = table->top_idx == -1 ? 0 : table->top_idx;
+    
+    while(table_idx >= 0 && !found) {
         found = awl_search(table->table_stack[table_idx],key,entry);
         table_idx--;
     }
