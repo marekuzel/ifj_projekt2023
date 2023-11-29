@@ -10,11 +10,11 @@
 typedef struct Parser {
     TokenT *token_current;
     TokenT *token_topOfStack;
+    TokenT *token_extraToken; //in rule expr we need to take out of scanner one more token, so we will store it here
 
     Stack *stack;
-
-    //global symtable
-    //local symtable
+    symtable_t *symtable;
+    symtable_entry_t *current_entry;
 }Parser_t;
 
 typedef enum {
@@ -24,15 +24,16 @@ typedef enum {
     PARSER_INVALID_TOKEN,
     } parser_ret_t;
 
-void Parser_init();
+void parser_init(Parser_t *);
 
-parser_ret_t Parser_dtor(Parser_t*);
+void parser_dtor(Parser_t*);
 
-void Parser_getNewToken(Parser_t *parser){
+void parser_getNewToken(Parser_t *);
 
-typedef enum{
-    PARSER_RULE_STATEMENT,
-    PARSER_RULE_FAIL,
-} parser_rule_t;
+void parser_stashExtraToken(Parser_t *, TokenT *);
+
+void parser_symtableEntry(Parser_t *);
+
+void parser_initlocalSymtable(Parser_t *);
 
 #endif

@@ -25,7 +25,8 @@ typedef enum fsm_state_e {
     STATE_RELATIONAL_OPERATOR,
     STATE_NUMBER,
     STATE_DECIMAL,
-    STATE_DECIMAL_POINT
+    STATE_DECIMAL_POINT, 
+    STATE_EXPONENT
 } ScannerState;
 
 #define NOF_KEYWORDS 8

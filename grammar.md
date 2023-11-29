@@ -35,7 +35,7 @@
    | // empty
 
 [func_ret] →
-   | -> [type] { [stmt_seqFuncRet] }
+   | -> [type] { [stmt_seqFunc] }
    | { [stmt_seqFunc] }
 
 [stmt_seqFunc] → 

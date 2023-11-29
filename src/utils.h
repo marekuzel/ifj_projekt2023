@@ -79,8 +79,11 @@ typedef enum tokentype_e {
     TOKEN_IDENTIFIER,
 
     TOKEN_DT_DOUBLE,
+    TOKEN_DT_DOUBLE_NIL,
     TOKEN_DT_INT,
+    TOKEN_DT_INT_NIL,
     TOKEN_DT_STRING,
+    TOKEN_DT_STRING_NIL,
 
     TOKEN_LET,
     TOKEN_VAR,
@@ -94,7 +97,6 @@ typedef enum tokentype_e {
 
     TOKEN_OPERATOR,
 
-    TOKEN_NULLABLE,
     TOKEN_STRING, 
     TOKEN_INTEGER, 
     TOKEN_DOUBLE,

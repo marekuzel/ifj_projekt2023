@@ -6,4 +6,5 @@ src/*.txt
 src/prec
 src/bu
 src/test_code_gen
+src/test_scanner
 interpreter/*.txt

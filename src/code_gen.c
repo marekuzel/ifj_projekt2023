@@ -75,7 +75,7 @@ void  gen_push_lit(litValue value, TokenType type) {
     }
 
 void gen_var_copy(awl_t *awl) {
-    if (awl->value->redclared || awl->value->type == TOKEN_FUNC)
+    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
         return;
 
     printf("DEFVAR TF@%s\n",awl->key);
@@ -83,7 +83,7 @@ void gen_var_copy(awl_t *awl) {
 }
 
 void gen_var_val_move(awl_t *awl) {
-    if (awl->value->redclared || awl->value->type == TOKEN_FUNC)
+    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
         return;
 
     printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
