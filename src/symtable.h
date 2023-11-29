@@ -17,6 +17,7 @@ typedef struct  param{
     char *name; //parameter name
     char *id; //parameter identifier
     bool global; //flag if variable is global
+    bool var; //flag if the param is a variable
     TokenType type; //parameter type
     litValue value; //value of literal params
 } param_t;
@@ -32,7 +33,6 @@ typedef struct symtable_entry {
     bool redclared; //flag for symbol redeclaration
     param_t **params; // NULL termianted array of function parameters
     TokenType return_type; //return type of a function
-    litValue value; // value of a variable
 } symtable_entry_t;
 
 
@@ -325,18 +325,59 @@ buff_ret_t insert_param(ParamBufferT *buffer, param_t *param);
 void param_buffer_detor(ParamBufferT *buffer);
 
 /**
- * @brief exports the list of parameters into a NULL terminated array
+ * @brief funcion for creating a param from string literals
  * 
- * @param buffer: pointer to a ParamBuffer
- * @param entry: pointe to a symtable entry
+ * @param id: parameter identificator (never NULL)
+ * @param name: parameter name (optionaly  NULL)
+ * @param type: type of param
+ * 
 */
-void param_list_insert(ParamBufferT *buffer, symtable_entry_t *entry);
+param_t *param_from_lit_create(char *id, char *name, TokenType type);
 
-param_t *create_param(char *id, char *name, TokenType type);
 
+/**
+ * @brief funcion for creating a param
+ * 
+ * @param id: parameter identificator (never NULL)
+ * @param name: parameter name (optionaly  NULL)
+ * @param type: type of param
+ * 
+*/
+param_t *param_create(char *id, char *name, TokenType type);
+
+/**
+ * @brief function for adding vlaues to parameters
+ * 
+ * @param table: a pointer to a symtable
+ * @param param: pointer to a fucntion parameter
+ * @param value: enum with litralValues 
+ * @param type: type of literal value
+*/
+void param_vlaue_init(symtable_t *table, param_t *param, litValue value, TokenType type);
+
+/**
+ * @brief function inserts builtin funcion entries into the table
+ * 
+ * @param table: pointer to a symtable
+ * 
+ * @returns 1 if an error occured otherwise 0
+*/
 int table_insert_builtin_funcs(symtable_t *table);
 
-char *lit2ptr(char *lit);
+/**
+ * @brief function checks wether a given "name" is global or not
+ * 
+ * @param table: a pointer to a symtable
+ * @param name: name to find
+ * 
+ * @returns true if given name is global false otherwise 
+*/
+bool is_global(symtable_t *table, char *name);
+
+/**
+ * @brief function for transforming a string literal into a heap allocated string
+*/
+char *lit2ptr(const char *lit);
 
 #define CHECK_ERR(err) \
     if (ret != 0)      \

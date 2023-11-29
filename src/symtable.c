@@ -291,7 +291,7 @@ void awl_traverse(awl_t* awl, action_t action){
 }
 
 void table_traverse(symtable_t *table, action_t action) {
-    for (int table_idx = table->top_idx; table_idx >= 0; table_idx--) {
+    for (int table_idx = table->top_idx; table_idx > 1; table_idx--) {
         awl_traverse(table->table_stack[table_idx],action);
     }
 }
@@ -353,7 +353,7 @@ void param_buffer_detor(ParamBufferT *buffer) {
 }
 
 
-char *lit2ptr(char *lit) {
+char *lit2ptr(const char *lit) {
     size_t lit_len = strlen(lit);
     char *out = calloc(lit_len+1,1);
 
@@ -366,7 +366,47 @@ char *lit2ptr(char *lit) {
 }
 
 
-param_t *create_param(char *id, char *name, TokenType type) {
+void param_vlaue_init(symtable_t *table, param_t *param, litValue value, TokenType type) {
+    switch (type)
+    {
+    case TOKEN_INTEGER:
+        param->value.i = value.i; 
+        break;
+
+    case TOKEN_DOUBLE:
+        param->value.d = value.d; 
+        break;
+
+    case TOKEN_NIL:
+        break;
+
+    case TOKEN_STRING:
+        param->value.str = value.str;
+        break;
+
+    default:
+        param->value.str = value.str;
+        param->var = true;
+        param->var = true;
+        param->global = is_global(table,value.str);
+        break;
+    }
+}
+
+
+param_t *param_create(char *id, char *name, TokenType type) {
+    param_t *new_param = calloc(1,sizeof(param_t));
+
+    if (new_param != NULL) {
+        new_param->id = id;
+        new_param->name = name;
+        new_param->type = type;
+    }
+    return new_param;
+}
+
+
+param_t *param_from_lit_create(char *id, char *name, TokenType type) {
     param_t *new_param; 
     char *new_id;
     char *new_name;
@@ -450,37 +490,42 @@ int table_insert_builtin_funcs(symtable_t *table) {
     CHECK_ERR(table_insert_builtin_funcs_err)
 
     /**Int2Double*/
-    params[0] = create_param("term", NULL, TOKEN_DT_INT);
+    params[0] = param_from_lit_create("term", NULL, TOKEN_DT_INT);
     ret = insert_builtin(table,"Int2Double",TOKEN_DT_DOUBLE,params,1);
     CHECK_ERR(table_insert_builtin_funcs_err)
 
     /**Double2Int*/
-    params[0] = create_param("term", NULL, TOKEN_DT_DOUBLE);
+    params[0] = param_from_lit_create("term", NULL, TOKEN_DT_DOUBLE);
     ret = insert_builtin(table,"Double2Int",TOKEN_DT_INT,params,1);
     CHECK_ERR(table_insert_builtin_funcs_err)
 
     /**length*/
-    params[0] = create_param("s", NULL, TOKEN_DT_STRING);
+    params[0] = param_from_lit_create("s", NULL, TOKEN_DT_STRING);
     ret = insert_builtin(table,"length",TOKEN_DT_INT,params,1);
     CHECK_ERR(table_insert_builtin_funcs_err)
 
     /**ord*/
-    params[0] = create_param("c",NULL,TOKEN_DT_STRING);
+    params[0] = param_from_lit_create("c",NULL,TOKEN_DT_STRING);
     ret = insert_builtin(table, "ord", TOKEN_DT_INT, params,1);
     CHECK_ERR(table_insert_builtin_funcs_err)
 
     /*chr*/
-    params[0] = create_param("i",NULL,TOKEN_DT_INT);
+    params[0] = param_from_lit_create("i",NULL,TOKEN_DT_INT);
     ret = insert_builtin(table,"chr", TOKEN_DT_STRING,params,1);
     CHECK_ERR(table_insert_builtin_funcs_err)
 
     /**susbstring*/
-    params[0] = create_param("s", "of", TOKEN_DT_STRING);
-    params[1] = create_param("i", "startingAt", TOKEN_DT_INT);
-    params[2] = create_param("j", "endingBefore", TOKEN_DT_INT);
+    params[0] = param_from_lit_create("s", "of", TOKEN_DT_STRING);
+    params[1] = param_from_lit_create("i", "startingAt", TOKEN_DT_INT);
+    params[2] = param_from_lit_create("j", "endingBefore", TOKEN_DT_INT);
     ret = insert_builtin(table,"substring",TOKEN_DT_STRING,params,3);
     CHECK_ERR(table_insert_builtin_funcs_err)
 
     table_insert_builtin_funcs_err:
     return ret;
+}
+
+bool is_global(symtable_t *table, char *name) {
+    symtable_entry_t *entry;
+    return table_search_global(table,name,&entry);
 }

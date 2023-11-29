@@ -85,14 +85,12 @@ void gen_string_op(const char operator);
 /**
  * @brief function generates code for built-in read functions
  * 
- * @param identifier: target for read value
- * @param global: boolean flag
  * @param type: type of value to read only accepted values:
  *          "int" - integer
  *          "float" - float
  *          "sting" - string 
 */
-void gen_read(char *identifier, bool global, char *type);
+void gen_read(char *type);
 
 /**
  * @brief function generates code assigning a value to a variable
@@ -246,3 +244,7 @@ void gen_ord();
  * @brief fucntion generates code for built-in funcion chr
 */
 void gen_chr();
+
+void gen_int2double();
+
+void gen_double2int();
