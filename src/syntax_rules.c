@@ -249,7 +249,10 @@ Error parser_rule_expr(Parser_t *parser){
     parser_getNewToken(parser);
     TokenT *next = malloc(sizeof(TokenT));
     next->type = TOKEN_ZERO;
-    return bu_read(&next);
+    // TODO vymaz
+    symtable_t symTab;
+    table_init(&symTab);
+    Error err = bu_read(&next, &symTab);
     Stack_Push(parser->stack, parser->token_current);
     parser_stashExtraToken(parser, next);
 }

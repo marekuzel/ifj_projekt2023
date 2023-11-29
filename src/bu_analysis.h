@@ -14,6 +14,6 @@ typedef struct used_types {
     bool t_string;
 } used_types_t;
 
-Error bu_read(TokenT** next);
+Error bu_read(TokenT** next, symtable_t* symTable);
 
 #endif

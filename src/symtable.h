@@ -17,20 +17,9 @@ typedef struct  param{
     char *name; //parameter name
     char *id; //parameter identifier
     TokenType type; //parameter type
+    litValue value; //param value
 } param_t;
 
-
-/**
- * @brief enume representing the return type of a function
-*/
-typedef enum func_ret_type{
-    RET_INT,
-    RET_INT_ISH, //equivalent to Int?
-    RET_DOUBLE,
-    RET_DOUBLE_ISH, //equivalent to Double?
-    RET_STRING,
-    RET_STRING_ISH //equivalent to String?
-} func_ret_type_t;
 
 /**
  * @brief struct representing a sytable entry
@@ -40,9 +29,9 @@ typedef struct symtable_entry {
     bool defined; //flag for symbol definition
     bool declared; //flag for symbol declaration
     bool redeclared; //flag for symbol redeclaration
+    bool constant; //flag for constants
     param_t **params; // NULL termianted array of function parameters
-    func_ret_type_t return_type; //return type of a function
-    litValue value; // value of a variable
+    TokenT return_type; //return type of a function
 } symtable_entry_t;
 
 
@@ -251,7 +240,7 @@ void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry)
  * @param key: function name
  * @param params: array NULL treminated array of function parameters
 */
-void table_function_insert(symtable_t *table, char *key, param_t **parms, func_ret_type_t return_type);
+void table_function_insert(symtable_t *table, char *key, param_t **parms, TokenT return_type);
 
 /**
  * @brief function for searching a symbol in table

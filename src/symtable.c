@@ -204,6 +204,7 @@ void table_init(symtable_t *table) {
     if (new_tree_array == NULL) {
         exit(INTERNAL_COMPILER_ERROR);
     }
+    table->table_stack = new_tree_array;
     table->size = SYMTABLE_SIZE;
     table->top_idx = -1;
     table->table_stack = new_tree_array;
@@ -234,7 +235,7 @@ void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
     awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
     *entry = new_entry;
     symtable_entry_t *tmp_entry;
-    table->top_idx--;
+    table->top_idx--; //todo fix
     if (table_search(table,key,&tmp_entry)){
         new_entry->declared = true;
     }
@@ -247,7 +248,7 @@ void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry)
     *entry = new_entry;
 }
 
-void table_function_insert(symtable_t *table, char *key, param_t **params, func_ret_type_t return_type) {
+void table_function_insert(symtable_t *table, char *key, param_t **params, TokenT return_type) {
     symtable_entry_t *entry;
     table_insert_global(table, key, &entry);
     entry->type = TOKEN_FUNC;
@@ -258,7 +259,7 @@ void table_function_insert(symtable_t *table, char *key, param_t **params, func_
 bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
     bool found = false;
     int table_idx = table->top_idx;
-    while(table_idx > 0 && !found) {
+    while(table_idx >= 0 && !found) {
         found = awl_search(table->table_stack[table_idx],key,entry);
         table_idx--;
     }

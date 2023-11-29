@@ -7,3 +7,4 @@ src/prec
 src/bu
 src/test_code_gen
 interpreter/*.txt
+.vscode

@@ -178,6 +178,8 @@ TokenT Stack_peak();
  */
 void Stack_Top(const Stack *, TokenT **);
 
+TokenT* stack_read_token_bottom(Stack* stack);
+
 /**
  * @brief Pops element from stack
  * 

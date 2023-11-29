@@ -404,17 +404,17 @@ TokenT* generate_token() {
     }
 }
 
-int main() {
-    TokenT* token = generate_token();
-    while (token != NULL && token->type != TOKEN_EOF) {
+// int main() {
+//     TokenT* token = generate_token();
+//     while (token != NULL && token->type != TOKEN_EOF) {
         
-        printf("TOKEN T%d VALUE ", token->type);
-        print_Token(token);
+//         printf("TOKEN T%d VALUE ", token->type);
+//         print_Token(token);
 
-        // token_dtor(token);
-        token = generate_token();
-    }
-    // printf("TOKEN T%d VALUE [%s]\n", token->type, token->value.str);
+//         // token_dtor(token);
+//         token = generate_token();
+//     }
+//     // printf("TOKEN T%d VALUE [%s]\n", token->type, token->value.str);
 
-    return 0;
-}
+//     return 0;
+// }
