@@ -25,11 +25,11 @@
 #define OUTPUT_VAR(var)                                 \
     param = param_create(NULL, NULL,TOKEN_VAR);         \
     value.str = var;                                    \
-    param_vlaue_init(&table,param,value,TOKEN_VAR);     \
+    param_value_init(&table,param,value,TOKEN_VAR);     \
     gen_write_arg(param);                               \
     value.str = "\\010";                                \
     param->type = TOKEN_STRING;                         \
-    param_vlaue_init(&table,param,value,TOKEN_STRING);  \
+    param_value_init(&table,param,value,TOKEN_STRING);  \
     gen_write_arg(param);                               \
     free(param);                                        \
 
@@ -197,7 +197,7 @@ void test_builtin_int2double() {
     OUTPUT_VAR(a)
     table_search_global(&table,"Int2Double",&entry);
     value.str = a;
-    param_vlaue_init(&table,entry->params[0],value,TOKEN_VAR);
+    param_value_init(&table,entry->params[0],value,TOKEN_VAR);
     gen_func_call("Int2Double",entry);
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
@@ -213,7 +213,7 @@ void test_builtin_double2int() {
     OUTPUT_VAR(a)
     table_search_global(&table,"Double2Int",&entry);
     value.str = a;
-    param_vlaue_init(&table,entry->params[0],value,TOKEN_VAR);
+    param_value_init(&table,entry->params[0],value,TOKEN_VAR);
     gen_func_call("Double2Int",entry);
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
@@ -228,11 +228,11 @@ void test_builtint_substring() {
     OUTPUT_VAR(a)
     value.str = "HelloWolrd";
     table_search_global(&table,"substring",&entry);
-    param_vlaue_init(&table,entry->params[0],value,TOKEN_STRING);
+    param_value_init(&table,entry->params[0],value,TOKEN_STRING);
     value.i = 2;
-    param_vlaue_init(&table,entry->params[1],value,TOKEN_INTEGER);
+    param_value_init(&table,entry->params[1],value,TOKEN_INTEGER);
     value.i = 5;
-    param_vlaue_init(&table,entry->params[2],value,TOKEN_INTEGER);
+    param_value_init(&table,entry->params[2],value,TOKEN_INTEGER);
     gen_func_call("substring",entry);
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
@@ -243,7 +243,7 @@ void test_builtin_chr() {
     TEST("builtin_chr")
     value.i = 50;
     table_search_global(&table,"chr",&entry);
-    param_vlaue_init(&table,entry->params[0],value,TOKEN_INTEGER);
+    param_value_init(&table,entry->params[0],value,TOKEN_INTEGER);
     gen_func_call("chr",entry);
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
@@ -254,7 +254,7 @@ void test_builtin_ord() {
     TEST("builtin_ord")
     value.str = "25699";
     table_search_global(&table,"ord",&entry);
-    param_vlaue_init(&table,entry->params[0],value,TOKEN_STRING);
+    param_value_init(&table,entry->params[0],value,TOKEN_STRING);
     gen_func_call("ord",entry);
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)

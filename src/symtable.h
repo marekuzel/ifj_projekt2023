@@ -315,7 +315,7 @@ buff_ret_t param_buffer_init(ParamBufferT *buffer);
  * @retval ret_t BUFF_APPEND_FAIL if failed
  */
 
-buff_ret_t insert_param(ParamBufferT *buffer, param_t *param);
+buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param);
 
 /**
  * @brief disposes of ParamBuffer
@@ -353,7 +353,7 @@ param_t *param_create(char *id, char *name, TokenType type);
  * @param value: enum with litralValues 
  * @param type: type of literal value
 */
-void param_vlaue_init(symtable_t *table, param_t *param, litValue value, TokenType type);
+void param_value_init(symtable_t *table, param_t *param, litValue value, TokenType type);
 
 /**
  * @brief function inserts builtin funcion entries into the table

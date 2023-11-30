@@ -300,7 +300,7 @@ void table_traverse(symtable_t *table, action_t action) {
 
 /*
 *********************************
-Implementation of parram buttfer
+Implementation of parram buffer
 *********************************
 */
 
@@ -317,7 +317,7 @@ buff_ret_t param_buffer_init(ParamBufferT *buffer) {
 }
 
 
-buff_ret_t insert_param(ParamBufferT *buffer, param_t *param) {
+buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param) {
     if (buffer->length >= buffer->cap) {
         param_t **new_buff = realloc(buffer->bytes,buffer->cap * 2); 
 
@@ -366,7 +366,7 @@ char *lit2ptr(const char *lit) {
 }
 
 
-void param_vlaue_init(symtable_t *table, param_t *param, litValue value, TokenType type) {
+void param_value_init(symtable_t *table, param_t *param, litValue value, TokenType type) {
     switch (type)
     {
     case TOKEN_INTEGER:
