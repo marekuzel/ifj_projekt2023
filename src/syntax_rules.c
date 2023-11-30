@@ -28,6 +28,7 @@ Error parser_rule_stmt(Parser_t *parser){
         goto success;
     }
     //stmt -> var <id> <stmt_assign>
+    //redeclaration: swift does not allow redeclaration of a variable in the same scope 
     else if (parser->token_current->type == TOKEN_VAR){
         GET_NEXT_AND_CALL_RULE(parser, id);
         table_insert(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
@@ -55,6 +56,11 @@ Error parser_rule_stmt(Parser_t *parser){
     //stmt -> <defFunc>
     else if (parser->token_current->type == TOKEN_FUNC){
         GET_NEXT_AND_CALL_RULE(parser, defFunc);
+        goto success;
+    }
+    //stmt -> [id] [stmtAssign]
+    else if (parser->token_current->type == TOKEN_IDENTIFIER){
+        GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         goto success;
     }
     else{
@@ -99,7 +105,7 @@ Error parser_rule_elseF(Parser_t *parser){
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
         table_add_scope(parser->symtable);
         GET_NEXT_AND_CALL_RULE(parser, stmtSeq);
-        table_remove_scope(parser->symtable);
+        parser_closeLocalSymtable(parser);
     }
     //otherwise empty
     return SUCCESS;
@@ -107,14 +113,17 @@ Error parser_rule_elseF(Parser_t *parser){
 
 Error parser_rule_defFunc(Parser_t *parser){
     //func [funcId] ([parameters]) [func_ret]
-    //TODO: add parameters to local symtable
-    table_add_scope(parser->symtable);
+    if (parser_initLocalSymtable(parser) == INTERNAL_COMPILER_ERROR) return INTERNAL_COMPILER_ERROR;
     GET_NEXT_AND_CALL_RULE(parser, funcID);
+
+    if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return SYNTAX_ERROR;
+    table_function_insert(parser->symtable, parser->token_current->value.str, parser->buffer, TOKEN_NIL); //function is deafultly set to return nil -> void function
+
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, params);
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
-    table_remove_scope(parser->symtable);
+    parser_closeLocalSymtable(parser);
     return SUCCESS;
     return SYNTAX_ERROR;
 }
@@ -126,6 +135,7 @@ Error parser_rule_funcRet(Parser_t *parser){
     // in both cases the right bracket is checked in the stmtSeqRet
     if (parser->token_current->type == TOKEN_COLON){
         GET_NEXT_AND_CALL_RULE(parser, type);
+        parser->current_entry->return_type = parser->token_current->type;
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
         GET_NEXT_AND_CALL_RULE(parser, stmtSeqRet);
         return SUCCESS;
@@ -183,14 +193,21 @@ Error parser_rule_callFunc(Parser_t *parser){
 
 Error parser_rule_params(Parser_t *parser){
     //[parameters] →
-    //  | ( [id] : [type]  [parameters_seq]*
+    //  | ( [name] [id] : [type]  [parameters_seq]*
     //  | ( )
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
     parser_getNewToken(parser);
     if (parser->token_current->type == TOKEN_IDENTIFIER){
-        GET_NEXT_AND_CALL_RULE(parser, id);
+        GET_NEXT_AND_CALL_RULE(parser, id); //name is id from syntax pow
+        
+        if (strcmp(parser->token_current->value.str, "_")==0){ //"_" as name of the parameter is essencially null
+            parser->current_param = param_create(NULL, NULL, TOKEN_NIL);
+        }
+        else{parser->current_param = param_create(NULL, parser->token_current->value.str, TOKEN_NIL);}
+
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
+        parser->current_param->type = parser->token_current->type; //TODO: unsure about this
         GET_NEXT_AND_CALL_RULE(parser, paramsSeq);
         goto success;
     }
@@ -203,7 +220,7 @@ Error parser_rule_params(Parser_t *parser){
 
 Error parser_rule_paramsSeq(Parser_t* parser){
     // [parameters_seq] →
-    //    | , [id] : [type] [parameters_seq]
+    //    | , [name] [id] : [type] [parameters_seq]
     //    | )
     if (parser->token_current->type == TOKEN_COMMA){
         GET_NEXT_AND_CALL_RULE(parser, id);
@@ -249,13 +266,12 @@ Error parser_rule_expr(Parser_t *parser){
     parser_getNewToken(parser);
     TokenT *next = malloc(sizeof(TokenT));
     next->type = TOKEN_ZERO;
-    return bu_read(&next);
-    Stack_Push(parser->stack, parser->token_current);
+    Error err =  bu_read(&next);
     parser_stashExtraToken(parser, next);
+    return err;
 }
 
 Error parser_rule_stmtSeq(Parser_t *parser){
-    table_add_scope(parser->symtable); //add global symtable
     while (parser->token_current->type != TOKEN_EOF){
         parser_getNewToken(parser);
         if (parser_rule_stmt(parser) == SYNTAX_ERROR){

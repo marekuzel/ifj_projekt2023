@@ -22,3 +22,7 @@ test_code_gen: code_gen.o symtable.o code_gen_test.o utils.o
 test_scanner: scanner.o utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 	./test_scanner < test.txt
+
+test_parser: parser.o symtable.o utils.o
+	$(CC) $(CFLAGS) -o $@ $^ -RUN_TESTS
+	../test_parser < test.txt

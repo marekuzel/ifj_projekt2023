@@ -1,4 +1,8 @@
+#ifdef RUN_TESTS 
+#else
 #include "scanner.h"
+#endif
+
 #include "errors.h"
 #include "utils.h"
 #include "symtable.h"
@@ -30,13 +34,23 @@ void parser_getNewToken(Parser_t *parser){
     }
 }
 
-void parser_initlocalSymtable(Parser_t *parser){
+Error parser_initLocalSymtable(Parser_t *parser){
     table_add_scope(parser->symtable);
-    //TODO: buffer for parameters
+    parser->buffer = malloc(sizeof(ParamBufferT));
+    if (parser->buffer == NULL) return INTERNAL_COMPILER_ERROR;
+    return SUCCESS;
+}
+
+
+void parser_closeLocalSymtable(Parser_t *parser){
+    table_remove_scope(parser->symtable);
+    param_buffer_detor(parser->buffer); 
+    free(parser->buffer); //TODO: unsure if neccesary
 }
 
 void parser_dtor(Parser_t * parser){
     table_dispose(parser->symtable);
+    param_buffer_detor(parser->buffer);
     Stack_Dispose(parser->stack);
     parser->current_entry = NULL;
     free(parser);
