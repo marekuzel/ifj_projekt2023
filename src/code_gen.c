@@ -107,17 +107,11 @@ void gen_expr_binop(char operator) {
         break;
 
     case '/':
-        label_num =  get_cond_label();
-        printf("POPS GF@$op1\n");
-        printf("PUSHS GF@$op1\n");
-        printf("TYPE GF@$dest GF@$op1\n");
-
-        printf("JUMPIFEQ division%d GF@$dest string@float\n",label_num);
-        printf("IDIVS\n");
-        printf("JUMP divisionend%d\n",label_num);
-        printf("LABEL division%d\n",label_num);
         printf("DIVS\n");
-        printf("LABEL divisionend%d\n",label_num);
+        break;
+    
+    case '\\':
+        printf("IDIVS\n");
         break;
 
     case '?':
@@ -132,6 +126,15 @@ void gen_expr_binop(char operator) {
         printf("PUSHS GF@$op1\n");
         break;
 
+    case '|':
+        printf("MOVE GF@$dest string@\n");
+
+        printf("POPS GF@$op2\n"); 
+        printf("POPS GF@$op1\n");
+
+        printf("CONCAT GF@$dest GF@$op1 GF@$op2\n");
+
+        printf("PUSHS GF@$dest\n");
     default:
         break;
     }
@@ -184,39 +187,6 @@ void gen_cond(rel_op_t relation_operator) {
     default:
         break;
     }
-}
-
-void gen_string_op(const char operator) {
-        printf("MOVE GF@$dest string@\n");
-    switch (operator) {
-    case 'l':
-        printf("POPS GF@$op1\n");
-        printf("STRLEN GF@$dest GF@$op1\n");
-        break;
-
-    case '|':
-        printf("POPS GF@$op2\n"); 
-        printf("POPS GF@$op1\n");
-
-        printf("CONCAT GF@$dest GF@$op1 GF@$op2\n");
-        break;
-    case 'g':
-        printf("POPS GF@$op2\n");
-        printf("POPS GF@$op1\n"); ;
-
-        printf("GETCHAR GF@$dest GF@$op1 GF@$op2\n");
-        break;
-    
-    case 's':
-        printf("POPS GF@$op2\n");
-        printf("POPS GF@$op1\n"); 
-
-        printf("SETCHAR GF@$dest GF@$op1 GF@$op2\n");
-    default:
-        break;
-    }
-
-    printf("PUSHS GF@$dest\n");
 }
 
 void gen_local_scope(symtable_t *table) {
