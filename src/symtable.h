@@ -286,7 +286,7 @@ void table_dispose(symtable_t *table);
  * @param table: a pointer to a symtable
  * @param action: action to be performend (function pointer)
 */
-void table_traverse(symtable_t *table, action_t action);
+void table_traverse(symtable_t *table, action_t action, int start);
 
 /**
  * @brief ADT for dynamiclaly growing array of function parameters

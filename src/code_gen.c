@@ -221,13 +221,14 @@ void gen_string_op(const char operator) {
 
 void gen_local_scope(symtable_t *table) {
     printf("CREATEFRAME\n");
-    table_traverse(table,&gen_var_copy);
+    table_traverse(table,&gen_var_copy,1);
     printf("PUSHFRAME\n");
 }
 
 void gen_drop_local_scope(symtable_t *table) {
-    table_traverse(table,&gen_var_val_move);
     printf("POPFRAME\n");
+    table_traverse(table,&gen_var_val_move,2);
+    printf("CREATEFRAME\n");
 }
 
 void gen_cnd_jump(char *dest_type, int dest_number) {
