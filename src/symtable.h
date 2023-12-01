@@ -16,8 +16,10 @@ Symtable entry
 typedef struct  param{
     char *name; //parameter name
     char *id; //parameter identifier
+    bool global; //flag if variable is global
+    bool var; //flag if the param is a variable
     TokenType type; //parameter type
-    litValue value; //param value
+    litValue value; //value of literal params
 } param_t;
 
 
@@ -29,9 +31,9 @@ typedef struct symtable_entry {
     bool defined; //flag for symbol definition
     bool declared; //flag for symbol declaration
     bool redeclared; //flag for symbol redeclaration
-    bool constant; //flag for constants
+    bool constant; //flag for denouncing constants
     param_t **params; // NULL termianted array of function parameters
-    TokenT return_type; //return type of a function
+    TokenType return_type; //return type of a function
 } symtable_entry_t;
 
 
@@ -240,7 +242,7 @@ void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry)
  * @param key: function name
  * @param params: array NULL treminated array of function parameters
 */
-void table_function_insert(symtable_t *table, char *key, param_t **parms, TokenT return_type);
+void table_function_insert(symtable_t *table, char *key, param_t **parms, TokenType return_type);
 
 /**
  * @brief function for searching a symbol in table
@@ -285,7 +287,7 @@ void table_dispose(symtable_t *table);
  * @param table: a pointer to a symtable
  * @param action: action to be performend (function pointer)
 */
-void table_traverse(symtable_t *table, action_t action);
+void table_traverse(symtable_t *table, action_t action, int start);
 
 /**
  * @brief ADT for dynamiclaly growing array of function parameters
@@ -314,7 +316,7 @@ buff_ret_t param_buffer_init(ParamBufferT *buffer);
  * @retval ret_t BUFF_APPEND_FAIL if failed
  */
 
-buff_ret_t insert_param(ParamBufferT *buffer, param_t *param);
+buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param);
 
 /**
  * @brief disposes of ParamBuffer
@@ -324,11 +326,65 @@ buff_ret_t insert_param(ParamBufferT *buffer, param_t *param);
 void param_buffer_detor(ParamBufferT *buffer);
 
 /**
- * @brief exports the list of parameters into a NULL terminated array
+ * @brief funcion for creating a param from string literals
  * 
- * @param buffer: pointer to a ParamBuffer
- * @param entry: pointe to a symtable entry
+ * @param id: parameter identificator (never NULL)
+ * @param name: parameter name (optionaly  NULL)
+ * @param type: type of param
+ * 
 */
-void param_list_insert(ParamBufferT *buffer, symtable_entry_t *entry);
+param_t *param_from_lit_create(char *id, char *name, TokenType type);
+
+
+/**
+ * @brief funcion for creating a param
+ * 
+ * @param id: parameter identificator (never NULL)
+ * @param name: parameter name (optionaly  NULL)
+ * @param type: type of param
+ * 
+*/
+param_t *param_create(char *id, char *name, TokenType type);
+
+/**
+ * @brief function for adding vlaues to parameters
+ * 
+ * @param table: a pointer to a symtable
+ * @param param: pointer to a fucntion parameter
+ * @param value: enum with litralValues 
+ * @param type: type of literal value
+*/
+void param_value_init(symtable_t *table, param_t *param, litValue value, TokenType type);
+
+/**
+ * @brief function inserts builtin funcion entries into the table
+ * 
+ * @param table: pointer to a symtable
+ * 
+ * @returns 1 if an error occured otherwise 0
+*/
+int table_insert_builtin_funcs(symtable_t *table);
+
+/**
+ * @brief function checks wether a given "name" is global or not
+ * 
+ * @param table: a pointer to a symtable
+ * @param name: name to find
+ * 
+ * @returns true if given name is global false otherwise 
+*/
+bool is_global(symtable_t *table, char *name);
+
+/**
+ * @brief function for transforming a string literal into a heap allocated string
+*/
+char *lit2ptr(const char *lit);
+
+#define CHECK_ERR(err) \
+    if (ret != 0)      \
+        goto err;       \
+
+
+param_t **param_buffer_export(ParamBufferT *);
 
 #endif

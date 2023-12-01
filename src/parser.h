@@ -13,6 +13,7 @@ typedef struct Parser {
     TokenT *token_extraToken; //in rule expr we need to take out of scanner one more token, so we will store it here
 
     Stack *stack;
+    ParamBufferT *buffer;
     symtable_t *symtable;
     symtable_entry_t *current_entry;
 }Parser_t;
@@ -34,6 +35,8 @@ void parser_stashExtraToken(Parser_t *, TokenT *);
 
 void parser_symtableEntry(Parser_t *);
 
-void parser_initlocalSymtable(Parser_t *);
+Error parser_initLocalSymtable(Parser_t *);
+
+Error parser_createParam (Parser_t *);
 
 #endif

@@ -8,11 +8,13 @@
    | while [expr] { [stmt_seqFunc] }
    | [def_func]
    | [callFunction]
+   | [id] [stmt_assign]
 
 [stmt_assign]-> 
    | = [expr]
    | : [type] = [expr]
    | : [type]
+   | = [callFunction]
    
 [stmt_else] →
    | else { [stmt_seqFunc] }
@@ -27,12 +29,14 @@
    
 
 [parameters] →
-   | [id] : [type] ( [parameters_seq]* )
+   | [name] [id] : [type] ( [parameters_seq]* )
    | // empty
 
 [parameters_seq] →
-   | , [id] : [type] [parameters_seq]
+   | , [name] [id] : [type] [parameters_seq]
    | // empty
+
+[name] → *name*
 
 [func_ret] →
    | -> [type] { [stmt_seqFunc] }
