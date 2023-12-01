@@ -16,6 +16,7 @@ Error Parser_init(Parser_t *parser){
     parser->symtable = malloc(sizeof(symtable_t));
     if (!(parser->symtable)) return INTERNAL_COMPILER_ERROR;
     table_init(parser->symtable);
+    return SUCCESS;
 }
 
 void parser_stashExtraToken(Parser_t *parser, TokenT *token){
