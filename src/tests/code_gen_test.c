@@ -21,6 +21,8 @@ char str_const2[11] = "World";
     litValue value;                     \
     param_t *param;                     \
     symtable_entry_t *entry;            \
+    ParamBufferT pbuf;                  \
+    param_buffer_init(&pbuf);           \
     table_init(&table);                 \
     inset_test_label(name);             \
     gen_local_scope(&table);            \
@@ -33,6 +35,7 @@ char str_const2[11] = "World";
     gen_drop_local_scope(&table);   \
     table_remove_scope(&table);     \
     table_dispose(&table);          \
+    param_buffer_detor(&pbuf);      \
 
 
 #define OUTPUT_VAR(var)                                 \
@@ -110,7 +113,7 @@ void test_div_int() {
     gen_push_lit(value,TOKEN_INTEGER);
     value.i = int_const3;
     gen_push_lit(value,TOKEN_INTEGER);
-    gen_expr_binop('/');
+    gen_expr_binop('\\');
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
     END_TEST
@@ -204,7 +207,7 @@ void test_concat_str() {
     gen_push_lit(value,TOKEN_STRING);
     value.str = str_const2;
     gen_push_lit(value,TOKEN_STRING);
-    gen_string_op('|');
+    gen_expr_binop('|');
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
     value.str = lit2ptr("World");
@@ -213,7 +216,7 @@ void test_concat_str() {
     value.str = lit2ptr("Hello");
     gen_push_lit(value,TOKEN_STRING);
     free(value.str);
-    gen_string_op('|');
+    gen_expr_binop('|');
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
     END_TEST
@@ -497,6 +500,36 @@ void test_expr() {
     END_TEST
 }
 
+void test_custom_funcion() {
+    TEST("custom_funcion")
+    /*funcion insert*/
+    param = param_from_lit_create("x","_",TOKEN_DT_INT);
+    table_insert_param(&pbuf,param);
+    param = param_from_lit_create("y","_",TOKEN_DT_INT);
+    table_insert_param(&pbuf,param);
+    table_function_insert(&table,lit2ptr("custom_func"),param_buffer_export(&pbuf),TOKEN_INTEGER);
+
+    table_search_global(&table,"custom_func",&entry);
+    entry->params[0]->var = 1;
+    entry->params[0]->value.str = "a";
+    entry->params[1]->value.i = 144-15;
+    printf("MOVE LF@a int@15\n");
+    table_add_scope(&table);
+    symtable_entry_t *tmp;
+    table_insert(&table,lit2ptr("x"),&tmp);
+    table_insert(&table,lit2ptr("y"),&tmp);
+    gen_func_call("custom_func",entry);
+    gen_assignment(a,is_global(&table,a));
+    OUTPUT_VAR(a)
+    printf("EXIT int@0\n");
+
+    gen_func_def("custom_func");
+    gen_push_var("x",is_global(&table,"x"));
+    gen_push_var("y",is_global(&table,"y"));
+    gen_expr_binop('+');
+    gen_func_return();
+    END_TEST
+}
 
 
 
@@ -527,6 +560,7 @@ int main() {
     test_neq();
     test_nested_scopes();
     test_expr();
+    test_custom_funcion();
     gen_prog_end(0);
 
     return 0;
