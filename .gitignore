@@ -8,3 +8,4 @@ src/bu
 src/test_code_gen
 src/test_scanner
 interpreter/*.txt
+src/*.out
