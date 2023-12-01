@@ -31,6 +31,7 @@ typedef struct symtable_entry {
     bool defined; //flag for symbol definition
     bool declared; //flag for symbol declaration
     bool redeclared; //flag for symbol redeclaration
+    bool constant; //flag for denouncing constants
     param_t **params; // NULL termianted array of function parameters
     TokenType return_type; //return type of a function
 } symtable_entry_t;
@@ -382,5 +383,8 @@ char *lit2ptr(const char *lit);
 #define CHECK_ERR(err) \
     if (ret != 0)      \
         goto err;       \
+
+
+param_t **param_buffer_export(ParamBufferT *);
 
 #endif

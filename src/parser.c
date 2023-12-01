@@ -8,11 +8,12 @@
 #include "symtable.h"
 #include "parser.h"
 
-
+//TODO: add return value
 void Parser_init(Parser_t *parser){
     parser->token_current = NULL;
     parser->token_topOfStack = NULL;
     Stack *stack = malloc(sizeof(Stack));
+    parser->buffer = malloc(sizeof(ParamBufferT));
     Stack_Init(stack);
     symtable_t *symtable = malloc(sizeof(symtable_t));
     table_init(symtable);
@@ -23,8 +24,8 @@ void parser_stashExtraToken(Parser_t *parser, TokenT *token){
 }
 
 void parser_getNewToken(Parser_t *parser){
-    Stack_Push(parser->stack, parser->token_current);
     parser->token_topOfStack = parser->token_current;
+    Stack_Push(parser->stack, parser->token_current);
     if (parser->token_extraToken != NULL){
         parser->token_current = parser->token_extraToken;
         parser->token_extraToken = NULL;
@@ -33,19 +34,17 @@ void parser_getNewToken(Parser_t *parser){
         parser->token_current = generate_token();
     }
 }
-
-Error parser_initLocalSymtable(Parser_t *parser){
-    table_add_scope(parser->symtable);
-    parser->buffer = malloc(sizeof(ParamBufferT));
-    if (parser->buffer == NULL) return INTERNAL_COMPILER_ERROR;
+//takes case ( [name] [id] : [type] [parameters_CallSeq]*
+//therefore, we know order of tokens on the stack and can manually take out tokens
+//!!!!DO NOT USE INA ANY OTHER CASE !!!!!
+Error parser_createParam (Parser_t * parser){
+    //dont touch this
+    int top = parser->stack->topIndex;
+    TokenT ** ptr = parser->stack->array;
+    param_t* param = param_create(ptr[top-2]->value.str,ptr[top-3]->value.str, ptr[top]->type);
+    if (param == NULL) return INTERNAL_COMPILER_ERROR;
+    table_insert_param(parser->buffer, param);
     return SUCCESS;
-}
-
-
-void parser_closeLocalSymtable(Parser_t *parser){
-    table_remove_scope(parser->symtable);
-    param_buffer_detor(parser->buffer); 
-    free(parser->buffer); //TODO: unsure if neccesary
 }
 
 void parser_dtor(Parser_t * parser){

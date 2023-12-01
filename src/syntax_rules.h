@@ -27,9 +27,9 @@ Error parser_rule_defFunc(Parser_t *);
 
 Error parser_rule_funcRet(Parser_t *);
 
-Error parser_rule_params(Parser_t *);
+Error parser_rule_paramsDef(Parser_t *);
 
-Error parser_rule_paramsSeq(Parser_t *);
+Error parser_rule_paramsDefSeq(Parser_t *);
 
 Error parser_rule_elseF(Parser_t *);
 
@@ -44,6 +44,10 @@ Error parser_rule_expr(Parser_t *);
 Error parser_rule_stmtVoidSeqRet(Parser_t *);
 
 Error parser_rule_callFunc(Parser_t *);
+
+Error parser_rule_paramsCall (Parser_t*);
+
+Error parser_rule_paramsCallSeq (Parser_t*);
 
 #define CHECK_TOKEN_TYPE(parser, expected_type) \
     do { \
