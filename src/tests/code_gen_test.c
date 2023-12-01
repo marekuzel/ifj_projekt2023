@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "code_gen.h"
-#include "symtable.h"
+#include "../code_gen.h"
+#include "../symtable.h"
 
 const int int_const1 = 15;
 const int int_const2 = 12;
