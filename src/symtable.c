@@ -207,7 +207,7 @@ void table_init(symtable_t *table) {
     table->table_stack = new_tree_array;
     table_add_scope(table);
     if (table_insert_builtin_funcs(table) != 0) {
-        table_dispose(table);
+        exit(INTERNAL_COMPILER_ERROR);
     }
 }
 
@@ -232,14 +232,12 @@ void table_remove_scope(symtable_t *table) {
 
 void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
     symtable_entry_t *new_entry = entry_create();
-    awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
-    *entry = new_entry;
     symtable_entry_t *tmp_entry;
+    awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
     table->top_idx--;
-    if (table_search(table,key,&tmp_entry)){
-        new_entry->declared = true;
-    }
+    new_entry->redeclared = table_search(table,key,&tmp_entry) == true;
     table->top_idx++;
+    *entry = new_entry;
 }
 
 void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry) {
@@ -259,7 +257,6 @@ void table_function_insert(symtable_t *table, char *key, param_t **params, Token
 bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
     bool found = false;
     int table_idx = table->top_idx == -1 ? 0 : table->top_idx;
-
     while(table_idx >= 0 && !found) {
         found = awl_search(table->table_stack[table_idx],key,entry);
         table_idx--;
@@ -290,8 +287,8 @@ void awl_traverse(awl_t* awl, action_t action){
     awl_traverse(awl->right,action);
 }
 
-void table_traverse(symtable_t *table, action_t action) {
-    for (int table_idx = table->top_idx; table_idx > 1; table_idx--) {
+void table_traverse(symtable_t *table, action_t action, int start) {
+    for (int table_idx = table->top_idx; table_idx >= start; table_idx--) {
         awl_traverse(table->table_stack[table_idx],action);
     }
 }
