@@ -155,7 +155,8 @@ void print_Token(TokenT *token){
 }
 
 void token_dtor(TokenT *token) {
-    free(token->value.str);
+    if (token->type != TOKEN_INTEGER && token->type != TOKEN_DOUBLE)
+        free(token->value.str);
     token->value.str = NULL;
     free(token);
 }

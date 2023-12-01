@@ -1,6 +1,5 @@
 balala
 
-volaco = """
-balalalalalala " ""
-
-"""
+volaco = ""
+balalalalalala " ahoj
+vole"
