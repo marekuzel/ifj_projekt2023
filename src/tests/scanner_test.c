@@ -67,9 +67,8 @@ int main() {
             break;
         }
         print_token(next_token);
-        // token_dtor(next_token);
         next_token = generate_token();
     }
-    token_dtor(next_token);
+    return 0;
 
 }
