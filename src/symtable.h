@@ -391,5 +391,5 @@ param_t **param_buffer_export(ParamBufferT *);
 //TODO vymaz
 int insert_builtin(symtable_t *table, char *name, TokenType ret_type, param_t **params, int param_num);
 
-
+void add_params_to_scope(symtable_t *table, symtable_entry_t *entry);
 #endif
