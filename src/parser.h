@@ -11,7 +11,11 @@ typedef struct Parser {
     TokenT *token_current;
     TokenT *token_topOfStack;
     TokenT *token_extraToken; //in rule expr we need to take out of scanner one more token, so we will store it here
-
+    char* current_function;
+    char* current_id;
+    bool return_in_func;
+    bool find_id_type;
+    bool assign;
     Stack *stack;
     ParamBufferT *buffer;
     symtable_t *symtable;
