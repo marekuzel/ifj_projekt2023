@@ -9,6 +9,12 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
+#ifndef SCANNER_TESTS
+    #define SCANNER_ERROR(msg) fprintf(stderr,"%s.\n",msg); return NULL;
+#else
+    #define SCANNER_ERROR(msg) error_exit(token,&buffer,msg,LEXICAL_ERROR);
+#endif
+
 typedef enum fsm_state_e {
     STATE_START,
     STATE_TEXT,
@@ -20,13 +26,14 @@ typedef enum fsm_state_e {
     STATE_MULTILINE_STRING,
     STATE_TWO_DOUBLE_QUOTES,
     STATE_EQUALS,
-    STATE_EXCLAMATION,
     STATE_QUESTION,
-    STATE_RELATIONAL_OPERATOR,
+    STATE_OPERATOR,
     STATE_NUMBER,
     STATE_DECIMAL,
     STATE_DECIMAL_POINT, 
-    STATE_EXPONENT
+    STATE_EXPONENT,
+    STATE_DASH, 
+    STATE_ESCAPE_SEQUENCE
 } ScannerState;
 
 #define NOF_KEYWORDS 8

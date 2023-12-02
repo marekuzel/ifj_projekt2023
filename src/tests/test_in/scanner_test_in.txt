@@ -1,0 +1,116 @@
+balala
+
+volaco = """
+balalalalalala " ""
+
+"""
+
+String let x =23515
+
+
+// testing numbers
+452435.484misic
+
+
+
+
+// fkuewrnfwe
+
+/*nvejrsbvsjbv
+avrkmnkseurhjlcs
+x9 *88/+ 78*+866+nksdifj*/
+
+/ 
+""
+
+" kihgh nku"
+"""
+uzgzjuki
+"""
+
++
+-
+*
+bjz !
+
+!=
+
+==
+
+??
+
+f=1568
+
+>
+
+,
+
+<
+
+>=
+
+<=
+String?
+(
+{
+@ 
+:
+?
+
+}
+)
+->
+
+Int?
+&
+""
+##
+"""
+LOKO
+Ł
+nfusrbfk
+"""
+->
+#
+zjgz
+Double
+Double?
+Int
+1651.
+Int?
+String
+String?
+let
+var
+return if
+else
+while func nil
+54.1e3
+let
+1.52e-5
+$dst
+"\n"
+"\\"
+"\""
+"\r"
+"\t"
+"\u{04}"
+"""
+vnksjnv \u{4} 
+\\ nsjdnvk
+
+""""nvzedbrkr \n dkjnvrzvs \u{17}"
+"""
+
+
+
+
+"""
+func bar(with param : String) -> String. {
+let r : String = foo(param)
+return r
+}
+func foo(_ par? : String) -> String {
+let ret = bar(with: par)
+return ret
+}
