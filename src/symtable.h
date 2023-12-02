@@ -388,4 +388,8 @@ char *lit2ptr(const char *lit);
 
 param_t **param_buffer_export(ParamBufferT *);
 
+//TODO vymaz
+int insert_builtin(symtable_t *table, char *name, TokenType ret_type, param_t **params, int param_num);
+
+
 #endif

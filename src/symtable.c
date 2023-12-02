@@ -202,6 +202,7 @@ void table_init(symtable_t *table) {
     if (new_tree_array == NULL) {
         exit(INTERNAL_COMPILER_ERROR);
     }
+    table->table_stack = new_tree_array;
     table->size = SYMTABLE_SIZE;
     table->top_idx = -1;
     table->table_stack = new_tree_array;
