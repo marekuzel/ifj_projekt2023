@@ -1,22 +1,22 @@
-#ifdef RUN_TESTS 
-#else
 #include "scanner.h"
-#endif
-
 #include "errors.h"
 #include "utils.h"
 #include "symtable.h"
 #include "parser.h"
 
-//TODO: add return value
-void Parser_init(Parser_t *parser){
+
+Error Parser_init(Parser_t *parser){
     parser->token_current = NULL;
     parser->token_topOfStack = NULL;
-    Stack *stack = malloc(sizeof(Stack));
-    parser->buffer = malloc(sizeof(ParamBufferT));
-    Stack_Init(stack);
-    symtable_t *symtable = malloc(sizeof(symtable_t));
-    table_init(symtable);
+
+    parser->stack = malloc(sizeof(Stack));
+    if (!(parser->stack)) return INTERNAL_COMPILER_ERROR; 
+    if (Stack_Init(parser->stack) == STACK_INIT_FAIL) return INTERNAL_COMPILER_ERROR;
+
+    parser->symtable = malloc(sizeof(symtable_t));
+    if (!(parser->symtable)) return INTERNAL_COMPILER_ERROR;
+    table_init(parser->symtable);
+    return SUCCESS;
 }
 
 void parser_stashExtraToken(Parser_t *parser, TokenT *token){
@@ -24,8 +24,8 @@ void parser_stashExtraToken(Parser_t *parser, TokenT *token){
 }
 
 void parser_getNewToken(Parser_t *parser){
-    parser->token_topOfStack = parser->token_current;
     Stack_Push(parser->stack, parser->token_current);
+    parser->token_topOfStack = parser->token_current;
     if (parser->token_extraToken != NULL){
         parser->token_current = parser->token_extraToken;
         parser->token_extraToken = NULL;
@@ -34,9 +34,8 @@ void parser_getNewToken(Parser_t *parser){
         parser->token_current = generate_token();
     }
 }
-//takes case ( [name] [id] : [type] [parameters_CallSeq]*
-//therefore, we know order of tokens on the stack and can manually take out tokens
-//!!!!DO NOT USE INA ANY OTHER CASE !!!!!
+
+//takes case parser->buffer = malloc(sizeof(ParamBufferT));
 Error parser_createParam (Parser_t * parser){
     //dont touch this
     int top = parser->stack->topIndex;
@@ -49,7 +48,6 @@ Error parser_createParam (Parser_t * parser){
 
 void parser_dtor(Parser_t * parser){
     table_dispose(parser->symtable);
-    param_buffer_detor(parser->buffer);
     Stack_Dispose(parser->stack);
     parser->current_entry = NULL;
     free(parser);
