@@ -70,27 +70,24 @@ TokenType keyword_to_token(char* keyword) {
     }
 }
 
-TokenType datatype_to_token(BufferT* buffer, int ch) {
-    if (ch == '?') {
-        append_and_check(buffer, ch);
-    }
-    if (strcmp(buffer->bytes, "Double") == 0) {
+TokenType datatype_to_token(char* datatype) {
+    if (strcmp(datatype, "Double") == 0) {
         return TOKEN_DT_DOUBLE;
     }
-    else if (strcmp(buffer->bytes, "Double?") == 0) {
+    else if (strcmp(datatype, "Double?") == 0) {
         return TOKEN_DT_DOUBLE_NIL;
     }
-    else if (strcmp(buffer->bytes, "Int") == 0) {
+    else if (strcmp(datatype, "Int") == 0) {
         return TOKEN_DT_INT;
     }
-    else if (strcmp(buffer->bytes, "Int?") == 0) {
+    else if (strcmp(datatype, "Int?") == 0) {
         return TOKEN_DT_INT_NIL;
     }
-    else if (strcmp(buffer->bytes, "String") == 0) {
+    else if (strcmp(datatype, "String") == 0) {
         return TOKEN_DT_STRING;
     } 
-    else if (strcmp(buffer->bytes, "String?") == 0) {
-        return TOKEN_DT_DOUBLE_NIL;
+    else if (strcmp(datatype, "String?") == 0) {
+        return TOKEN_DT_STRING_NIL;
     }
     else {
         return TOKEN_ZERO;
@@ -123,7 +120,8 @@ TokenT* generate_token() {
     while (true) {
         ch = fgetc(stream);
         if (ch == EOF && state != STATE_START) {
-            error_exit(token, &buffer, "Unterminated comment or string", LEXICAL_ERROR);
+            return NULL;
+            //error_exit(token, &buffer, "Unterminated comment or string", LEXICAL_ERROR);
         }
 
         switch (state) {
@@ -213,7 +211,12 @@ TokenT* generate_token() {
                         token_init(token, keyword_to_token(buffer.bytes), &buffer);
                         ungetc(ch, stream);
                     } else if(check_for_datatype(buffer.bytes)) {
-                        token_init(token, datatype_to_token(&buffer, ch), &buffer);
+                        if (ch == '?') {
+                            append_and_check(&buffer, ch);
+                        } else {
+                            ungetc(ch, stream);
+                        }
+                        token_init(token, datatype_to_token(buffer.bytes), &buffer); // zmenit jako u keywords
                     } else {
                         token_init(token, TOKEN_IDENTIFIER, &buffer);
                         ungetc(ch, stream);
@@ -277,7 +280,8 @@ TokenT* generate_token() {
                             append_and_check(&buffer, '\\');
                             break;
                         default:
-                            error_exit(token, &buffer, "Invalid escape sequence", LEXICAL_ERROR);
+                            return NULL;
+                            // error_exit(token, &buffer, "Invalid escape sequence", LEXICAL_ERROR);
                             break;
                     }
                     escape_next = false;
@@ -315,7 +319,8 @@ TokenT* generate_token() {
                 if (ch == '"') {
                     if (++multiline_string_counter >= 3) {
                         if (buffer.bytes[buffer.length-3] != '\n') {
-                            error_exit(token, &buffer, "Lexical error", LEXICAL_ERROR);
+                            return NULL;
+                            //error_exit(token, &buffer, "Lexical error", LEXICAL_ERROR);
                         }
                         buffer.bytes[buffer.length-3] = '\0';
                         token_init(token, TOKEN_STRING, &buffer);
@@ -326,7 +331,8 @@ TokenT* generate_token() {
                     multiline_string_counter = 0;
                     if (!multiline_string_ok) {
                         if (ch != '\n') {
-                            error_exit(token, &buffer, "Lexical error - invalid multiline string", LEXICAL_ERROR);
+                            return NULL;
+                            //error_exit(token, &buffer, "Lexical error - invalid multiline string", LEXICAL_ERROR);
                         } else {
                             multiline_string_ok = true;
                             break;
@@ -375,7 +381,8 @@ TokenT* generate_token() {
                     return token;
                 } 
                 else {
-                    error_exit(token, &buffer, "Lexical error - unexpected question mark", LEXICAL_ERROR);
+                    return NULL;
+                    // error_exit(token, &buffer, "Lexical error - unexpected question mark", LEXICAL_ERROR);
                 }
                 break;
 
@@ -400,7 +407,8 @@ TokenT* generate_token() {
 
             case STATE_DECIMAL_POINT:
                 if (!(isdigit(ch) || ch == '0')) {
-                    error_exit(token, &buffer, "Invalid decimal number", LEXICAL_ERROR);
+                    return NULL;
+                    // error_exit(token, &buffer, "Invalid decimal number", LEXICAL_ERROR);
                 }
                 else {
                     state = STATE_DECIMAL;
@@ -434,7 +442,8 @@ TokenT* generate_token() {
                 }
                 else {
                     if (empty_exp) {
-                        error_exit(token, &buffer, "Invalid exponent", LEXICAL_ERROR);
+                        return NULL;
+                        //error_exit(token, &buffer, "Invalid exponent", LEXICAL_ERROR);
                     }
                     token_init(token, TOKEN_DOUBLE, &buffer);
                     ungetc(ch, stream);

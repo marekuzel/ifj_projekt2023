@@ -7,15 +7,9 @@ balalalalalala " ""
 
 String let x =23515
 
+
+// testing numbers
 452435.484misic
-
-25e31
-
-486E-4
-
-334e+8??
-
-
 
 
 
@@ -76,3 +70,14 @@ nfusrbfk
 ->
 
 zjgz
+Double
+Double?
+Int
+Int?
+String
+String?
+let
+var
+return if
+else
+while func nil
