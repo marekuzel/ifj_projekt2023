@@ -8,6 +8,9 @@
 Error Parser_init(Parser_t *parser){
     parser->token_current = NULL;
     parser->token_topOfStack = NULL;
+    parser->return_in_func = false;
+    parser->find_id_type = false;
+    parser->assign = false;
 
     parser->stack = malloc(sizeof(Stack));
     if (!(parser->stack)) return INTERNAL_COMPILER_ERROR; 
