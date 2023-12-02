@@ -30,7 +30,7 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
             }
         } else if (!strcmp(rule, "E+E")) {
             if (conc) {
-                gen_string_op('|'); // TODO delete 
+                gen_expr_binop('|');
             } else {
                 gen_expr_binop('+');
             }
@@ -343,10 +343,10 @@ Error type_check_div(TokenT* prevprev, TokenT* actual, used_types_t* usedTypes, 
     return TYPE_COMPATIBILITY_ERROR;
 }
 
-Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) { // TODO generate
+Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
     symtable_entry_t* entry;
     table_search_global(symTable, token->value.str, &entry);
-
+    char *func_name = token->value.str;
     int param_idx = 0;
 
     while (entry->params[param_idx] != NULL) {
@@ -435,6 +435,9 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
     token = generate_token();
     if (token->type == TOKEN_R_BRACKET) {
         **resType = entry->return_type;
+        table_add_scope(symTable);
+        add_params_to_scope(symTable,entry);
+        gen_func_call(func_name,entry);
         return SUCCESS;
     }
 
@@ -455,7 +458,7 @@ Error isFunc(TokenT* token, symtable_t* symTable) {
     return UNDEFINED_FUNCTION_ERROR;
 }
 
-Error type_check_2qm(TokenT* prevprev, TokenT* actual, used_types_t* usedTypes, symtable_t* symTable) {
+Error type_check_2qm(TokenT* prevprev, TokenT* actual, symtable_t* symTable) {
     TokenType before;
     TokenType after;
     Error err = type_in_special_expr(prevprev, symTable, &before);
@@ -614,7 +617,7 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType) {
                         }
 
                         if (check2questionmarks) {
-                            err = type_check_2qm(prevprevToken, token, &divTypeResult, symTable);
+                            err = type_check_2qm(prevprevToken, token, symTable);
                             if (err != SUCCESS) {
                                 return err;
                             }
@@ -708,7 +711,7 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType) {
                         }
 
                         if (check2questionmarks) {
-                            err = type_check_2qm(prevprevToken, token, &divTypeResult, symTable);
+                            err = type_check_2qm(prevprevToken, token, symTable);
                             if (err != SUCCESS) {
                                 return err;
                             }

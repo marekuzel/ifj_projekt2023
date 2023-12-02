@@ -529,3 +529,11 @@ bool is_global(symtable_t *table, char *name) {
     symtable_entry_t *entry;
     return table_search_global(table,name,&entry);
 }
+
+
+void add_params_to_scope(symtable_t *table, symtable_entry_t *entry) {
+    symtable_entry_t *tmp;
+    for (int param_idx = 0; entry->params[param_idx] != NULL; param_idx++) {
+        table_insert(table,entry->params[param_idx]->id,&tmp);
+    }
+}
