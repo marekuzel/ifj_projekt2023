@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdbool.h>
 #include "utils.h"
 #include "errors.h"
@@ -115,10 +116,27 @@ void tokeBuffer_detor (tokenBufferT *buffer) {
     buffer->length = 0;
 }
 
+buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
+    char tmp_str[3];
+    char *endptr = NULL;
+    errno = 0;
 
+    int num = (int ) strtol(num_str,&endptr,16);
 
+    if (errno != 0 || !num_str || *endptr) {
+        return BUFF_NUM_CVT_FAIL;
+    }
+    
+    sprintf(tmp_str, "%03d",num);
 
+    for (int str_idx = 0; str_idx < 2; str_idx++) {
+        if (buffer_append(buffer,tmp_str[str_idx]) != BUFF_APPEND_SUCCES) {
+            return BUFF_APPEND_FAIL;
+        }
+    }
+    return BUFF_NUM_CVT_SUCCES;
 
+}
 
 
 stack_ret_t Stack_Init(Stack *stack) {
