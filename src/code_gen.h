@@ -1,6 +1,12 @@
 #include "utils.h"
 #include "symtable.h"
 
+#define LOOP_L "LOOP"
+#define LOOP_END_L "LOOP_END"
+#define ELSE_L "IF_ELSE"
+#define IF_L "IF"
+#define IF_END_L "IF_END"
+
 /**
  * @brief enum for types of conversions
 */
@@ -242,3 +248,9 @@ void gen_int2double();
  * @brief funcion generates code for built-in funcion double2int
 */
 void gen_double2int();
+
+int get_cont_label();
+
+void gen_cont_label(int cont_label_num);
+
+void jump_cont_label(int cont_label_num);

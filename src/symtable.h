@@ -32,6 +32,7 @@ typedef struct symtable_entry {
     bool declared; //flag for symbol declaration
     bool redeclared; //flag for symbol redeclaration
     bool constant; //flag for denouncing constants
+    bool modified; //flag denounces modificatoin in value
     param_t **params; // NULL termianted array of function parameters
     TokenType return_type; //return type of a function
 } symtable_entry_t;
@@ -287,7 +288,7 @@ void table_dispose(symtable_t *table);
  * @param table: a pointer to a symtable
  * @param action: action to be performend (function pointer)
 */
-void table_traverse(symtable_t *table, action_t action, int start);
+void table_traverse(symtable_t *table, action_t action);
 
 /**
  * @brief ADT for dynamiclaly growing array of function parameters
@@ -387,4 +388,8 @@ char *lit2ptr(const char *lit);
 
 param_t **param_buffer_export(ParamBufferT *);
 
+//TODO vymaz
+int insert_builtin(symtable_t *table, char *name, TokenType ret_type, param_t **params, int param_num);
+
+void add_params_to_scope(symtable_t *table, symtable_entry_t *entry);
 #endif

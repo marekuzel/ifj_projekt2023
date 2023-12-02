@@ -7,7 +7,7 @@ ERRORS = "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)"
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): scanner.o utils.o symtable.o code_gen.o bu_analysis.o prec_table.o parser.o syntax_rules.o
+$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 .PHONY: clean, valgrind, test_code_gen, test_scanner 
@@ -29,6 +29,6 @@ test_scanner: scanner.o utils.o ./tests/scanner_test.o
 	diff ./tests/test_out/scanner_test.exp_out ./tests/test_out/scanner_test.out && echo "token output if correct"
 	grep --silent $(ERRORS) ./tests/test_out/scanner_test_valgrind.out  && echo "valgrind ok!"
 
-test_parser: parser.o symtable.o utils.o
-	$(CC) $(CFLAGS) -o $@ $^ -RUN_TESTS
-	../test_parser < test.txt
+test_parser: parser.o symtable.o utils.o ./tests/parser_test.o syntax_rules.o prec_table.o bu_analysis.o scanner.o code_gen.o
+	$(CC) $(CFLAGS) -o $@ $^
+	../test_parser 1  < /test_in/parser_test_1.txt > test_out/test_parser.out

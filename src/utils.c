@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdbool.h>
 #include "utils.h"
 #include "errors.h"
@@ -61,6 +62,83 @@ void buffer_detor (BufferT *buffer) {
 
 
 
+buff_ret_t tokenBuffer_init(tokenBufferT *buffer) {
+    buffer->length = 0;
+    buffer->cap = BUFFER_CAP_S;
+
+    buffer->bytes = calloc(buffer->cap,sizeof(TokenT *));
+    
+    if (buffer->bytes == NULL) 
+        return BUFF_INIT_FAIL;
+
+    return BUFF_INIT_SUCCES;
+}
+
+
+buff_ret_t tokenBuffer_append(tokenBufferT *buffer, const TokenT *token) {
+    if (buffer->length >= buffer->cap) {
+        TokenT **new_buff = realloc(buffer->bytes,buffer->cap * 2 * sizeof(TokenT *)); 
+
+        if (new_buff == NULL)
+        {
+            buffer_detor(buffer);
+            return BUFF_APPEND_FAIL;
+        }
+        
+        buffer->bytes = new_buff;
+        buffer->cap *= 2;
+    }
+
+    buffer->bytes[buffer->length++] = token;
+    return BUFF_APPEND_SUCCES;  
+
+}
+
+void tokenBuffer_clear(tokenBufferT *buffer) {
+    buffer->length = 0;
+}
+
+TokenT **tokenBuffer_export(const tokenBufferT *buffer) {
+    TokenT ** dst = calloc(buffer->length,sizeof(TokenT *));
+
+    if (dst == NULL)
+        return NULL;
+
+    memcpy(dst,buffer->bytes,buffer->length * sizeof(TokenT*));
+    
+    return dst;
+}
+
+void tokeBuffer_detor (tokenBufferT *buffer) {
+    free(buffer->bytes);
+    buffer->bytes = NULL;
+    buffer->cap = 0;
+    buffer->length = 0;
+}
+
+buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
+    char tmp_str[3];
+    char *endptr = NULL;
+    errno = 0;
+
+    int num = (int ) strtol(num_str,&endptr,16);
+
+    if (errno != 0 || !num_str || *endptr) {
+        return BUFF_NUM_CVT_FAIL;
+    }
+    
+    sprintf(tmp_str, "%03d",num);
+
+    for (int str_idx = 0; str_idx < 2; str_idx++) {
+        if (buffer_append(buffer,tmp_str[str_idx]) != BUFF_APPEND_SUCCES) {
+            return BUFF_APPEND_FAIL;
+        }
+    }
+    return BUFF_NUM_CVT_SUCCES;
+
+}
+
+
 stack_ret_t Stack_Init(Stack *stack) {
 	if (stack == NULL){
 		return STACK_INIT_FAIL;
@@ -85,6 +163,31 @@ void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
     if (!Stack_IsEmpty(stack)){
         *dataPtr = stack->array[stack->topIndex];
     }
+}
+
+TokenT* stack_read_token_bottom(Stack* stack) {
+  Stack tmp;
+  Stack_Init(&tmp);
+  TokenT* token;
+
+  while (!Stack_IsEmpty(stack)) {
+    Stack_Top(stack, &token);
+    Stack_Push(&tmp, token);
+    Stack_Pop(stack);
+  }
+
+  if (!Stack_IsEmpty(&tmp)) {
+    Stack_Pop(&tmp);
+  }
+
+  TokenT* token_tmp;
+  while (!Stack_IsEmpty(&tmp)) {
+    Stack_Top(&tmp, &token_tmp);
+    Stack_Push(stack, token_tmp);
+    Stack_Pop(&tmp);
+  }
+
+  return token;
 }
 
 stack_ret_t Stack_Pop( Stack *stack) {
@@ -117,7 +220,7 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     token->type = type;
     char *token_value = buffer_export(buff);
 
-    fprintf(stderr, "%s \n", token_value);
+    // fprintf(stderr, "%s \n", token_value);
 
     if (token_value == NULL) {
         return VALUE_ASSIGNMENT_FAIL;
@@ -199,8 +302,9 @@ bool stack_char_2oftop(stack_char_t *stack) {
   strcat(result, second);
   
   stack_char_push(stack, second);
-
-  return !strcmp(result, "$E");
+  bool res = !strcmp(result, "$E");
+  free(result);
+  return res;
 }
 
 bool isTerminal (char* stackSymbol) {
@@ -249,7 +353,7 @@ Error stack_insertAfterTerminal(stack_char_t* stack) {
     char* top = stack_char_top(stack);
 
     if (isTerminal(top)) {
-      stack_char_push(stack, "<");
+      stack_char_push(stack, "[");
 
       while (!stack_char_empty(&tmp)) {
         char* insert = stack_char_top(&tmp);
@@ -310,20 +414,44 @@ void stack_topTerminal(stack_char_t* stack, char **term) {
   }
 }
 
-// void print_stack(stack_char_t* stack) {
-//   stack_char_t tmp;
-//   stack_char_init(&tmp);
+char* stack_bottom_read(stack_char_t* stack) {
+  stack_char_t tmp;
+  stack_char_init(&tmp);
+  char* bottom = "";
 
-//   while (!stack_char_empty(stack)) {
-//     char* item = stack_char_top(stack);
-//     printf("%s\n", item);
-//     stack_char_push(&tmp, item);
-//     stack_char_pop(stack);
-//   }
+  while (!stack_char_empty(stack)) {
+    bottom = stack_char_top(stack);
+    stack_char_push(&tmp, bottom);
+    stack_char_pop(stack); 
+  }
 
-//   while (!stack_char_empty(&tmp)) {
-//     char* insert = stack_char_top(&tmp);
-//     stack_char_push(stack, insert);
-//     stack_char_pop(&tmp);
-//   }
-// }
+  if (!stack_char_empty(&tmp)) {
+    stack_char_pop(&tmp);
+  }
+
+  while (!stack_char_empty(&tmp)) {
+    char* chr = stack_char_top(&tmp);
+    stack_char_push(stack, chr);
+    stack_char_pop(&tmp);
+  }
+
+  return bottom;
+}
+
+void print_stack(stack_char_t* stack) {
+  stack_char_t tmp;
+  stack_char_init(&tmp);
+
+  while (!stack_char_empty(stack)) {
+    char* item = stack_char_top(stack);
+    printf("%s\n", item);
+    stack_char_push(&tmp, item);
+    stack_char_pop(stack);
+  }
+
+  while (!stack_char_empty(&tmp)) {
+    char* insert = stack_char_top(&tmp);
+    stack_char_push(stack, insert);
+    stack_char_pop(&tmp);
+  }
+}
