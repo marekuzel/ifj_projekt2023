@@ -122,6 +122,9 @@ TokenT* generate_token() {
     int ch;
     while (true) {
         ch = fgetc(stream);
+        if (ch == EOF && state != STATE_START) {
+            error_exit(token, &buffer, "Unterminated comment or string", LEXICAL_ERROR);
+        }
 
         switch (state) {
             case STATE_START:
@@ -148,13 +151,17 @@ TokenT* generate_token() {
                     token_init(token, TOKEN_EOF, &buffer);
                     return token;
                 }
-                else if (ch == '+' || ch == '-' || ch == '*') {
+                else if (ch == '+' || ch == '*') {
                     append_and_check(&buffer, ch);
                     token_init(token, TOKEN_OPERATOR, &buffer);
                     return token;
                 }
-                else if (ch == '!') {
-                    state = STATE_EXCLAMATION;
+                else if (ch == '-') {
+                    append_and_check(&buffer, ch);
+                    state = STATE_DASH;
+                }
+                else if (ch == '!' || ch == '<' || ch == '>') {
+                    state = STATE_OPERATOR;
                     append_and_check(&buffer, ch);
                 }
                 else if (ch == '=') {
@@ -163,10 +170,6 @@ TokenT* generate_token() {
                 }
                 else if (ch == '?') {
                     state = STATE_QUESTION;
-                    append_and_check(&buffer, ch);
-                }
-                else if (ch == '<' || ch == '>') {
-                    state = STATE_RELATIONAL_OPERATOR;
                     append_and_check(&buffer, ch);
                 }
                 else if (ch == '(') {
@@ -274,7 +277,7 @@ TokenT* generate_token() {
                             append_and_check(&buffer, '\\');
                             break;
                         default:
-                            error_exit(token, &buffer, "Invalid escape sequence.", LEXICAL_ERROR);
+                            error_exit(token, &buffer, "Invalid escape sequence", LEXICAL_ERROR);
                             break;
                     }
                     escape_next = false;
@@ -323,7 +326,7 @@ TokenT* generate_token() {
                     multiline_string_counter = 0;
                     if (!multiline_string_ok) {
                         if (ch != '\n') {
-                            error_exit(token, &buffer, "Lexical error", LEXICAL_ERROR);
+                            error_exit(token, &buffer, "Lexical error - invalid multiline string", LEXICAL_ERROR);
                         } else {
                             multiline_string_ok = true;
                             break;
@@ -333,31 +336,37 @@ TokenT* generate_token() {
                 append_and_check(&buffer, ch);
                 break;
 
-            case STATE_EXCLAMATION:
+            case STATE_DASH:
+                if (ch == '>') {
+                    append_and_check(&buffer, ch);
+                    token_init(token, TOKEN_ARROW, &buffer);
+                }
+                else {
+                    ungetc(ch, stream);
+                    token_init(token, TOKEN_OPERATOR, &buffer);
+                }
+                return token;
+
+            case STATE_OPERATOR:
                 if (ch == '=') {
                     append_and_check(&buffer, ch);
-                    token_init(token, TOKEN_OPERATOR, &buffer);
-                    return token;
                 } 
                 else {
-                    token_init(token, TOKEN_OPERATOR, &buffer);
                     ungetc(ch, stream);
-                    return token;
                 }
-                break;
+                token_init(token, TOKEN_OPERATOR, &buffer);
+                return token;
 
             case STATE_EQUALS:
                 if (ch == '=') {
                     append_and_check(&buffer, ch);
                     token_init(token, TOKEN_OPERATOR, &buffer);
-                    return token;
                 } 
                 else {
                     token_init(token, TOKEN_ASSIGN, &buffer);
                     ungetc(ch, stream);
-                    return token;
                 }
-                break;
+                return token;
 
             case STATE_QUESTION:
                 if (ch == '?') {
@@ -366,21 +375,7 @@ TokenT* generate_token() {
                     return token;
                 } 
                 else {
-                    ungetc(ch, stream);
-                    return token;
-                }
-                break;
-
-            case STATE_RELATIONAL_OPERATOR:
-                if (ch == '=') {
-                    append_and_check(&buffer, ch);
-                    token_init(token, TOKEN_OPERATOR, &buffer);
-                    return token;
-                } 
-                else {
-                    token_init(token, TOKEN_OPERATOR, &buffer);
-                    ungetc(ch, stream);
-                    return token;
+                    error_exit(token, &buffer, "Lexical error - unexpected question mark", LEXICAL_ERROR);
                 }
                 break;
 
@@ -448,4 +443,28 @@ TokenT* generate_token() {
 
         }
     }
+}
+
+int main() {
+    TokenT* token = generate_token();
+    while (token != NULL && token->type != TOKEN_EOF) {
+        
+        printf("TOKEN T%d VALUE ", token->type);
+
+        if (token->type == TOKEN_INTEGER) {
+            printf("%d\n", token->value.i);
+        }
+        else if (token->type == TOKEN_DOUBLE) {
+            printf("%f\n", token->value.d);
+        }
+        else {
+            printf("%s\n", token->value.str);
+        }
+
+        // token_dtor(token);
+        token = generate_token();
+    }
+    // printf("TOKEN T%d VALUE [%s]\n", token->type, token->value.str);
+
+    return 0;
 }
