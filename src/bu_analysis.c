@@ -16,7 +16,6 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
 
         if(!strcmp(rule, "i")) {
             token = stack_read_token_bottom(tokenStack);
-
             if (token->type == TOKEN_DT_DOUBLE || token->type == TOKEN_DT_INT || token->type == TOKEN_DT_STRING || 
             token->type == TOKEN_DT_STRING_NIL || token->type == TOKEN_DT_INT_NIL || token->type == TOKEN_DT_DOUBLE_NIL) {
                 gen_push_var(token->value.str, is_global(symTable, token->value.str));
@@ -151,6 +150,9 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
 
     } else if (types->t_string == true && (types->t_double == true || types->t_int == true)) {
         return TYPE_COMPATIBILITY_ERROR;
+    } else if (types->t_nil == true) {
+        generate(tokenStack, ruleStack, convert, conc, symTable);
+        **exprRetType = TOKEN_NIL;
     } else {
         return TYPE_COMPATIBILITY_ERROR;
     }
@@ -244,7 +246,7 @@ Error check_rule(char* stackRule, stack_char_t* stack, stack_char_t* ruleStack) 
 
     for (int i = 0; i < NUM_OF_EXPR; i++) {
         if (!strcmp(stackRule, expr[i])) { // find rule 
-            fprintf(stderr, "rule: %s\n", expr[i]);
+            // fprintf(stderr, "rule: %s\n", expr[i]);
             stack_char_push(stack, "E");
             stack_char_push(ruleStack, stackRule);
             return SUCCESS;
@@ -358,7 +360,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
             comma = false;
         }
 
-        if (entry->params[param_idx]->name == NULL) { // TODO param_value_init
+        if (entry->params[param_idx]->name == NULL) { // [expr]
             token = generate_token();
             if (token->type == TOKEN_IDENTIFIER) {
                 symtable_entry_t* paramIdent;
@@ -388,7 +390,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
                     return SYNTAX_ERROR;
                 }
             }
-        } else {
+        } else { // [name] : [expr]
             token = generate_token();
             if (token->type == TOKEN_IDENTIFIER && !strcmp(token->value.str, entry->params[param_idx]->name)) {
 

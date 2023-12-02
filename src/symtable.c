@@ -486,6 +486,7 @@ int table_insert_builtin_funcs(symtable_t *table) {
     CHECK_ERR(table_insert_builtin_funcs_err)
 
     /**write*/
+    params[0] = param_from_lit_create("term", NULL, TOKEN_ZERO);
     ret = insert_builtin(table,"write",TOKEN_NIL,NULL,0);
     CHECK_ERR(table_insert_builtin_funcs_err)
 
