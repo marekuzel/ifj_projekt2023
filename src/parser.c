@@ -5,7 +5,7 @@
 #include "parser.h"
 
 
-Error Parser_init(Parser_t *parser){
+Error parser_init(Parser_t *parser){
     parser->token_current = NULL;
     parser->token_topOfStack = NULL;
     parser->return_in_func = false;
@@ -26,8 +26,8 @@ void parser_stashExtraToken(Parser_t *parser, TokenT *token){
     parser->token_extraToken = token;
 }
 
-void parser_getNewToken(Parser_t *parser){
-    Stack_Push(parser->stack, parser->token_current);
+Error parser_getNewToken(Parser_t *parser){
+    if (Stack_Push(parser->stack, parser->token_current) == STACK_PUSH_FAIL) return INTERNAL_COMPILER_ERROR;
     parser->token_topOfStack = parser->token_current;
     if (parser->token_extraToken != NULL){
         parser->token_current = parser->token_extraToken;
@@ -36,6 +36,7 @@ void parser_getNewToken(Parser_t *parser){
     else{
         parser->token_current = generate_token();
     }
+    return SUCCESS;
 }
 
 //takes case parser->buffer = malloc(sizeof(ParamBufferT));

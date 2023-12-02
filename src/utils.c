@@ -148,7 +148,7 @@ stack_ret_t Stack_Init(Stack *stack) {
 		return STACK_INIT_FAIL;
 	}
 	stack -> topIndex = -1;
-    return STACK_INIT_SUCCES;
+  return STACK_INIT_SUCCES;
 }
 
 bool Stack_IsEmpty(const Stack *stack) {
@@ -201,8 +201,8 @@ stack_ret_t Stack_Pop( Stack *stack) {
 stack_ret_t Stack_Push( Stack *stack, TokenT *data ) {
 	if (!Stack_IsFull(stack)) {
 		stack->topIndex++;
-		stack->array[stack->topIndex] = data;
-        return STACK_PUSH_SUCCES;
+    stack->array[stack->topIndex] = data;
+      return STACK_PUSH_SUCCES;
 	}
 	else{
 		return STACK_PUSH_FAIL;
