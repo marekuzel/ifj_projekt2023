@@ -1,14 +1,18 @@
 #include "utils.h"
 #include "symtable.h"
 
+#define LOOP_L "LOOP"
+#define LOOP_END_L "LOOP_END"
+#define ELSE_L "IF_ELSE"
+#define IF_L "IF"
+#define IF_END_L "IF_END"
+
 /**
  * @brief enum for types of conversions
 */
 typedef enum conv_type {
     FI, //float to int
     IF, //int ot float
-    IC, //int to character
-    CI, //character to int
 } conv_type_t;
 
 /**
@@ -34,9 +38,9 @@ typedef enum rel_op {
  *      '+'  - adition
  *      '-'  - subtraction
  *      '*'  - multiplication
- *      '/'  - division between ints
- *      '\\' - division between floats
+ *      '/'  - division
  *      '?'  - ??
+ *      '|'  - string concatenation
 */
 void gen_expr_binop(const char operator);
 
@@ -71,16 +75,6 @@ void gen_push_var(char *id, bool global);
 */
 void gen_push_lit(litValue value, TokenType type);
 
-/**
- * @brief function generates code for string operations
- * 
- * @param operator: accepted operato values:
- *        'l' - srting length
- *        '|' - string concatenation
- *        'g' - get character at idx of string
- *        's' - set character at idx of string
-*/
-void gen_string_op(const char operator);
 
 /**
  * @brief function generates code for built-in read functions
@@ -245,6 +239,18 @@ void gen_ord();
 */
 void gen_chr();
 
+/**
+ * @brief funcion generates code for built-in funcion int2double
+*/
 void gen_int2double();
 
+/**
+ * @brief funcion generates code for built-in funcion double2int
+*/
 void gen_double2int();
+
+int get_cont_label();
+
+void gen_cont_label(int cont_label_num);
+
+void jump_cont_label(int cont_label_num);

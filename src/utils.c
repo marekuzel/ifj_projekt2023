@@ -87,6 +87,31 @@ void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
     }
 }
 
+TokenT* stack_read_token_bottom(Stack* stack) {
+  Stack tmp;
+  Stack_Init(&tmp);
+  TokenT* token;
+
+  while (!Stack_IsEmpty(stack)) {
+    Stack_Top(stack, &token);
+    Stack_Push(&tmp, token);
+    Stack_Pop(stack);
+  }
+
+  if (!Stack_IsEmpty(&tmp)) {
+    Stack_Pop(&tmp);
+  }
+
+  TokenT* token_tmp;
+  while (!Stack_IsEmpty(&tmp)) {
+    Stack_Top(&tmp, &token_tmp);
+    Stack_Push(stack, token_tmp);
+    Stack_Pop(&tmp);
+  }
+
+  return token;
+}
+
 stack_ret_t Stack_Pop( Stack *stack) {
 	if (!Stack_IsEmpty(stack)){
 		stack->topIndex--;
@@ -117,7 +142,7 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     token->type = type;
     char *token_value = buffer_export(buff);
 
-    fprintf(stderr, "%s \n", token_value);
+    // fprintf(stderr, "%s \n", token_value);
 
     if (token_value == NULL) {
         return VALUE_ASSIGNMENT_FAIL;
@@ -138,20 +163,6 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
     token->value.str = token_value;
     return VALUE_ASSIGNMENT_SUCCES;
 
-}
-
-void print_Token(TokenT *token){
-    switch(token->type) {
-        case TOKEN_INTEGER:
-            printf("%d\n",token->value.i);
-            break;
-        case TOKEN_DOUBLE:
-            printf("%f\n",token->value.d);
-            break;
-        default:
-            printf("%s\n",token->value.str);
-            break;
-    }
 }
 
 void token_dtor(TokenT *token) {
@@ -212,8 +223,9 @@ bool stack_char_2oftop(stack_char_t *stack) {
   strcat(result, second);
   
   stack_char_push(stack, second);
-
-  return !strcmp(result, "$E");
+  bool res = !strcmp(result, "$E");
+  free(result);
+  return res;
 }
 
 bool isTerminal (char* stackSymbol) {
@@ -262,7 +274,7 @@ Error stack_insertAfterTerminal(stack_char_t* stack) {
     char* top = stack_char_top(stack);
 
     if (isTerminal(top)) {
-      stack_char_push(stack, "<");
+      stack_char_push(stack, "[");
 
       while (!stack_char_empty(&tmp)) {
         char* insert = stack_char_top(&tmp);
@@ -323,20 +335,44 @@ void stack_topTerminal(stack_char_t* stack, char **term) {
   }
 }
 
-// void print_stack(stack_char_t* stack) {
-//   stack_char_t tmp;
-//   stack_char_init(&tmp);
+char* stack_bottom_read(stack_char_t* stack) {
+  stack_char_t tmp;
+  stack_char_init(&tmp);
+  char* bottom = "";
 
-//   while (!stack_char_empty(stack)) {
-//     char* item = stack_char_top(stack);
-//     printf("%s\n", item);
-//     stack_char_push(&tmp, item);
-//     stack_char_pop(stack);
-//   }
+  while (!stack_char_empty(stack)) {
+    bottom = stack_char_top(stack);
+    stack_char_push(&tmp, bottom);
+    stack_char_pop(stack); 
+  }
 
-//   while (!stack_char_empty(&tmp)) {
-//     char* insert = stack_char_top(&tmp);
-//     stack_char_push(stack, insert);
-//     stack_char_pop(&tmp);
-//   }
-// }
+  if (!stack_char_empty(&tmp)) {
+    stack_char_pop(&tmp);
+  }
+
+  while (!stack_char_empty(&tmp)) {
+    char* chr = stack_char_top(&tmp);
+    stack_char_push(stack, chr);
+    stack_char_pop(&tmp);
+  }
+
+  return bottom;
+}
+
+void print_stack(stack_char_t* stack) {
+  stack_char_t tmp;
+  stack_char_init(&tmp);
+
+  while (!stack_char_empty(stack)) {
+    char* item = stack_char_top(stack);
+    printf("%s\n", item);
+    stack_char_push(&tmp, item);
+    stack_char_pop(stack);
+  }
+
+  while (!stack_char_empty(&tmp)) {
+    char* insert = stack_char_top(&tmp);
+    stack_char_push(stack, insert);
+    stack_char_pop(&tmp);
+  }
+}
