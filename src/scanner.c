@@ -445,26 +445,3 @@ TokenT* generate_token() {
     }
 }
 
-int main() {
-    TokenT* token = generate_token();
-    while (token != NULL && token->type != TOKEN_EOF) {
-        
-        printf("TOKEN T%d VALUE ", token->type);
-
-        if (token->type == TOKEN_INTEGER) {
-            printf("%d\n", token->value.i);
-        }
-        else if (token->type == TOKEN_DOUBLE) {
-            printf("%f\n", token->value.d);
-        }
-        else {
-            printf("%s\n", token->value.str);
-        }
-
-        // token_dtor(token);
-        token = generate_token();
-    }
-    // printf("TOKEN T%d VALUE [%s]\n", token->type, token->value.str);
-
-    return 0;
-}

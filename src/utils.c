@@ -141,7 +141,8 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
 }
 
 void token_dtor(TokenT *token) {
-    free(token->value.str);
+    if (token->type != TOKEN_INTEGER && token->type != TOKEN_DOUBLE)
+        free(token->value.str);
     token->value.str = NULL;
     free(token);
 }
