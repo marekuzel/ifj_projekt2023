@@ -6,6 +6,12 @@
 Implementaion of syntax rules
 *****************************
 */
+#define TEST_PARSER
+#ifdef TEST_PARSER
+#define PRINT_RULE(rule) printf("rule %s\n", #rule);
+#else
+#define PRINT_RULE(rule)
+#endif
 
 Error parser_rule_id(Parser_t *parser){
     //id ->id
@@ -22,6 +28,7 @@ Error parser_rule_funcID(Parser_t *parser){
 Error parser_rule_stmt(Parser_t *parser){
     //stmt -> let <id> <stmt_assign>
     if (parser->token_current->type == TOKEN_LET){
+        PRINT_RULE(Let);
         GET_NEXT_AND_CALL_RULE(parser, id);
 
         table_insert(parser->symtable,parser->token_current->value.str,&(parser->current_entry));
@@ -34,6 +41,7 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> var <id> <stmt_assign>
     else if (parser->token_current->type == TOKEN_VAR){
+        PRINT_RULE(var);
         GET_NEXT_AND_CALL_RULE(parser, id);
 
         //add variable to symtable and assign that its declared
@@ -48,6 +56,7 @@ Error parser_rule_stmt(Parser_t *parser){
      // | if <expr> { <stmtSeq> }
     //  | if let [id] [stmtAssign] [stmtSeq] [stmt_else]
     else if (parser->token_current->type == TOKEN_IF){ //add local symbol table
+        PRINT_RULE(ifS);
         table_add_scope(parser->symtable);
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_LET){
@@ -67,6 +76,7 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> while [expr] { [stmt_seqFunc] }
     else if (parser->token_current->type == TOKEN_WHILE){
+        PRINT_RULE (whileS);
         GET_NEXT_AND_CALL_RULE(parser, expr);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
 
@@ -83,6 +93,7 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> [id] = [expr]
     else if (parser->token_current->type == TOKEN_IDENTIFIER){
+        PRINT_RULE(stmt);
         parser->current_id = parser->token_current->value.str;
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
         parser->assign = true;
@@ -97,6 +108,7 @@ Error parser_rule_stmt(Parser_t *parser){
 }
 
 Error parser_rule_stmtAssign(Parser_t *parser){
+    PRINT_RULE(stmtAssign);
     //stmt_assign -> = <expr>
     if (parser->token_current->type == TOKEN_ASSIGN){
         parser->find_id_type = true;
@@ -108,16 +120,21 @@ Error parser_rule_stmtAssign(Parser_t *parser){
     else if (parser->token_current->type == TOKEN_COLON){
         GET_NEXT_AND_CALL_RULE(parser, type);
         parser->current_entry->type = parser->token_current->type;
+        parser_getNewToken(parser);
+        if (parser->token_current->type == TOKEN_ASSIGN){
+            GET_NEXT_AND_CALL_RULE(parser, expr);
+            parser->current_entry->defined = true;
         goto success;
+        }
+        else{
+            goto success;
+        }
     }
     //stmt_assign -> : <type> = <expr>
     else if (parser->token_current->type == TOKEN_COLON){
         GET_NEXT_AND_CALL_RULE(parser, type);
         parser->current_entry->type = parser->token_current->type;
-        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
-        GET_NEXT_AND_CALL_RULE(parser, expr);
-        parser->current_entry->defined = true;
-        goto success;
+        
     }
     else{
         return SYNTAX_ERROR;
@@ -127,6 +144,9 @@ Error parser_rule_stmtAssign(Parser_t *parser){
 }
 
 Error parser_rule_paramsCall (Parser_t *parser){
+    #ifdef TEST_PARSER
+    printf ("rule paramsCall\n");
+    #endif
     //     [parametersCall] →
     //    | [name] : [expr] [parameters_seqCall]
     //    | empty
@@ -459,6 +479,7 @@ Error parser_rule_type(Parser_t *parser){
 }
 
 Error parser_rule_expr(Parser_t *parser){
+    PRINT_RULE(expr);
     //  [expr] →
     //    | ( [expr] )
     //    | [expr] + [expr]
@@ -529,11 +550,14 @@ Error parser_rule_stmtSeq(Parser_t *parser){
 }
 
 Error parser_rule_stmtMainSeq(Parser_t *parser){
-    while (parser->token_current->type != TOKEN_EOF){
+    do {
         parser_getNewToken(parser);
+        if (parser->token_current->type == TOKEN_EOF) {
+            break;
+        }
         if (parser_rule_stmt(parser) == SYNTAX_ERROR){
             return SYNTAX_ERROR;
         }
-    }
+    } while (1); 
     return SUCCESS;
 }
