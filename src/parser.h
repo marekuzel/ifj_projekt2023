@@ -20,10 +20,6 @@ typedef struct Parser {
     ParamBufferT *buffer;
     symtable_t *symtable;
     symtable_entry_t *current_entry;
-
-    int loop_label_num; //keeps track of loop label number
-    int cond_label_num; // keeps track of condition label number
-    int cont_label_num; // keeps track of continuation label number
 }Parser_t;
 
 typedef enum {
