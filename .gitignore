@@ -1,0 +1,15 @@
+src/*.o
+src/tests/*.o
+src/*.exe
+src/scanner
+src/test_table
+src/*.txt
+src/prec
+src/bu
+src/test_code_gen
+src/test_scanner
+interpreter/*.txt
+.vscode
+src/tests/test_out/*
+
+src/googletest/*

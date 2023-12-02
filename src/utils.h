@@ -1,7 +1,10 @@
 #include <stdbool.h>
-
+#include "errors.h"
 #ifndef UTILS_H
 #define UTILS_H
+
+
+
 
 /**
  * @brief Buffet ADT implementation
@@ -14,7 +17,7 @@ typedef struct buffer_t {
 } BufferT;
 
 
-typedef enum {
+typedef enum buffer_ret{
     BUFF_INIT_FAIL,
     BUFF_INIT_SUCCES,
     BUFF_APPEND_SUCCES,
@@ -65,6 +68,63 @@ char *buffer_export(const BufferT *buffer);
  */
 void buffer_detor (BufferT *buffer);
 
+typedef union {
+    char* str;
+    double d;
+    int i;
+} litValue;
+
+typedef enum tokentype_e {
+    TOKEN_ZERO,
+    TOKEN_IDENTIFIER,
+
+    TOKEN_DT_DOUBLE,
+    TOKEN_DT_DOUBLE_NIL,
+    TOKEN_DT_INT,
+    TOKEN_DT_INT_NIL,
+    TOKEN_DT_STRING,
+    TOKEN_DT_STRING_NIL,
+
+    TOKEN_LET,
+    TOKEN_VAR,
+
+    TOKEN_RETURN,
+    TOKEN_IF,
+    TOKEN_ELSE,
+    TOKEN_WHILE,
+    TOKEN_FUNC,
+    TOKEN_NIL,
+
+    TOKEN_OPERATOR,
+
+    TOKEN_STRING, 
+    TOKEN_INTEGER, 
+    TOKEN_DOUBLE,
+
+    TOKEN_ASSIGN,
+    TOKEN_L_BRACKET,
+    TOKEN_R_BRACKET,
+    TOKEN_LC_BRACKET,
+    TOKEN_RC_BRACKET,
+    TOKEN_COLON,
+    TOKEN_COMMA,
+    TOKEN_ARROW, //->
+
+    TOKEN_EOF
+} TokenType;
+
+typedef enum token_ret{
+    INT_CONVERSION_SUCCES,
+    DOUBLE_CONVERTION_SUCCES,
+    VALUE_ASSIGNMENT_FAIL,
+    VALUE_ASSIGNMENT_SUCCES,
+} token_ret_t;
+
+typedef struct token{
+    TokenType type;
+    litValue value;
+} TokenT;
+
 /**
  * @brief Stack impementation
  * 
@@ -72,12 +132,12 @@ void buffer_detor (BufferT *buffer);
 
 #define STACK_SIZE 100 
 
-typedef struct {
-	char *array;
+typedef struct stack{
+	TokenT **array;
 	int topIndex;
 } Stack;
 
-typedef enum {
+typedef enum stack_ret{
     STACK_INIT_SUCCES,
     STACK_INIT_FAIL,
     STACK_POP_SUCCES,
@@ -112,15 +172,25 @@ bool Stack_IsEmpty(const Stack *);
  */
 bool Stack_IsFull(const Stack *);
 
+TokenT Stack_peak();
 /**
- * @brief Pops element from stack, assigns value to TokenT
+ * @brief Assigns value of the top element of stack to dataPtr
  * 
  * @param stack pointer to stack
- * @param TokenT pointer to token
+ * @param dataPtr pointer to TokenT
+ */
+void Stack_Top(const Stack *, TokenT **);
+
+TokenT* stack_read_token_bottom(Stack* stack);
+
+/**
+ * @brief Pops element from stack
+ * 
+ * @param stack pointer to stack
  * @retval stack_ret_t STACK_POP_SUCCES if succesfull
  * @retval stack_ret_t STACK_POP_FAIL if failed
  */
-stack_ret_t Stack_Pop(Stack *, TokenT*);
+stack_ret_t Stack_Pop(Stack *);
 
 /**
  * @brief Stack push operation
@@ -131,7 +201,7 @@ stack_ret_t Stack_Pop(Stack *, TokenT*);
  * @return stack_ret_t STACK_PUSH_FAIL if failed
  */
 
-stack_ret_t Stack_Push(Stack *, TokenT);
+stack_ret_t Stack_Push(Stack *, TokenT*);
 
 
 /**
@@ -144,40 +214,6 @@ void Stack_Dispose(Stack *);
 /**
  * @brief ADT Token implementation
 */
-
-
-typedef union {
-    char* str;
-    double d;
-    int i;
-} tokenValue;
-
-typedef enum tokentype_e {
-    TOKEN_ZERO,
-    TOKEN_IDENTIFIER,
-    TOKEN_KEYWORD,
-    TOKEN_DATATYPE,
-    TOKEN_STRING, 
-    TOKEN_INTEGER, 
-    TOKEN_DECIMAL,
-    TOKEN_TERM,
-    TOKEN_LINE_COMMENT,
-    TOKEN_BLOCK_COMMENT,
-    TOKEN_EOF
-} TokenType;
-
-typedef enum {
-    INT_CONVERSION_SUCCES,
-    DOUBLE_CONVERTION_SUCCES,
-    VALUE_ASSIGNMENT_FAIL,
-    VALUE_ASSIGNMENT_SUCCES,
-} token_ret_t;
-
-typedef struct {
-    TokenType type;
-    tokenValue value;
-} TokenT;
-
 
 /**
  * @brief TokenT initialization
@@ -195,5 +231,29 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff);
  * @param token: pointer to a token
 */
 void token_dtor(TokenT *token);
+
+#define MAXSTACK 100
+
+#define STACKDEC(T, TNAME)                                                     \
+  typedef struct {                                                             \
+    T items[MAXSTACK];                                                         \
+    int top;                                                                   \
+  } stack_##TNAME##_t;                                                         \
+                                                                               \
+  void stack_##TNAME##_init(stack_##TNAME##_t *stack);                         \
+  void stack_##TNAME##_push(stack_##TNAME##_t *stack, T item);                 \
+  T stack_##TNAME##_pop(stack_##TNAME##_t *stack);                             \
+  T stack_##TNAME##_top(stack_##TNAME##_t *stack);                             \
+  bool stack_##TNAME##_empty(stack_##TNAME##_t *stack);                        \
+
+STACKDEC(char*, char)
+
+bool stack_char_2oftop(stack_char_t *stack);
+Error stack_insertAfterTerminal(stack_char_t* stack);
+int stack_numOfElem(stack_char_t* stack);
+void stack_topTerminal(stack_char_t* stack, char **term);
+char* stack_bottom_read(stack_char_t* stack);
+void print_stack(stack_char_t* stack);
+
 
 #endif
