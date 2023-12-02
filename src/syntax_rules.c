@@ -1,5 +1,6 @@
 #include "syntax_rules.h"
 #include "parser.h"
+#include "code_gen.h"
 /*
 *****************************
 Implementaion of syntax rules
@@ -26,7 +27,7 @@ Error parser_rule_stmt(Parser_t *parser){
         table_insert(parser->symtable,parser->token_current->value.str,&(parser->current_entry));
         parser->current_entry->declared = true;
         parser->current_entry->constant = true;
-
+        gen_def_var(parser->token_current->value.str,is_global(parser->symtable,parser->token_current->value.str),parser->current_entry->type);
         GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         goto success;
     }
@@ -38,7 +39,7 @@ Error parser_rule_stmt(Parser_t *parser){
         table_insert(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
         parser->current_entry->declared = true;
         parser->current_entry->constant = false;
-
+        gen_def_var(parser->token_current->value.str,is_global(parser->symtable,parser->token_current->value.str),parser->current_entry->type);
         GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         goto success;
     }
@@ -96,7 +97,12 @@ Error parser_rule_stmtAssign(Parser_t *parser){
     //stmt_assign -> = <expr>
     if (parser->token_current->type == TOKEN_ASSIGN){
         GET_NEXT_AND_CALL_RULE(parser, expr);
-        parser->current_entry->defined = true;
+
+        if (parser->current_entry->defined == false) {
+            parser->current_entry->defined = true;
+        } else {
+            parser->current_entry->modified = true;
+        }
         goto success;
     }
     //stmt_assign -> : <type>
