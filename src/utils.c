@@ -62,62 +62,62 @@ void buffer_detor (BufferT *buffer) {
 
 
 
-buff_ret_t tokenBuffer_init(tokenBufferT *buffer) {
-    buffer->length = 0;
-    buffer->cap = BUFFER_CAP_S;
+// buff_ret_t tokenBuffer_init(tokenBufferT *buffer) {
+//     buffer->length = 0;
+//     buffer->cap = BUFFER_CAP_S;
 
-    buffer->bytes = calloc(buffer->cap,sizeof(TokenT *));
+//     buffer->bytes = calloc(buffer->cap,sizeof(TokenT *));
     
-    if (buffer->bytes == NULL) 
-        return BUFF_INIT_FAIL;
+//     if (buffer->bytes == NULL) 
+//         return BUFF_INIT_FAIL;
 
-    return BUFF_INIT_SUCCES;
-}
+//     return BUFF_INIT_SUCCES;
+// }
 
 
-buff_ret_t tokenBuffer_append(tokenBufferT *buffer, const TokenT *token) {
-    if (buffer->length >= buffer->cap) {
-        TokenT **new_buff = realloc(buffer->bytes,buffer->cap * 2 * sizeof(TokenT *)); 
+// buff_ret_t tokenBuffer_append(tokenBufferT *buffer, const TokenT *token) {
+//     if (buffer->length >= buffer->cap) {
+//         TokenT **new_buff = realloc(buffer->bytes,buffer->cap * 2 * sizeof(TokenT *)); 
 
-        if (new_buff == NULL)
-        {
-            buffer_detor(buffer);
-            return BUFF_APPEND_FAIL;
-        }
+//         if (new_buff == NULL)
+//         {
+//             buffer_detor(buffer);
+//             return BUFF_APPEND_FAIL;
+//         }
         
-        buffer->bytes = new_buff;
-        buffer->cap *= 2;
-    }
+//         buffer->bytes = new_buff;
+//         buffer->cap *= 2;
+//     }
 
-    buffer->bytes[buffer->length++] = token;
-    return BUFF_APPEND_SUCCES;  
+//     buffer->bytes[buffer->length++] = token;
+//     return BUFF_APPEND_SUCCES;  
 
-}
+// }
 
-void tokenBuffer_clear(tokenBufferT *buffer) {
-    buffer->length = 0;
-}
+// void tokenBuffer_clear(tokenBufferT *buffer) {
+//     buffer->length = 0;
+// }
 
-TokenT **tokenBuffer_export(const tokenBufferT *buffer) {
-    TokenT ** dst = calloc(buffer->length,sizeof(TokenT *));
+// TokenT **tokenBuffer_export(const tokenBufferT *buffer) {
+//     TokenT ** dst = calloc(buffer->length,sizeof(TokenT *));
 
-    if (dst == NULL)
-        return NULL;
+//     if (dst == NULL)
+//         return NULL;
 
-    memcpy(dst,buffer->bytes,buffer->length * sizeof(TokenT*));
+//     memcpy(dst,buffer->bytes,buffer->length * sizeof(TokenT*));
     
-    return dst;
-}
+//     return dst;
+// }
 
-void tokeBuffer_detor (tokenBufferT *buffer) {
-    free(buffer->bytes);
-    buffer->bytes = NULL;
-    buffer->cap = 0;
-    buffer->length = 0;
-}
+// void tokeBuffer_detor (tokenBufferT *buffer) {
+//     free(buffer->bytes);
+//     buffer->bytes = NULL;
+//     buffer->cap = 0;
+//     buffer->length = 0;
+// }
 
 buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
-    char tmp_str[3];
+    char tmp_str[4];
     char *endptr = NULL;
     errno = 0;
 
@@ -129,7 +129,7 @@ buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
     
     sprintf(tmp_str, "%03d",num);
 
-    for (int str_idx = 0; str_idx < 2; str_idx++) {
+    for (int str_idx = 0; tmp_str[str_idx] != '\0'; str_idx++) {
         if (buffer_append(buffer,tmp_str[str_idx]) != BUFF_APPEND_SUCCES) {
             return BUFF_APPEND_FAIL;
         }

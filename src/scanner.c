@@ -15,6 +15,18 @@ void append_and_check(BufferT *buffer, const char ch) {
     }
 }
 
+void append_hex(BufferT *buffer, char* number_buffer) {
+    buff_ret_t ret = buffer_apend_hex_num(buffer, number_buffer);
+    if (ret == BUFF_NUM_CVT_FAIL) {
+        return NULL;
+        //error_exit(token, &buffer, "Invalid escape sequence", LEXICAL_ERROR);
+    } 
+    else if (ret == BUFF_APPEND_FAIL) {
+        fprintf(stderr, "Internal compiler error. \n");
+        exit(INTERNAL_COMPILER_ERROR);
+    }
+}
+
 void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
     token_dtor(token); // free(token) bude v token_dtor 
     buffer_detor(buffer);
@@ -93,6 +105,34 @@ TokenType datatype_to_token(char* datatype) {
         return TOKEN_ZERO;
     }
 }
+
+ScannerState handle_escape_sequence(BufferT* buffer, char ch) {
+    switch (ch) {
+        case '"':
+            append_hex(buffer, "22");
+            break;
+        case 'n':
+            append_hex(buffer, "a");
+            break;
+        case 'r':
+            append_hex(buffer, "d");
+            break;
+        case 't':
+            append_hex(buffer, "9");
+            break;
+        case '\\':
+            append_hex(buffer, "5c");
+            break;
+        case 'u':
+            return STATE_ESCAPE_SEQUENCE;
+            break;
+        default:
+            return STATE_START; // zmenit na null
+            // error_exit(token, &buffer, "Invalid escape sequence", LEXICAL_ERROR);
+            break;
+    }
+    return STATE_STRING;
+}
     
 TokenT* generate_token() {
     FILE* stream = stdin;
@@ -113,6 +153,9 @@ TokenT* generate_token() {
     bool escape_next = false;
     bool exp_sign = false;
     bool empty_exp = true;
+    bool multiline_mode = false;
+    char number_buffer[3];
+    int esc_sqv_cnt = 0;
     // V pripade ze chci vratit charakter do stdin:
     // ungetc(ch, stream);
 
@@ -120,6 +163,7 @@ TokenT* generate_token() {
     while (true) {
         ch = fgetc(stream);
         if (ch == EOF && state != STATE_START) {
+            fprintf(stderr, "here\n");
             return NULL;
             //error_exit(token, &buffer, "Unterminated comment or string", LEXICAL_ERROR);
         }
@@ -200,7 +244,10 @@ TokenT* generate_token() {
                     token_init(token, TOKEN_COMMA, &buffer);
                     return token;
                 }
-                // ..
+                else {
+                    return NULL;
+                    //error_exit(token, &buffer, "Unexpected symbol", LEXICAL_ERROR);
+                }
                 break;
 
             case STATE_TEXT:
@@ -216,7 +263,7 @@ TokenT* generate_token() {
                         } else {
                             ungetc(ch, stream);
                         }
-                        token_init(token, datatype_to_token(buffer.bytes), &buffer); // zmenit jako u keywords
+                        token_init(token, datatype_to_token(buffer.bytes), &buffer);
                     } else {
                         token_init(token, TOKEN_IDENTIFIER, &buffer);
                         ungetc(ch, stream);
@@ -263,26 +310,10 @@ TokenT* generate_token() {
 
             case STATE_STRING:
                 if (escape_next) {
-                    switch (ch) {
-                        case '"':
-                            append_and_check(&buffer, '\"');
-                            break;
-                        case 'n':
-                            append_and_check(&buffer, '\n');
-                            break;
-                        case 'r':
-                            append_and_check(&buffer, '\r');
-                            break;
-                        case 't':
-                            append_and_check(&buffer, '\t');
-                            break;
-                        case '\\':
-                            append_and_check(&buffer, '\\');
-                            break;
-                        default:
-                            return NULL;
-                            // error_exit(token, &buffer, "Invalid escape sequence", LEXICAL_ERROR);
-                            break;
+                    append_and_check(&buffer, '\\');
+                    state = handle_escape_sequence(&buffer, ch);
+                    if (state == 0) { // smazat
+                        return NULL;
                     }
                     escape_next = false;
                     break;
@@ -307,6 +338,7 @@ TokenT* generate_token() {
             case STATE_TWO_DOUBLE_QUOTES:
                 if (ch == '"') {
                     state = STATE_MULTILINE_STRING;
+                    multiline_mode = true;
                 } 
                 else {
                     ungetc(ch, stream);
@@ -316,7 +348,21 @@ TokenT* generate_token() {
                 break;
 
             case STATE_MULTILINE_STRING:
-                if (ch == '"') {
+                if (escape_next) {
+                    append_and_check(&buffer, '\\');
+                    state = handle_escape_sequence(&buffer, ch);
+                    fprintf(stderr, "!!!!!!!!!!!!!%d\n", state);
+                    if (state == 0) { // smazat
+                        return NULL;
+                    }
+                    if (state == STATE_STRING) {
+                        state = STATE_MULTILINE_STRING;
+                    }
+                    
+                    escape_next = false;
+                    break;
+                }
+                else if (ch == '"') {
                     if (++multiline_string_counter >= 3) {
                         if (buffer.bytes[buffer.length-3] != '\n') {
                             return NULL;
@@ -327,6 +373,10 @@ TokenT* generate_token() {
                         return token;
                     }
                 } 
+                else if (ch == '\\') {
+                    escape_next = true;
+                    break;
+                }
                 else {
                     multiline_string_counter = 0;
                     if (!multiline_string_ok) {
@@ -433,23 +483,57 @@ TokenT* generate_token() {
        
             case STATE_EXPONENT:
                 if ((ch == '+' || ch == '-') && exp_sign == false) {
+                    fprintf(stderr, "exp znamenko \n");
                     exp_sign = true;
                     append_and_check(&buffer, ch);
                 } 
                 else if (isdigit(ch) || ch == '0') {
+                    fprintf(stderr, "exp cislo \n");
                     empty_exp = false;
                     append_and_check(&buffer, ch);
                 }
                 else {
+                    fprintf(stderr, "koncim exp\n");
                     if (empty_exp) {
+                        fprintf(stderr, "prazdny exp\n");
                         return NULL;
                         //error_exit(token, &buffer, "Invalid exponent", LEXICAL_ERROR);
                     }
+                    fprintf(stderr, "valid exp\n");
                     token_init(token, TOKEN_DOUBLE, &buffer);
                     ungetc(ch, stream);
                     return token;
                 }
+                break;
 
+            case STATE_ESCAPE_SEQUENCE:
+                esc_sqv_cnt++;
+                if (esc_sqv_cnt == 1 && ch == '{') {
+                    break;
+                } 
+                else if (esc_sqv_cnt == 2 && isxdigit(ch)) {
+                    number_buffer[0] = ch;
+                    break;
+                }
+                else if (esc_sqv_cnt == 3 && isxdigit(ch)) {
+                    number_buffer[1] = ch;
+                    continue;
+                }
+                else if ((esc_sqv_cnt == 3 || esc_sqv_cnt == 4) && ch == '}') {
+                    number_buffer[esc_sqv_cnt-2] = '\0';
+                    append_hex(&buffer, number_buffer);
+                    if (multiline_mode) {
+                        state = STATE_MULTILINE_STRING;
+                    } else {
+                        state = STATE_STRING;
+                    }
+                    break;
+                }
+                else {
+                    return NULL;
+                    //error_exit(token, &buffer, "Invalid escape sequence", LEXICAL_ERROR);
+                }
+                break;
         }
     }
 }

@@ -46,7 +46,7 @@ void print_token(TokenT *token) {
         printf("%s %d\n",tokentype_to_string[TOKEN_INTEGER],token->value.i);
         break;
     case TOKEN_DOUBLE:
-        printf("%s %lf\n",tokentype_to_string[TOKEN_DOUBLE],token->value.d);
+        printf("%s %a\n",tokentype_to_string[TOKEN_DOUBLE],token->value.d);
         break;
     default:
         printf("%s %s\n",tokentype_to_string[token->type],token->value.str);
@@ -57,7 +57,15 @@ void print_token(TokenT *token) {
 
 int main() {
     TokenT *next_token = generate_token();
-    while (next_token->type != TOKEN_EOF) {
+    while (1) {
+        if (next_token == NULL) {
+            next_token = generate_token();
+            printf("Invalid input\n");
+            continue;
+        }
+        if (next_token->type == TOKEN_EOF) {
+            break;
+        }
         print_token(next_token);
         // token_dtor(next_token);
         next_token = generate_token();
