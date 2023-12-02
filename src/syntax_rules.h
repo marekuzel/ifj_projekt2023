@@ -49,6 +49,8 @@ Error parser_rule_paramsCall (Parser_t*);
 
 Error parser_rule_paramsCallSeq (Parser_t*);
 
+Error parser_rule_stmtMainSeq (Parser_t *);
+
 #define CHECK_TOKEN_TYPE(parser, expected_type) \
     do { \
         if ((parser)->token_current->type != (expected_type)) { \
