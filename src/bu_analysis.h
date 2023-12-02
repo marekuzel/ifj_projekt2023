@@ -12,8 +12,15 @@ typedef struct used_types {
     bool t_int;
     bool t_double;
     bool t_string;
+    bool t_int_nil;
+    int int_nil;
+    bool t_double_nil;
+    int double_nil;
+    bool t_string_nil;
+    int string_nil;
+    bool t_nil;
 } used_types_t;
 
-Error bu_read(TokenT** next, symtable_t* symTable);
+Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType);
 
 #endif
