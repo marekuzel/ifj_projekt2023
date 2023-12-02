@@ -21,7 +21,9 @@ typedef enum buffer_ret{
     BUFF_INIT_FAIL,
     BUFF_INIT_SUCCES,
     BUFF_APPEND_SUCCES,
-    BUFF_APPEND_FAIL
+    BUFF_APPEND_FAIL,
+    BUFF_NUM_CVT_FAIL,
+    BUFF_NUM_CVT_SUCCES
     } buff_ret_t;
 
 
@@ -68,6 +70,8 @@ char *buffer_export(const BufferT *buffer);
  */
 void buffer_detor (BufferT *buffer);
 
+buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str);
+
 typedef struct token_buffer_t {
     TokenT **bytes;
     int cap;
@@ -81,7 +85,7 @@ typedef struct token_buffer_t {
  * @retval ret_t BUFF_INIT_SUCCES if succesfull
  * @retval ret_t BUFF_INIT_FAIL if failed
  */
-buff_ret_t tokenbuffer_init(tokenBufferT *buffer);
+buff_ret_t tokenBuffer_init(tokenBufferT *buffer);
 
 /**
  * @brief Appends chr to the end of buffer 
