@@ -11,6 +11,8 @@ Error Parser_init(Parser_t *parser){
     parser->return_in_func = false;
     parser->find_id_type = false;
     parser->assign = false;
+    parser->if_while = false;
+
     parser->stack = malloc(sizeof(Stack));
     if (!(parser->stack)) return INTERNAL_COMPILER_ERROR; 
     if (Stack_Init(parser->stack) == STACK_INIT_FAIL) return INTERNAL_COMPILER_ERROR;

@@ -94,6 +94,7 @@ Error parser_rule_stmt(Parser_t *parser){
             // GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         }
         else{
+            parser->if_while = true;
             int cnd_label = get_cond_label();
             GET_NEXT_AND_CALL_RULE(parser, expr); //with note that expr will handle the brackets
             GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
@@ -114,6 +115,7 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> while [expr] { [stmt_seqFunc] }
     else if (parser->token_current->type == TOKEN_WHILE){
+        parser->if_while = true;
         int loop_label = get_loop_label();
         table_add_scope(parser->symtable);
         gen_local_scope(parser->symtable);
@@ -541,7 +543,10 @@ Error parser_rule_expr(Parser_t *parser){
     TokenT *next = malloc(sizeof(TokenT));
     next->type = TOKEN_ZERO;
     TokenType exprRet;
-    Error err = bu_read(&next, parser->symtable, &exprRet);
+    Error err = bu_read(&next, parser->symtable, &exprRet, parser->if_while);
+    if (parser->if_while) {
+        parser->if_while = false;
+    }
     symtable_entry_t* entry;
     if (err == SUCCESS) {
         if (parser->return_in_func) { // return [expr]
