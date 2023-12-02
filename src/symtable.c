@@ -236,7 +236,9 @@ void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
     symtable_entry_t *tmp_entry;
     awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
     table->top_idx--;
-    new_entry->redeclared = table_search(table,key,&tmp_entry) == true;
+    if (table_search(table,key,&tmp_entry)) {
+        new_entry->redeclared = true;
+    }
     table->top_idx++;
     *entry = new_entry;
 }
@@ -288,8 +290,8 @@ void awl_traverse(awl_t* awl, action_t action){
     awl_traverse(awl->right,action);
 }
 
-void table_traverse(symtable_t *table, action_t action, int start) {
-    for (int table_idx = table->top_idx; table_idx >= start; table_idx--) {
+void table_traverse(symtable_t *table, action_t action) {
+    for (int table_idx = table->top_idx; table_idx >= 1; table_idx--) {
         awl_traverse(table->table_stack[table_idx],action);
     }
 }

@@ -165,20 +165,6 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
 
 }
 
-void print_Token(TokenT *token){
-    switch(token->type) {
-        case TOKEN_INTEGER:
-            printf("%d\n",token->value.i);
-            break;
-        case TOKEN_DOUBLE:
-            printf("%f\n",token->value.d);
-            break;
-        default:
-            printf("%s\n",token->value.str);
-            break;
-    }
-}
-
 void token_dtor(TokenT *token) {
     free(token->value.str);
     token->value.str = NULL;

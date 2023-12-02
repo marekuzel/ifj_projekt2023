@@ -11,9 +11,12 @@ void gen_prog() {
     printf("DEFVAR GF@$dest\n");
     printf("DEFVAR GF@$op1\n");
     printf("DEFVAR GF@$op2\n");
+    jump_cont_label(1);
 
 }
 void gen_prog_end(int exit_code) {
+    int cnt_label = get_cont_label();
+    gen_cont_label(cnt_label);
     printf("EXIT int@%d\n",exit_code);
     gen_ord();
     gen_chr();
@@ -75,17 +78,17 @@ void  gen_push_lit(litValue value, TokenType type) {
     }
 
 void gen_var_copy(awl_t *awl) {
-    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
+    if (awl->value->redeclared|| awl->value->type == TOKEN_FUNC) {
         return;
-
+    }
     printf("DEFVAR TF@%s\n",awl->key);
     printf("MOVE TF@%s LF@%s\n",awl->key,awl->key);
 }
 
 void gen_var_val_move(awl_t *awl) {
-    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC)
+    if (awl->value->redeclared || awl->value->type == TOKEN_FUNC || !(awl->value->modified)) {
         return;
-
+    }
     printf("MOVE LF@%s TF@%s\n",awl->key,awl->key);
 }
 
@@ -107,17 +110,11 @@ void gen_expr_binop(char operator) {
         break;
 
     case '/':
-        label_num =  get_cond_label();
-        printf("POPS GF@$op1\n");
-        printf("PUSHS GF@$op1\n");
-        printf("TYPE GF@$dest GF@$op1\n");
-
-        printf("JUMPIFEQ division%d GF@$dest string@float\n",label_num);
-        printf("IDIVS\n");
-        printf("JUMP divisionend%d\n",label_num);
-        printf("LABEL division%d\n",label_num);
         printf("DIVS\n");
-        printf("LABEL divisionend%d\n",label_num);
+        break;
+    
+    case '\\':
+        printf("IDIVS\n");
         break;
 
     case '?':
@@ -132,6 +129,15 @@ void gen_expr_binop(char operator) {
         printf("PUSHS GF@$op1\n");
         break;
 
+    case '|':
+        printf("MOVE GF@$dest string@\n");
+
+        printf("POPS GF@$op2\n"); 
+        printf("POPS GF@$op1\n");
+
+        printf("CONCAT GF@$dest GF@$op1 GF@$op2\n");
+
+        printf("PUSHS GF@$dest\n");
     default:
         break;
     }
@@ -186,54 +192,21 @@ void gen_cond(rel_op_t relation_operator) {
     }
 }
 
-void gen_string_op(const char operator) {
-        printf("MOVE GF@$dest string@\n");
-    switch (operator) {
-    case 'l':
-        printf("POPS GF@$op1\n");
-        printf("STRLEN GF@$dest GF@$op1\n");
-        break;
-
-    case '|':
-        printf("POPS GF@$op2\n"); 
-        printf("POPS GF@$op1\n");
-
-        printf("CONCAT GF@$dest GF@$op1 GF@$op2\n");
-        break;
-    case 'g':
-        printf("POPS GF@$op2\n");
-        printf("POPS GF@$op1\n"); ;
-
-        printf("GETCHAR GF@$dest GF@$op1 GF@$op2\n");
-        break;
-    
-    case 's':
-        printf("POPS GF@$op2\n");
-        printf("POPS GF@$op1\n"); 
-
-        printf("SETCHAR GF@$dest GF@$op1 GF@$op2\n");
-    default:
-        break;
-    }
-
-    printf("PUSHS GF@$dest\n");
-}
-
 void gen_local_scope(symtable_t *table) {
     printf("CREATEFRAME\n");
-    table_traverse(table,&gen_var_copy,1);
+    table_traverse(table,&gen_var_copy);
     printf("PUSHFRAME\n");
 }
 
 void gen_drop_local_scope(symtable_t *table) {
     printf("POPFRAME\n");
-    table_traverse(table,&gen_var_val_move,2);
+    table_traverse(table,&gen_var_val_move);
     printf("CREATEFRAME\n");
 }
 
 void gen_cnd_jump(char *dest_type, int dest_number) {
     printf("PUSHS bool@true\n");
-    printf("JUMPIFNEQS %s%d\n",dest_type, dest_number);
+    printf("JUMPIFNEQS $%s%d\n",dest_type, dest_number);
 }
 
 int get_cond_label() {
@@ -243,11 +216,11 @@ int get_cond_label() {
 }
 
 void gen_cond_else_label(int cond_label_num) {
-    printf("LABEL IF_ELSE%d\n",cond_label_num);
+    printf("LABEL $IF_ELSE%d\n",cond_label_num);
 }
 
 void gen_loop_label(int loop_label_num) {
-    printf("LABEL LOOP%d\n",loop_label_num);
+    printf("LABEL $LOOP%d\n",loop_label_num);
 }
 
 int get_loop_label() {
@@ -257,11 +230,11 @@ int get_loop_label() {
 }
 
 void gen_end_label(char *des_type, int label_num) {
-    printf("LABEL %s_END%d\n",des_type,label_num);
+    printf("LABEL $%s_END%d\n",des_type,label_num);
 }
 
 void gen_jmp(char* label_type, int label_num) {
-    printf("JUMP %s%d\n",label_type,label_num);
+    printf("JUMP $%s%d\n",label_type,label_num);
 }
 
 void gen_func_def(char *name) {
@@ -438,4 +411,18 @@ void gen_double2int() {
     printf("PUSHS GF@$dest\n");
     
     gen_func_return();
+}
+
+int get_cont_label() {
+    static int cont_label_num = 0;
+    cont_label_num++;
+    return cont_label_num;
+}
+
+void gen_cont_label(int cont_label_num) {
+    printf("LABEL $cont%d\n",cont_label_num);
+}
+
+void jump_cont_label(int cont_label_num) {
+    printf("JUMP $cont%d\n",cont_label_num);
 }
