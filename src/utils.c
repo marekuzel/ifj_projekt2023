@@ -61,6 +61,66 @@ void buffer_detor (BufferT *buffer) {
 
 
 
+buff_ret_t tokenBuffer_init(tokenBufferT *buffer) {
+    buffer->length = 0;
+    buffer->cap = BUFFER_CAP_S;
+
+    buffer->bytes = calloc(buffer->cap,sizeof(TokenT *));
+    
+    if (buffer->bytes == NULL) 
+        return BUFF_INIT_FAIL;
+
+    return BUFF_INIT_SUCCES;
+}
+
+
+buff_ret_t tokenBuffer_append(tokenBufferT *buffer, const TokenT *token) {
+    if (buffer->length >= buffer->cap) {
+        TokenT **new_buff = realloc(buffer->bytes,buffer->cap * 2 * sizeof(TokenT *)); 
+
+        if (new_buff == NULL)
+        {
+            buffer_detor(buffer);
+            return BUFF_APPEND_FAIL;
+        }
+        
+        buffer->bytes = new_buff;
+        buffer->cap *= 2;
+    }
+
+    buffer->bytes[buffer->length++] = token;
+    return BUFF_APPEND_SUCCES;  
+
+}
+
+void tokenBuffer_clear(tokenBufferT *buffer) {
+    buffer->length = 0;
+}
+
+TokenT **tokenBuffer_export(const tokenBufferT *buffer) {
+    TokenT ** dst = calloc(buffer->length,sizeof(TokenT *));
+
+    if (dst == NULL)
+        return NULL;
+
+    memcpy(dst,buffer->bytes,buffer->length * sizeof(TokenT*));
+    
+    return dst;
+}
+
+void tokeBuffer_detor (tokenBufferT *buffer) {
+    free(buffer->bytes);
+    buffer->bytes = NULL;
+    buffer->cap = 0;
+    buffer->length = 0;
+}
+
+
+
+
+
+
+
 stack_ret_t Stack_Init(Stack *stack) {
 	if (stack == NULL){
 		return STACK_INIT_FAIL;
