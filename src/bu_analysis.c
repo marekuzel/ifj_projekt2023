@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool conc) {
+Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool conc, symtable_t* symTable) {
     // "i", "(E)", "E+E", "E-E", "E*E", "E/E", "E==E", "E!=E", "E<E", "E<=E", "E>E", "E>=E", "E??E"
     while (!stack_char_empty(ruleStack)) {
         char* rule = stack_bottom_read(ruleStack);
@@ -16,9 +16,9 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
 
         if(!strcmp(rule, "i")) {
             token = stack_read_token_bottom(tokenStack);
-
-            if (token->type == TOKEN_DT_DOUBLE || token->type == TOKEN_DT_INT || token->type == TOKEN_DT_STRING) {
-                gen_push_var(token->value.str, true);
+            if (token->type == TOKEN_DT_DOUBLE || token->type == TOKEN_DT_INT || token->type == TOKEN_DT_STRING || 
+            token->type == TOKEN_DT_STRING_NIL || token->type == TOKEN_DT_INT_NIL || token->type == TOKEN_DT_DOUBLE_NIL) {
+                gen_push_var(token->value.str, is_global(symTable, token->value.str));
             } else {
                 gen_push_lit(token->value, token->type);  
             }
@@ -100,21 +100,21 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil) {
     return SUCCESS;
 }
 
-Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType) {
+Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable) {
     bool convert = false; // convert int to float
     bool conc = false; // concatenate strings
     Error err;
     if (types->t_int == true && types->t_double == false && types->t_string == false && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
-        err = generate(tokenStack, ruleStack, convert, conc);
+        err = generate(tokenStack, ruleStack, convert, conc, symTable);
         **exprRetType = TOKEN_DT_INT;
     } else if (types->t_int == false && types->t_double == true && types->t_string == false && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
-        err = generate(tokenStack, ruleStack, convert, conc);
+        err = generate(tokenStack, ruleStack, convert, conc, symTable);
         **exprRetType = TOKEN_DT_DOUBLE;
     } else if (types->t_int == false && types->t_double == false && types->t_string == true && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
         err = check_comb(ruleStack, true, false);
         if (err == SUCCESS) {
             conc = true;
-            err = generate(tokenStack, ruleStack, convert, conc);
+            err = generate(tokenStack, ruleStack, convert, conc, symTable);
             **exprRetType = TOKEN_DT_STRING;
         } else {
             return err;
@@ -124,7 +124,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
             err = check_comb(ruleStack, false, false);
             if (err == SUCCESS) {
                 convert = true;
-                err = generate(tokenStack, ruleStack, convert, conc);
+                err = generate(tokenStack, ruleStack, convert, conc, symTable);
                 **exprRetType = TOKEN_DT_DOUBLE;
             } else {
                 return err;
@@ -136,7 +136,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
     (types->t_string == true && (types->t_string_nil == true || types->int_nil == true))) {
         err = check_comb(ruleStack, false, true);
         if (err == SUCCESS) {
-            err = generate(tokenStack, ruleStack, convert, conc);
+            err = generate(tokenStack, ruleStack, convert, conc, symTable);
             if (types->t_int == true) {
                 **exprRetType = TOKEN_DT_INT;
             } else if (types->t_double == true) {
@@ -150,6 +150,9 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
 
     } else if (types->t_string == true && (types->t_double == true || types->t_int == true)) {
         return TYPE_COMPATIBILITY_ERROR;
+    } else if (types->t_nil == true) {
+        generate(tokenStack, ruleStack, convert, conc, symTable);
+        **exprRetType = TOKEN_NIL;
     } else {
         return TYPE_COMPATIBILITY_ERROR;
     }
@@ -243,7 +246,7 @@ Error check_rule(char* stackRule, stack_char_t* stack, stack_char_t* ruleStack) 
 
     for (int i = 0; i < NUM_OF_EXPR; i++) {
         if (!strcmp(stackRule, expr[i])) { // find rule 
-            fprintf(stderr, "rule: %s\n", expr[i]);
+            // fprintf(stderr, "rule: %s\n", expr[i]);
             stack_char_push(stack, "E");
             stack_char_push(ruleStack, stackRule);
             return SUCCESS;
@@ -357,7 +360,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
             comma = false;
         }
 
-        if (entry->params[param_idx]->name == NULL) { // TODO param_value_init
+        if (entry->params[param_idx]->name == NULL) { // [expr]
             token = generate_token();
             if (token->type == TOKEN_IDENTIFIER) {
                 symtable_entry_t* paramIdent;
@@ -387,7 +390,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
                     return SYNTAX_ERROR;
                 }
             }
-        } else {
+        } else { // [name] : [expr]
             token = generate_token();
             if (token->type == TOKEN_IDENTIFIER && !strcmp(token->value.str, entry->params[param_idx]->name)) {
 
@@ -747,7 +750,7 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType) {
         }
     }
     
-    err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType);
+    err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable);
     return err;
 }
 
