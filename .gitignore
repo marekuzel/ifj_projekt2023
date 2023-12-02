@@ -11,3 +11,5 @@ src/test_scanner
 interpreter/*.txt
 .vscode
 src/tests/test_out/*
+
+src/googletest/*
