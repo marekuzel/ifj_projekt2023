@@ -22,9 +22,11 @@ char str_const2[11] = "World";
     param_t *param;                     \
     symtable_entry_t *entry;            \
     ParamBufferT pbuf;                  \
+    int cnt_label = get_cont_label();   \
     param_buffer_init(&pbuf);           \
     table_init(&table);                 \
     inset_test_label(name);             \
+    gen_cont_label(cnt_label);          \
     gen_local_scope(&table);            \
     table_add_scope(&table);            \
     char *a = lit2ptr("a");             \
@@ -32,10 +34,11 @@ char str_const2[11] = "World";
     gen_def_var(a,false,TOKEN_DT_INT);  \
 
 #define END_TEST                    \
-    gen_drop_local_scope(&table);   \
     table_remove_scope(&table);     \
+    gen_drop_local_scope(&table);   \
     table_dispose(&table);          \
     param_buffer_detor(&pbuf);      \
+    jump_cont_label(cnt_label+1);   \
 
 
 #define OUTPUT_VAR(var)                                 \
@@ -60,7 +63,7 @@ char str_const2[11] = "World";
 
 
 #define PUSH_STR_LIT(val)               \
-    value.i = val;                      \
+    value.str = val;                      \
     gen_push_lit(value,TOKEN_STRING);   \
 
 #define PUSH_NIL                     \
@@ -455,6 +458,23 @@ void test_neq() {
     END_TEST
 }
 
+/*
+    a :Int = 0
+    b = 69
+    {
+        a :Int = 1
+        {
+            a :Int = 2
+            {
+                a :Int = 3
+                    ...
+                {
+                    a : Int = 14
+                }
+            }
+        }
+    }
+*/
 
 void test_nested_scopes() {
     TEST("nested_scopes")
@@ -484,7 +504,9 @@ void test_nested_scopes() {
     END_TEST
 }
 
-
+/*
+    a = 15+12*4
+*/
 void test_expr() {
     TEST("expr_15+12*4")
     value.i = int_const1;
@@ -499,7 +521,14 @@ void test_expr() {
     OUTPUT_VAR(a)
     END_TEST
 }
+/*
 
+a = custom_funcion(a,129)
+
+custom_funcion(_ x:Int, _ y:Int) -> Int {
+    return x + y
+}
+*/
 void test_custom_funcion() {
     TEST("custom_funcion")
     /*funcion insert*/
@@ -519,18 +548,130 @@ void test_custom_funcion() {
     table_insert(&table,lit2ptr("x"),&tmp);
     table_insert(&table,lit2ptr("y"),&tmp);
     gen_func_call("custom_func",entry);
+
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
-    printf("EXIT int@0\n");
-
+    
+    cnt_label = get_cont_label();
+    jump_cont_label(cnt_label);
     gen_func_def("custom_func");
     gen_push_var("x",is_global(&table,"x"));
     gen_push_var("y",is_global(&table,"y"));
     gen_expr_binop('+');
+    table_remove_scope(&table);
     gen_func_return();
+    gen_cont_label(cnt_label);
+    END_TEST
+}
+/*
+a :Int = 0
+if (3 > 12){
+    a = 3
+} else {
+    a = 12
+}
+*/
+void test_if_else() {
+    TEST("if_else")
+    OUTPUT_VAR(a)
+    int ln = get_cond_label();
+    PUSH_INT_LIT(int_const3)
+    PUSH_INT_LIT(int_const2)
+    gen_cond(GT);
+    gen_cnd_jump(ELSE_L,ln);
+    table_add_scope(&table);
+    gen_local_scope(&table);
+    PUSH_INT_LIT(int_const3)
+    table_insert(&table,lit2ptr("b"),&entry);
+    PUSH_STR_LIT("IF_branch")
+    gen_assignment("b",is_global(&table,"b"));
+    OUTPUT_VAR("b")
+    table_search(&table,a,&entry);
+    entry->modified = true;
+    gen_assignment(a,is_global(&table,a));
+    gen_drop_local_scope(&table);
+    table_remove_scope(&table);
+
+    gen_jmp(IF_END_L,ln);
+    gen_cond_else_label(ln);
+    table_add_scope(&table);
+    gen_local_scope(&table);
+    PUSH_INT_LIT(int_const2)
+    table_insert(&table,lit2ptr("b"),&entry);
+    PUSH_STR_LIT("ELSE_BRANCH")
+    gen_def_var("b",is_global(&table,"b"),TOKEN_INTEGER);
+    gen_assignment("b",is_global(&table,"b"));
+    OUTPUT_VAR("b")
+    table_search(&table,a,&entry);
+    entry->modified = true;
+    gen_assignment(a,is_global(&table,a));
+    gen_drop_local_scope(&table);
+    table_remove_scope(&table);
+    gen_end_label(IF_L,ln);
+    OUTPUT_VAR(a)
     END_TEST
 }
 
+/*
+{
+    a :Int = 0
+
+    while(a < 100) {
+        if (a <= 4) {
+            a = a + 1
+        }
+        a = a + 3
+    }
+}
+*/
+void test_loop() {
+    TEST("loop")
+    OUTPUT_VAR(a)
+    int lpn = get_loop_label();
+    table_add_scope(&table);
+    gen_local_scope(&table);
+    gen_loop_label(lpn);
+    gen_push_var(a,is_global(&table,a));
+    PUSH_INT_LIT(100);
+    gen_cond(LT);
+    int cndn = get_cond_label();
+    gen_cnd_jump(LOOP_END_L,lpn);
+    gen_push_var(a,is_global(&table,a));
+    PUSH_INT_LIT(4)
+    gen_cond(LTE);
+    gen_cnd_jump(ELSE_L,cndn);
+    table_add_scope(&table);
+    gen_local_scope(&table);
+    gen_push_var(a,is_global(&table,a));
+    PUSH_INT_LIT(1)
+    gen_expr_binop('+');
+    gen_assignment(a,is_global(&table,a));
+    table_search(&table,a,&entry);
+    entry->modified = 1;
+    gen_drop_local_scope(&table);
+    table_remove_scope(&table);
+    gen_jmp(IF_END_L,cndn);
+    gen_cond_else_label(cndn);
+    table_add_scope(&table);
+    gen_local_scope(&table);
+    gen_drop_local_scope(&table);
+    table_remove_scope(&table);
+    gen_end_label(IF_L,cndn);
+    gen_push_var(a,is_global(&table,a));
+    PUSH_INT_LIT(4)
+    gen_expr_binop('+');
+    gen_assignment(a,is_global(&table,a));
+    table_search(&table,a,&entry);
+    entry->modified = 1;
+    gen_jmp(LOOP_L,lpn);
+    gen_end_label(LOOP_L,lpn);
+    gen_drop_local_scope(&table);
+    table_remove_scope(&table);
+
+    OUTPUT_VAR(a)
+    END_TEST
+
+}
 
 
 
@@ -561,6 +702,8 @@ int main() {
     test_nested_scopes();
     test_expr();
     test_custom_funcion();
+    test_if_else();
+    test_loop();
     gen_prog_end(0);
 
     return 0;
