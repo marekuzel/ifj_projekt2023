@@ -60,26 +60,30 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
     return SUCCESS;
 }
 
-Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil) {
+Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_while) {
     // "i", "(E)", "E+E", "E-E", "E*E", "E/E", "E==E", "E!=E", "E<E", "E<=E", "E>E", "E>=E", "E??E"
-
     stack_char_t tmp;
     stack_char_init(&tmp);
+    int relation_op_counter = 0;
 
     while (!stack_char_empty(stack)) {
         char* rule = stack_char_top(stack);
-        if (typeNil) {
+        if (if_while) { // have to have at least one relation op
+            if (!strcmp(rule, "E==E") || !strcmp(rule, "E!=E") || !strcmp(rule, "E<E") || !strcmp(rule, "E<=E") || !strcmp(rule, "E>E") || 
+            !strcmp(rule, "E>=E")) {
+                relation_op_counter++;
+            }
+        } else if (typeNil) { // cant use this rules with nil
             if (!strcmp(rule, "E/E") || !strcmp(rule, "E-E") || !strcmp(rule, "E*E") || !strcmp(rule, "E==E") ||
             !strcmp(rule, "E!=E") || !strcmp(rule, "E<E") || !strcmp(rule, "E<=E") || !strcmp(rule, "E>E") || !strcmp(rule, "E>=E")) {
                 return TYPE_COMPATIBILITY_ERROR;
             }
-        }
-        if (only_strings) {
+        } else if (only_strings) {
             // check if right operators are used with strings
             if (!strcmp(rule, "E/E") || !strcmp(rule, "E-E") || !strcmp(rule, "E*E")) {
                 return TYPE_COMPATIBILITY_ERROR;
             }
-        } else {
+        } else if (only_strings == false && typeNil == false && if_while == false) {
             // check if right operators are used with double and int in one expr
             if (!strcmp(rule, "E<E") || !strcmp(rule, "E<=E") ||
             !strcmp(rule, "E>E") || !strcmp(rule, "E>=E")) {
@@ -97,13 +101,28 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil) {
         stack_char_pop(&tmp);
     }
 
+
+    if (if_while && relation_op_counter == 1) {
+        return SUCCESS;
+    } else {
+        return TYPE_COMPATIBILITY_ERROR;
+    }
+
     return SUCCESS;
 }
 
-Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable) {
+Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while) {
     bool convert = false; // convert int to float
     bool conc = false; // concatenate strings
     Error err;
+
+    if (if_while) { // check if true or false will be the result
+        err = check_comb(ruleStack, false, false, if_while);
+        if (err != SUCCESS) {
+            return err;
+        }
+    }
+
     if (types->t_int == true && types->t_double == false && types->t_string == false && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
         err = generate(tokenStack, ruleStack, convert, conc, symTable);
         **exprRetType = TOKEN_DT_INT;
@@ -111,7 +130,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
         err = generate(tokenStack, ruleStack, convert, conc, symTable);
         **exprRetType = TOKEN_DT_DOUBLE;
     } else if (types->t_int == false && types->t_double == false && types->t_string == true && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
-        err = check_comb(ruleStack, true, false);
+        err = check_comb(ruleStack, true, false, false);
         if (err == SUCCESS) {
             conc = true;
             err = generate(tokenStack, ruleStack, convert, conc, symTable);
@@ -121,7 +140,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
         }
     } else if (types->t_int == true && types->t_double == true && types->t_string == false && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
         if (division_types->t_double == true || (division_types->t_double == false && division_types->t_int == false)) {
-            err = check_comb(ruleStack, false, false);
+            err = check_comb(ruleStack, false, false, false);
             if (err == SUCCESS) {
                 convert = true;
                 err = generate(tokenStack, ruleStack, convert, conc, symTable);
@@ -134,7 +153,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
         }
     } else if ((types->t_int == true && (types->t_int_nil == true || types->int_nil == true)) || (types->t_double == true && (types->double_nil == true || types->int_nil == true)) || 
     (types->t_string == true && (types->t_string_nil == true || types->int_nil == true))) {
-        err = check_comb(ruleStack, false, true);
+        err = check_comb(ruleStack, false, true, false);
         if (err == SUCCESS) {
             err = generate(tokenStack, ruleStack, convert, conc, symTable);
             if (types->t_int == true) {
@@ -324,6 +343,7 @@ Error type_in_special_expr(TokenT* symbol, symtable_t* symTable, TokenType* type
 Error type_check_div(TokenT* prevprev, TokenT* actual, used_types_t* usedTypes, symtable_t* symTable) {  
     TokenType before;
     TokenType after;
+
     Error err = type_in_special_expr(prevprev, symTable, &before);
     if (err != SUCCESS) {
         return err;
@@ -502,7 +522,7 @@ Error check_if_let(TokenT* token, symtable_t* symTable) { // TODO generate
     return UNDEFINED_VARIABLE_ERROR;
 }
 
-Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType) {
+Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool if_while) {
     used_types_t types = {.t_double = false, .t_int = false, .t_string = false, .t_int_nil = false, .int_nil = 0,
                             .t_double_nil = false, .double_nil = 0, .t_string_nil = false, .string_nil = 0};
     used_types_t divTypeResult = {.t_double = false, .t_int = false, .t_string = false, .t_int_nil = false, .int_nil = 0,
@@ -750,31 +770,31 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType) {
         }
     }
     
-    err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable);
+    err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable, if_while);
     return err;
 }
 
-// int main() {
-//     TokenT *next = malloc(sizeof(TokenT));
-//     next->type = TOKEN_ZERO;
-//     symtable_t symTab;
-//     table_init(&symTab);
-//     symtable_entry_t* entry1;
-//     table_insert(&symTab, "a", &entry1);
-//     entry1->type = TOKEN_DT_STRING_NIL;
-//     entry1->constant = true;
+int main() {
+    TokenT *next = malloc(sizeof(TokenT));
+    next->type = TOKEN_ZERO;
+    symtable_t symTab;
+    table_init(&symTab);
+    symtable_entry_t* entry1;
+    table_insert(&symTab, "a", &entry1);
+    entry1->type = TOKEN_DT_STRING_NIL;
+    entry1->constant = true;
 
-//     symtable_entry_t* entry2;
-//     table_insert(&symTab, "c", &entry2);
-//     entry2->type = TOKEN_DT_DOUBLE;
+    symtable_entry_t* entry2;
+    table_insert(&symTab, "c", &entry2);
+    entry2->type = TOKEN_DT_DOUBLE;
 
-//     param_t *params[3];
-//     params[0] = param_from_lit_create("a",NULL,TOKEN_DT_STRING_NIL);
-//     params[1] = param_from_lit_create("b","tmp",TOKEN_DT_DOUBLE);
-//     insert_builtin(&symTab, "funkcia", TOKEN_DT_INT, NULL, 0);
+    param_t *params[3];
+    params[0] = param_from_lit_create("a",NULL,TOKEN_DT_STRING_NIL);
+    params[1] = param_from_lit_create("b","tmp",TOKEN_DT_DOUBLE);
+    insert_builtin(&symTab, "funkcia", TOKEN_DT_INT, NULL, 0);
 
-//     TokenType returnedType;
-//     Error err = bu_read(&next, &symTab, &returnedType);
-//     printf("ERROR = %d\nreturnedType = %d\n", err, returnedType);
-//     return 0;
-// }
+    TokenType returnedType;
+    Error err = bu_read(&next, &symTab, &returnedType, false);
+    printf("ERROR = %d\nreturnedType = %d\n", err, returnedType);
+    return 0;
+}
