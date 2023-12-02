@@ -35,6 +35,17 @@ void parser_getNewToken(Parser_t *parser){
     }
 }
 
+//takes case parser->buffer = malloc(sizeof(ParamBufferT));
+Error parser_createParam (Parser_t * parser){
+    //dont touch this
+    int top = parser->stack->topIndex;
+    TokenT ** ptr = parser->stack->array;
+    param_t* param = param_create(ptr[top-2]->value.str,ptr[top-3]->value.str, ptr[top]->type);
+    if (param == NULL) return INTERNAL_COMPILER_ERROR;
+    table_insert_param(parser->buffer, param);
+    return SUCCESS;
+}
+
 void parser_dtor(Parser_t * parser){
     table_dispose(parser->symtable);
     Stack_Dispose(parser->stack);
