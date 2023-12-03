@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <errno.h>
 #include "utils.h"
 #include "errors.h"
 
@@ -59,7 +60,27 @@ void buffer_detor (BufferT *buffer) {
     buffer->length = 0;
 }
 
+buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
+    char tmp_str[4];
+    char *endptr = NULL;
+    errno = 0;
 
+    int num = (int ) strtol(num_str,&endptr,16);
+
+    if (errno != 0 || !num_str || *endptr) {
+        return BUFF_NUM_CVT_FAIL;
+    }
+    
+    sprintf(tmp_str, "%03d",num);
+
+    for (int str_idx = 0; tmp_str[str_idx] != '\0'; str_idx++) {
+        if (buffer_append(buffer,tmp_str[str_idx]) != BUFF_APPEND_SUCCES) {
+            return BUFF_APPEND_FAIL;
+        }
+    }
+    return BUFF_NUM_CVT_SUCCES;
+
+}
 
 stack_ret_t Stack_Init(Stack *stack) {
 	if (stack == NULL){
@@ -166,6 +187,8 @@ token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
 }
 
 void token_dtor(TokenT *token) {
+    if(token == NULL)
+        return;
     if (token->type != TOKEN_INTEGER && token->type != TOKEN_DOUBLE)
         free(token->value.str);
     token->value.str = NULL;

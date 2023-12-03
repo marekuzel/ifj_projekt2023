@@ -28,7 +28,7 @@ int append_hex(BufferT *buffer, char* number_buffer) {
 }
 
 void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
-    token_dtor(token); // free(token) bude v token_dtor 
+    // token_dtor(token); // free(token) bude v token_dtor 
     buffer_detor(buffer);
     fprintf(stderr, "%s.\n", message);
     exit(exit_code);
