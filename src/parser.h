@@ -16,6 +16,7 @@ typedef struct Parser {
     bool return_in_func;
     bool find_id_type;
     bool assign;
+    bool if_while;
     Stack *stack;
     ParamBufferT *buffer;
     symtable_t *symtable;
