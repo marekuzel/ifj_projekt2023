@@ -7,7 +7,7 @@ ERRORS = "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)"
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o first_traverse.o
+$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o first_traverse.o main.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 .PHONY: clean, valgrind, test_code_gen, test_scanner, test_parser
@@ -24,7 +24,7 @@ test_code_gen: code_gen.o symtable.o ./tests/code_gen_test.o utils.o
 	grep --silent $(LEAKS) ./tests/test_out/code_gen_test_valgrind.out && grep --silent $(ERRORS) ./tests/test_out/code_gen_test_valgrind.out  && echo "valgrind ok!"
 
 test_scanner: scanner.o utils.o ./tests/scanner_test.o	
-	$(CC) $(CFLAGS) -o $@ -D SCANNER_TESTS $^
+	$(CC) $(CFLAGS) -o $@ $^
 	valgrind -s --log-file=./tests/test_out/scanner_test_valgrind.out ./test_scanner < ./tests/test_in/scanner_test_in.txt >./tests/test_out/scanner_test.out
 	diff ./tests/test_out/scanner_test.exp_out ./tests/test_out/scanner_test.out && echo "token output if correct"
 	grep --silent $(ERRORS) ./tests/test_out/scanner_test_valgrind.out  && echo "valgrind ok!"

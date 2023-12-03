@@ -11,11 +11,8 @@
 
 int main() {
     Parser_t parser;
-    Error err = Parser_init(&parser);
-
-    if (err != SUCCESS) {
-        return err;
-    }
+    Error err;
+    parser_init(&parser);
 
     err = parser_rule_stmtMainSeq(&parser);
     

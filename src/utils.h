@@ -4,7 +4,13 @@
 #define UTILS_H
 
 
+#define CHECK_MEM_ERR(ptr)                              \
+    if (ptr == NULL) {                                  \
+        fprintf(stderr,"Failed to allocate memory!\n"); \
+        exit(INTERNAL_COMPILER_ERROR);                  \
+    }                                                   \
 
+// #define NDEBUG
 
 /**
  * @brief Buffet ADT implementation
@@ -34,7 +40,7 @@ typedef enum buffer_ret{
  * @retval ret_t BUFF_INIT_SUCCES if succesfull
  * @retval ret_t BUFF_INIT_FAIL if failed
  */
-buff_ret_t buffer_init(BufferT *buffer);
+void buffer_init(BufferT *buffer);
 
 /**
  * @brief Appends chr to the end of buffer 
@@ -45,7 +51,7 @@ buff_ret_t buffer_init(BufferT *buffer);
  * @retval ret_t BUFF_APPEND_FAIL if failed
  */
 
-buff_ret_t buffer_append(BufferT *buffer,const char chr);
+void buffer_append(BufferT *buffer,const char chr);
 
 /**
  * @brief Clears buffer
@@ -61,7 +67,7 @@ void buffer_clear(BufferT *buffer);
  * @param buffer pointer to buffer
  * @retval char* pointer to char array
  */
-char *buffer_export(const BufferT *buffer);
+char *buffer_export(BufferT *buffer);
 
 /**
  * @brief frees buffer from memory
@@ -70,57 +76,12 @@ char *buffer_export(const BufferT *buffer);
  */
 void buffer_detor (BufferT *buffer);
 
+/**
+ * @brief converts a hex number string into decimal number string
+ * and appends it to the buffer
+*/
+
 buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str);
-
-// typedef struct token_buffer_t {
-//     TokenT **bytes;
-//     int cap;
-//     int length;
-// } tokenBufferT;
-
-/**
- * @brief Initilaize ADT buffer
- * 
- * @param buffer pointer to buffer
- * @retval ret_t BUFF_INIT_SUCCES if succesfull
- * @retval ret_t BUFF_INIT_FAIL if failed
- */
-// buff_ret_t tokenBuffer_init(tokenBufferT *buffer);
-
-/**
- * @brief Appends chr to the end of buffer 
- * 
- * @param buffer pointer to buffer
- * @param chr character to be appended
- * @retval ret_t BUFF_APPEND_SUCCES if succesfull
- * @retval ret_t BUFF_APPEND_FAIL if failed
- */
-
-// buff_ret_t tokenBuffer_append(tokenBufferT *buffer, TokenT *token);
-
-/**
- * @brief Clears buffer
- * 
- * @param buffer pointer to buffer
- */
-// void Tokenbuffer_clear(tokenBufferT *buffer);
-
-
-/**
- * @brief exports buffer to char* (chars needs to be freed after use)
- * 
- * @param buffer pointer to buffer
- * @retval array of token pointers
- */
-// TokenT **tokenBuffer_export(const tokenBufferT *buffer);
-
-/**
- * @brief frees buffer from memory
- * 
- * @param buffer pointer to buffer
- */
-// void tokenBuffer_detor (tokenBufferT *buffer);
-
 
 
 typedef union {
@@ -190,16 +151,9 @@ typedef struct token{
 typedef struct stack{
 	TokenT **array;
 	int topIndex;
+    int bottomIndex;
+    int size;
 } Stack;
-
-typedef enum stack_ret{
-    STACK_INIT_SUCCES,
-    STACK_INIT_FAIL,
-    STACK_POP_SUCCES,
-    STACK_POP_FAIL,
-    STACK_PUSH_SUCCES,
-    STACK_PUSH_FAIL,
-    } stack_ret_t;
 
 /**
  * @brief Initialize stack
@@ -208,7 +162,7 @@ typedef enum stack_ret{
  * @retval stack_ret_t STACK_INIT_SUCCES succesfull initialization of stack sturcture
  * @retval stack_ret_t STACK_INIT_FAIL failed initialization of stack structure
  */
-stack_ret_t Stack_Init(Stack *);
+void Stack_Init(Stack *);
 
 /**
  * @brief If stack is empty return true, returns false otherwise
@@ -227,7 +181,6 @@ bool Stack_IsEmpty(const Stack *);
  */
 bool Stack_IsFull(const Stack *);
 
-TokenT Stack_peak();
 /**
  * @brief Assigns value of the top element of stack to dataPtr
  * 
@@ -245,7 +198,7 @@ TokenT* stack_read_token_bottom(Stack* stack);
  * @retval stack_ret_t STACK_POP_SUCCES if succesfull
  * @retval stack_ret_t STACK_POP_FAIL if failed
  */
-stack_ret_t Stack_Pop(Stack *);
+void Stack_Pop(Stack *);
 
 /**
  * @brief Stack push operation
@@ -256,7 +209,7 @@ stack_ret_t Stack_Pop(Stack *);
  * @return stack_ret_t STACK_PUSH_FAIL if failed
  */
 
-stack_ret_t Stack_Push(Stack *, TokenT*);
+void Stack_Push(Stack *, TokenT*);
 
 
 /**
@@ -277,7 +230,7 @@ void Stack_Dispose(Stack *);
  * @param type: type of token
  * @param buff: pointer to a buffer
 */
-token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff);
+void token_init(TokenT *token,TokenType type, BufferT *buff);
 
 
 /**
@@ -309,6 +262,6 @@ int stack_numOfElem(stack_char_t* stack);
 void stack_topTerminal(stack_char_t* stack, char **term);
 char* stack_bottom_read(stack_char_t* stack);
 void print_stack(stack_char_t* stack);
-
+void print_token(TokenT *token);
 
 #endif

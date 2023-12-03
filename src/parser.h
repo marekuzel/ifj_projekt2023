@@ -30,7 +30,7 @@ typedef enum {
     PARSER_INVALID_TOKEN,
     } parser_ret_t;
 
-Error parser_init(Parser_t *);
+void parser_init(Parser_t *);
 
 void parser_dtor(Parser_t*);
 
