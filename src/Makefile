@@ -7,7 +7,7 @@ ERRORS = "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)"
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o
+$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o first_traverse.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 .PHONY: clean, valgrind, test_code_gen, test_scanner 
@@ -32,3 +32,7 @@ test_scanner: scanner.o utils.o ./tests/scanner_test.o
 test_parser: parser.o symtable.o utils.o ./tests/parser_test.o syntax_rules.o prec_table.o bu_analysis.o scanner.o code_gen.o
 	$(CC) $(CFLAGS) -o $@ $^
 	../test_parser 1  < /test_in/parser_test_1.txt > test_out/test_parser.out
+
+test_first_traverse: parser.o symtable.o scanner.o utils.o	./tests/test_first_traverse.o first_traverse.o
+	$(CC) $(CFLAGS) -o $@ $^
+	./test_first_traverse < ./tests/test_in/test_first_traverse_in.txt

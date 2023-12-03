@@ -328,6 +328,13 @@ buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param) {
         
         buffer->bytes = new_buff;
         buffer->cap *= 2;
+    } 
+    for (int idx = 0; idx < buffer->length; idx ++) {
+        if (strcmp(param->id,buffer->bytes[idx]->id) == 0 ||
+        (strcmp(param->name,buffer->bytes[idx]->name) == 0 && strcmp(param->name,"_"))) {
+            return BUFF_APPEND_FAIL;
+        }
+
     }
     buffer->bytes[buffer->length++] = param;
     return BUFF_APPEND_SUCCES;  

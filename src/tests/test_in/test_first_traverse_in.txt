@@ -1,0 +1,9 @@
+let a : Int = 69
+func bar(with param : String) -> String {
+let r : String = foo(param)
+return r
+}
+func foo(a par : String, _ ar : Int, _ a : Int) -> String {
+let ret = bar(with: par)
+return ret
+}
