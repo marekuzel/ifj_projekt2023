@@ -26,6 +26,7 @@ Error parser_rule_funcID(Parser_t *parser){
 }
 
 Error parser_rule_stmt(Parser_t *parser){
+    PRINT_RULE(stmt);
     //stmt -> let <id> <stmt_assign>
     if (parser->token_current->type == TOKEN_LET){
         PRINT_RULE(Let);
@@ -93,7 +94,7 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> [id] = [expr]
     else if (parser->token_current->type == TOKEN_IDENTIFIER){
-        PRINT_RULE(stmt);
+        PRINT_RULE(stmtID);
         parser->current_id = parser->token_current->value.str;
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
         parser->assign = true;
@@ -101,6 +102,8 @@ Error parser_rule_stmt(Parser_t *parser){
         goto success;
     }
     else{
+        
+        PRINT_RULE(SYNTAX_ERROR);
         return SYNTAX_ERROR;
     }
     success:
@@ -117,16 +120,19 @@ Error parser_rule_stmtAssign(Parser_t *parser){
         goto success;
     }
     //stmt_assign -> : <type>
+    //stmt_assign -> : <type> = [expr]
     else if (parser->token_current->type == TOKEN_COLON){
         GET_NEXT_AND_CALL_RULE(parser, type);
         parser->current_entry->type = parser->token_current->type;
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_ASSIGN){
+            printf ("%s\n",parser->token_current->value.str);
             GET_NEXT_AND_CALL_RULE(parser, expr);
             parser->current_entry->defined = true;
-        goto success;
+            goto success;
         }
         else{
+            parser_stashExtraToken(parser, parser->token_current);
             goto success;
         }
     }
@@ -144,9 +150,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
 }
 
 Error parser_rule_paramsCall (Parser_t *parser){
-    #ifdef TEST_PARSER
-    printf ("rule paramsCall\n");
-    #endif
+    PRINT_RULE(paramsCall);
     //     [parametersCall] →
     //    | [name] : [expr] [parameters_seqCall]
     //    | empty
@@ -466,12 +470,19 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
 }
 
 Error parser_rule_type(Parser_t *parser){
+    PRINT_RULE(datatype)
     switch (parser->token_current->type){
-        case TOKEN_INTEGER:
+        case TOKEN_DT_DOUBLE:
             return SUCCESS;
-        case TOKEN_STRING:
+        case TOKEN_DT_DOUBLE_NIL:
             return SUCCESS;
-        case TOKEN_NIL:
+        case TOKEN_DT_INT:
+            return SUCCESS;
+        case TOKEN_DT_INT_NIL:
+            return SUCCESS;
+        case TOKEN_DT_STRING:
+            return SUCCESS;
+        case TOKEN_DT_STRING_NIL:
             return SUCCESS;
         default:
             return SYNTAX_ERROR;
