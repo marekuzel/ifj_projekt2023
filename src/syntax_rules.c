@@ -29,7 +29,6 @@ Error parser_rule_funcID(Parser_t *parser){
 
 Error parser_rule_stmt(Parser_t *parser){
     PRINT_RULE(stmt);
-    printf ("new token in stmt: %s\n", parser->token_current->value.str);
     //stmt -> let <id> <stmt_assign>
     if (parser->token_current->type == TOKEN_LET){
         PRINT_RULE(Let);
@@ -271,7 +270,6 @@ Error parser_rule_defFunc(Parser_t *parser){
 
     table_insert_global(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
     parser->current_function = parser->token_current->value.str;
-    if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return SYNTAX_ERROR;
 
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
@@ -305,12 +303,10 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
     //    | [stmt]
     //    | return [expr]
     while (1){
-        printf ("%s\n", parser->token_current->value.str);
         if (parser->token_current->type == TOKEN_RETURN){
             parser->return_in_func = true;
             parser_rule_expr(parser);
             parser_getNewToken(parser);
-            printf ("new token out of expr: %s\n", parser->token_current->value.str);
             continue;
         }
         else if (parser->token_current->type == TOKEN_RC_BRACKET){
@@ -567,7 +563,6 @@ Error parser_rule_type(Parser_t *parser){
 
 Error parser_rule_expr(Parser_t *parser){
     PRINT_RULE(expr);
-    printf ("new token before expr: %s\n", parser->token_current->value.str);
     //  [expr] →
     //    | ( [expr] )
     //    | [expr] + [expr]

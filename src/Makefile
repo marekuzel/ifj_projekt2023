@@ -34,5 +34,5 @@ test_parser: parser.o symtable.o utils.o ./tests/parser_test.o syntax_rules.o pr
 	./test_parser < ./tests/test_in/parser_test_1.txt > ./tests/test_out/parser_test_1.out
 
 	./test_parser < ./tests/test_in/parser_test_2.txt > ./tests/test_out/parser_test_2.out
-
-	# ./test_parser < ./tests/test_in/parser_test_3.txt 
+	
+	./test_parser < ./tests/test_in/parser_test_3.txt > ./tests/test_out/parser_test_3.out
