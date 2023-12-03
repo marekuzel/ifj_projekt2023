@@ -7,7 +7,7 @@ ERRORS = "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)"
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o
+$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o first_traverse.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 .PHONY: clean, valgrind, test_code_gen, test_scanner, test_parser
