@@ -20,6 +20,8 @@ Error Parser_init(Parser_t *parser){
     parser->symtable = malloc(sizeof(symtable_t));
     if (!(parser->symtable)) return INTERNAL_COMPILER_ERROR;
     table_init(parser->symtable);
+    parser->buffer = malloc(sizeof(ParamBufferT));
+    param_buffer_init(parser->buffer);
     return SUCCESS;
 }
 
@@ -44,9 +46,9 @@ Error parser_createParam (Parser_t * parser){
     //dont touch this
     int top = parser->stack->topIndex;
     TokenT ** ptr = parser->stack->array;
-    param_t* param = param_create(ptr[top-2]->value.str,ptr[top-3]->value.str, ptr[top]->type);
-    if (param == NULL) return INTERNAL_COMPILER_ERROR;
-    table_insert_param(parser->buffer, param);
+    param_t* param = param_create(ptr[top-3]->value.str,ptr[top-4]->value.str, ptr[top-1]->type); 
+    if (table_insert_param(parser->buffer, param) != BUFF_APPEND_SUCCES)
+        return ANOTHER_SEMANTIC_ERROR;
     return SUCCESS;
 }
 
