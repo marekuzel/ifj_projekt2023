@@ -9,7 +9,9 @@ src/bu
 src/test_code_gen
 src/test_scanner
 interpreter/*.txt
+src/tests/test_out/*.out
 .vscode
 src/tests/test_out/*
-
+rnd_tests/*
+src/googletest/*
 src/googletest/*

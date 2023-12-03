@@ -34,12 +34,16 @@ Error parser_rule_stmt(Parser_t *parser){
     if (parser->token_current->type == TOKEN_LET){
         PRINT_RULE(Let);
         GET_NEXT_AND_CALL_RULE(parser, id);
-
+        if (table_search(parser->symtable,parser->token_current->value.str,&(parser->current_entry))) {
+            if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
+                return UNDEFINED_FUNCTION_ERROR;
+            }
+        }
         table_insert(parser->symtable,parser->token_current->value.str,&(parser->current_entry));
         parser->current_id = parser->token_current->value.str;
         parser->current_entry->declared = true;
         parser->current_entry->constant = true;
-
+        gen_def_var(parser->token_current->value.str,is_global(parser->symtable,parser->token_current->value.str),parser->current_entry->type);
         GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         goto success;
     }
@@ -47,12 +51,16 @@ Error parser_rule_stmt(Parser_t *parser){
     else if (parser->token_current->type == TOKEN_VAR){
         PRINT_RULE(var);
         GET_NEXT_AND_CALL_RULE(parser, id);
-
+        if (table_search(parser->symtable,parser->token_current->value.str,&(parser->current_entry))) {
+            if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
+                return UNDEFINED_FUNCTION_ERROR;
+            }
+        }
         //add variable to symtable and assign that its declared
         table_insert(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
         parser->current_entry->declared = true;
         parser->current_entry->constant = false;
-
+        gen_def_var(parser->token_current->value.str,is_global(parser->symtable,parser->token_current->value.str),parser->current_entry->type);
         GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         goto success;
     }
@@ -65,15 +73,55 @@ Error parser_rule_stmt(Parser_t *parser){
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_LET){
             GET_NEXT_AND_CALL_RULE(parser, id);
-            GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_RC_BRACKET);
-            GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
+            symtable_entry_t* entry;
+            if (table_search(parser->symtable, parser->token_current->value.str, &entry)) {
+                switch (entry->type) {
+                    case TOKEN_DT_DOUBLE_NIL: case TOKEN_DT_INT_NIL: case TOKEN_DT_STRING_NIL:
+                        if (entry->constant != true) {
+                            return TYPE_COMPATIBILITY_ERROR; // TODO check me
+                        } 
+                        break;
+                    default: 
+                        return TYPE_COMPATIBILITY_ERROR; // TODO check me
+                }
+            } else {
+                return UNDEFINED_VARIABLE_ERROR;
+            }
+            int cond_label = get_cond_label();
+            litValue value = {.d = 0.0};
+            gen_push_var(parser->token_current->value.str,is_global(parser->symtable,parser->token_current->value.str));
+            gen_push_lit(value,TOKEN_NIL);
+            gen_cond(NEQ);
+            gen_cnd_jump(ELSE_L,cond_label);
+            entry->type--; //changeing datatype to without ?
+            gen_local_scope(parser->symtable);
+            GET_NEXT_AND_CALL_RULE(parser, stmtSeq);
+            gen_jmp(IF_END_L,cond_label);
+            gen_cond_else_label(cond_label);
+            entry->type++; //changing datatype back to with ?
+            GET_NEXT_AND_CALL_RULE(parser, elseF);
+            gen_end_label(IF_L,cond_label);
+            gen_drop_local_scope(parser->symtable);
             table_remove_scope(parser->symtable);
+            // GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_RC_BRACKET);
+            // GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         }
         else{
+            parser->if_while = true;
+            int cnd_label = get_cond_label();
             GET_NEXT_AND_CALL_RULE(parser, expr); //with note that expr will handle the brackets
             GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
+            gen_local_scope(parser->symtable);
+            gen_cnd_jump(ELSE_L,cnd_label);
+
             GET_NEXT_AND_CALL_RULE(parser, stmtSeq);
+            gen_jmp(IF_END_L,cnd_label);
+            gen_cond_else_label(cnd_label);
+
             GET_NEXT_AND_CALL_RULE(parser, elseF);
+
+            gen_end_label(IF_L,cnd_label);
+            gen_drop_local_scope(parser->symtable);
             table_remove_scope(parser->symtable);
         }
         goto success;
@@ -81,11 +129,20 @@ Error parser_rule_stmt(Parser_t *parser){
     //stmt -> while [expr] { [stmt_seqFunc] }
     else if (parser->token_current->type == TOKEN_WHILE){
         PRINT_RULE (whileS);
-        GET_NEXT_AND_CALL_RULE(parser, expr);
-        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
-
+        parser->if_while = true;
+        int loop_label = get_loop_label();
         table_add_scope(parser->symtable);
+        gen_local_scope(parser->symtable);
+        gen_loop_label(loop_label);
+        GET_NEXT_AND_CALL_RULE(parser, expr);
+        gen_cnd_jump(LOOP_END_L,loop_label);
+        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
+        
         GET_NEXT_AND_CALL_RULE(parser, stmtSeq);
+
+        gen_jmp(LOOP_L,loop_label);
+        gen_end_label(LOOP_L,loop_label);
+        gen_drop_local_scope(parser->symtable);
         table_remove_scope(parser->symtable);
 
         goto success;
@@ -119,7 +176,12 @@ Error parser_rule_stmtAssign(Parser_t *parser){
     if (parser->token_current->type == TOKEN_ASSIGN){
         parser->find_id_type = true;
         GET_NEXT_AND_CALL_RULE(parser, expr);
-        parser->current_entry->defined = true;
+
+        if (parser->current_entry->defined == false) {
+            parser->current_entry->defined = true;
+        } else {
+            parser->current_entry->modified = true;
+        }
         goto success;
     }
     //stmt_assign -> : <type>
@@ -198,9 +260,11 @@ Error parser_rule_elseF(Parser_t *parser){
     //else -> else { <stmtSeq>
     if (parser->token_current->type == TOKEN_ELSE){
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
+
         table_add_scope(parser->symtable);
+        gen_local_scope(parser->symtable);
+
         GET_NEXT_AND_CALL_RULE(parser, stmtSeq);
-        table_remove_scope(parser->symtable);
     }
     //otherwise empty
     return SUCCESS;
@@ -216,8 +280,12 @@ Error parser_rule_defFunc(Parser_t *parser){
     // if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return SYNTAX_ERROR;
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
-    printf("afsdaf%s\n", parser->token_current->value.str);
+    GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
+    int cont_label = get_cont_label();
+    gen_cont_label(cont_label);
+    gen_func_def(parser->current_function);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
+    jump_cont_label(cont_label + 1);
 
     return SUCCESS;
 }
@@ -254,6 +322,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
             }
         }
     }
+    gen_func_return();
     return SUCCESS;
 }
 
@@ -272,6 +341,7 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
             }
         }
     }
+    gen_func_return();
     return SUCCESS;
 }
 
@@ -506,7 +576,10 @@ Error parser_rule_expr(Parser_t *parser){
     //    | [literal]
     TokenT *next = NULL;
     TokenType exprRet;
-    Error err = bu_read(&next, parser->symtable, &exprRet);
+    Error err = bu_read(&next, parser->symtable, &exprRet, parser->if_while);
+    if (parser->if_while) {
+        parser->if_while = false;
+    }
     symtable_entry_t* entry;
     if (err == SUCCESS) {
         if (parser->return_in_func) { // return [expr]
