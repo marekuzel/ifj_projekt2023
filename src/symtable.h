@@ -327,17 +327,6 @@ buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param);
 void param_buffer_detor(ParamBufferT *buffer);
 
 /**
- * @brief funcion for creating a param from string literals
- * 
- * @param id: parameter identificator (never NULL)
- * @param name: parameter name (optionaly  NULL)
- * @param type: type of param
- * 
-*/
-param_t *param_from_lit_create(char *id, char *name, TokenType type);
-
-
-/**
  * @brief funcion for creating a param
  * 
  * @param id: parameter identificator (never NULL)
@@ -364,7 +353,7 @@ void param_value_init(symtable_t *table, param_t *param, litValue value, TokenTy
  * 
  * @returns 1 if an error occured otherwise 0
 */
-int table_insert_builtin_funcs(symtable_t *table);
+void table_insert_builtin_funcs(symtable_t *table);
 
 /**
  * @brief function checks wether a given "name" is global or not
@@ -376,11 +365,6 @@ int table_insert_builtin_funcs(symtable_t *table);
 */
 bool is_global(symtable_t *table, char *name);
 
-/**
- * @brief function for transforming a string literal into a heap allocated string
-*/
-char *lit2ptr(const char *lit);
-
 #define CHECK_ERR(err) \
     if (ret != 0)      \
         goto err;       \
@@ -389,7 +373,9 @@ char *lit2ptr(const char *lit);
 param_t **param_buffer_export(ParamBufferT *);
 
 //TODO vymaz
-int insert_builtin(symtable_t *table, char *name, TokenType ret_type, param_t **params, int param_num);
+void insert_builtin(symtable_t *table, char *name, TokenType ret_type, param_t **params, int param_num);
 
 void add_params_to_scope(symtable_t *table, symtable_entry_t *entry);
+
+char* add_string(char *str);
 #endif
