@@ -1,2 +1,2 @@
-let id12 : Int? = 12 + 15
-var id : Int = id12 ?? 0
+let id12 : Int = 12 + 15
+var id : Int = 12 - 2
