@@ -69,7 +69,10 @@ Error parser_rule_stmt(Parser_t *parser){
     else if (parser->token_current->type == TOKEN_IF){ //add local symbol table
         PRINT_RULE(ifS);
         table_add_scope(parser->symtable);
+        printf("first =%s\n", parser->token_current->value.str);
+        printf("stash =%s\n", parser->token_current->value.str);
         parser_getNewToken(parser);
+        printf("second =%s\n", parser->token_current->value.str);
         if (parser->token_current->type == TOKEN_LET){
             GET_NEXT_AND_CALL_RULE(parser, id);
             symtable_entry_t* entry;
@@ -190,6 +193,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
         parser->current_entry->type = parser->token_current->type;
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_ASSIGN){
+            parser_getNewToken(parser);
             parser_rule_expr(parser);
             parser->current_entry->defined = true;
             goto success;
@@ -198,12 +202,6 @@ Error parser_rule_stmtAssign(Parser_t *parser){
             parser_stashExtraToken(parser, parser->token_current);
             goto success;
         }
-    }
-    //stmt_assign -> : <type> = <expr>
-    else if (parser->token_current->type == TOKEN_COLON){
-        GET_NEXT_AND_CALL_RULE(parser, type);
-        parser->current_entry->type = parser->token_current->type;
-        
     }
     else{
         return SYNTAX_ERROR;

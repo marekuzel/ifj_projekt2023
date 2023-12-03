@@ -31,4 +31,8 @@ test_scanner: scanner.o utils.o ./tests/scanner_test.o
 
 test_parser: parser.o symtable.o utils.o ./tests/parser_test.o syntax_rules.o prec_table.o bu_analysis.o scanner.o code_gen.o
 	$(CC) $(CFLAGS) -o $@ $^
-	./test_parser < ./tests/test_in/parser_test_1.txt
+	./test_parser < ./tests/test_in/parser_test_1.txt > ./tests/test_out/parser_test_1.out
+
+	./test_parser < ./tests/test_in/parser_test_2.txt > ./tests/test_out/parser_test_2.out
+
+	./test_parser < ./tests/test_in/parser_test_3.txt
