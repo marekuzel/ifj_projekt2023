@@ -16,22 +16,23 @@ char str_const1[11] = "Hello";
 char str_const2[11] = "World";
 
 
-#define TEST(name)                      \
-    symtable_t table;                   \
-    litValue value;                     \
-    param_t *param;                     \
-    symtable_entry_t *entry;            \
-    ParamBufferT pbuf;                  \
-    int cnt_label = get_cont_label();   \
-    param_buffer_init(&pbuf);           \
-    table_init(&table);                 \
-    inset_test_label(name);             \
-    gen_cont_label(cnt_label);          \
-    gen_local_scope(&table);            \
-    table_add_scope(&table);            \
-    char *a = lit2ptr("a");             \
-    table_insert(&table,a,&entry);      \
-    gen_def_var(a,false,TOKEN_DT_INT);  \
+#define TEST(name)                                      \
+    symtable_t table;                                   \
+    litValue value;                                     \
+    symtable_entry_t *entry;                            \
+    symtable_entry_t *write_entry;                      \
+    ParamBufferT pbuf;                                  \
+    int cnt_label = get_cont_label();                   \
+    param_buffer_init(&pbuf);                           \
+    table_init(&table);                                 \
+    inset_test_label(name);                             \
+    gen_cont_label(cnt_label);                          \
+    gen_local_scope(&table);                            \
+    table_add_scope(&table);                            \
+    char *a = "a";                                      \
+    table_insert(&table,a,&entry);                      \
+    gen_def_var(a,false,TOKEN_DT_INT);                  \
+    table_search_global(&table,"write",&write_entry);   \
 
 #define END_TEST                    \
     table_remove_scope(&table);     \
@@ -41,16 +42,15 @@ char str_const2[11] = "World";
     jump_cont_label(cnt_label+1);   \
 
 
-#define OUTPUT_VAR(var)                                 \
-    param = param_create(NULL, NULL,TOKEN_VAR);         \
-    value.str = var;                                    \
-    param_value_init(&table,param,value,TOKEN_VAR);     \
-    gen_write_arg(param);                               \
-    value.str = "\\010";                                \
-    param->type = TOKEN_STRING;                         \
-    param_value_init(&table,param,value,TOKEN_STRING);  \
-    gen_write_arg(param);                               \
-    free(param);                                        \
+#define OUTPUT_VAR(var)                                                 \
+    value.str = var;                                                    \
+    param_value_init(&table,write_entry->params[0],value,TOKEN_VAR);    \
+    write_entry->params[0]->type = TOKEN_VAR;                           \
+    gen_write_arg(write_entry->params[0]);                              \
+    value.str = "\\010";                                                \
+    param_value_init(&table,write_entry->params[0],value,TOKEN_STRING); \
+    write_entry->params[0]->type = TOKEN_STRING;                        \
+    gen_write_arg(write_entry->params[0]);                              \
 
 #define PUSH_INT_LIT(val)               \
     value.i = val;                      \
@@ -63,7 +63,7 @@ char str_const2[11] = "World";
 
 
 #define PUSH_STR_LIT(val)               \
-    value.str = val;                      \
+    value.str = val;                    \
     gen_push_lit(value,TOKEN_STRING);   \
 
 #define PUSH_NIL                     \
@@ -81,7 +81,7 @@ void test_add_int() {
     value.i = int_const2;
     gen_push_lit(value,TOKEN_INTEGER);
     gen_expr_binop('+');
-    gen_assignment(a,is_global(&table,a));
+    gen_assignment(a,is_global(&table,a));                            
     OUTPUT_VAR(a)
     END_TEST
 }
@@ -213,12 +213,10 @@ void test_concat_str() {
     gen_expr_binop('|');
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
-    value.str = lit2ptr("World");
+    value.str = "World";
     gen_push_lit(value,TOKEN_STRING);
-    free(value.str);
-    value.str = lit2ptr("Hello");
+    value.str = "Hello";
     gen_push_lit(value,TOKEN_STRING);
-    free(value.str);
     gen_expr_binop('|');
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
@@ -482,13 +480,13 @@ void test_nested_scopes() {
     OUTPUT_VAR(a)
     printf("DEFVAR LF@b\n");
     printf("MOVE LF@b int@69\n");
-    char *b = lit2ptr("b");
+    char *b = "b";
     table_insert(&table,b,&entry);
     OUTPUT_VAR(b)
     for (int i = 1; i < 15; i++) {
         table_add_scope(&table);
         gen_local_scope(&table);
-        char *a = lit2ptr("a");
+        char *a = "a";
         table_insert(&table,a,&entry);
         printf("MOVE LF@a int@%d\n",i);
         OUTPUT_VAR(a)
@@ -532,11 +530,12 @@ custom_funcion(_ x:Int, _ y:Int) -> Int {
 void test_custom_funcion() {
     TEST("custom_funcion")
     /*funcion insert*/
-    param = param_from_lit_create("x","_",TOKEN_DT_INT);
+    param_t *param;
+    param = param_create("x","_",TOKEN_DT_INT);
     table_insert_param(&pbuf,param);
-    param = param_from_lit_create("y","_",TOKEN_DT_INT);
+    param = param_create("y","_",TOKEN_DT_INT);
     table_insert_param(&pbuf,param);
-    table_function_insert(&table,lit2ptr("custom_func"),param_buffer_export(&pbuf),TOKEN_INTEGER);
+    table_function_insert(&table,"custom_func",param_buffer_export(&pbuf),TOKEN_INTEGER);
 
     table_search_global(&table,"custom_func",&entry);
     entry->params[0]->var = 1;
@@ -545,10 +544,9 @@ void test_custom_funcion() {
     printf("MOVE LF@a int@15\n");
     table_add_scope(&table);
     symtable_entry_t *tmp;
-    table_insert(&table,lit2ptr("x"),&tmp);
-    table_insert(&table,lit2ptr("y"),&tmp);
+    table_insert(&table,"x",&tmp);
+    table_insert(&table,"y",&tmp);
     gen_func_call("custom_func",entry);
-
     gen_assignment(a,is_global(&table,a));
     OUTPUT_VAR(a)
     
@@ -582,7 +580,7 @@ void test_if_else() {
     table_add_scope(&table);
     gen_local_scope(&table);
     PUSH_INT_LIT(int_const3)
-    table_insert(&table,lit2ptr("b"),&entry);
+    table_insert(&table,"b",&entry);
     PUSH_STR_LIT("IF_branch")
     gen_assignment("b",is_global(&table,"b"));
     OUTPUT_VAR("b")
@@ -597,7 +595,7 @@ void test_if_else() {
     table_add_scope(&table);
     gen_local_scope(&table);
     PUSH_INT_LIT(int_const2)
-    table_insert(&table,lit2ptr("b"),&entry);
+    table_insert(&table,"b",&entry);
     PUSH_STR_LIT("ELSE_BRANCH")
     gen_def_var("b",is_global(&table,"b"),TOKEN_INTEGER);
     gen_assignment("b",is_global(&table,"b"));
