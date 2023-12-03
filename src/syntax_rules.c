@@ -13,7 +13,6 @@ Implementaion of syntax rules
 #define PRINT_RULE(rule)
 #endif
 
-//TODO: odkomentovat parser_createParam
 Error parser_rule_id(Parser_t *parser){
     //id ->id
     PRINT_RULE(id);
@@ -275,18 +274,17 @@ Error parser_rule_defFunc(Parser_t *parser){
     //func [funcId] ([parameters]) [func_ret]
     parser_rule_funcID(parser);
 
-    // table_insert_global(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
-    // parser->current_function = parser->token_current->value.str;
-    // if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return SYNTAX_ERROR;
+    table_insert_global(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
+    parser->current_function = parser->token_current->value.str;
+    if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return SYNTAX_ERROR;
+
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
-    GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
     int cont_label = get_cont_label();
     gen_cont_label(cont_label);
     gen_func_def(parser->current_function);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
     jump_cont_label(cont_label + 1);
-
     return SUCCESS;
 }
 
@@ -294,6 +292,7 @@ Error parser_rule_funcRet(Parser_t *parser){
     PRINT_RULE(funcRet);
     if (parser->token_current->type == TOKEN_ARROW){
         GET_NEXT_AND_CALL_RULE(parser, type);
+        printf ("sd\n");
         parser->current_entry->return_type = parser->token_current->type;
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
         GET_NEXT_AND_CALL_RULE(parser, stmtSeqRet);
@@ -307,11 +306,11 @@ Error parser_rule_funcRet(Parser_t *parser){
 }
 
 Error parser_rule_stmtSeqRet(Parser_t *parser){
+    PRINT_RULE(stmtSeqRet)
     // [stmt_seqFunc] → 
     //    | [stmt]
     //    | return [expr]
     while (parser->token_current->type != TOKEN_RC_BRACKET){
-        parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_RETURN){
             parser->return_in_func = true;
             GET_NEXT_AND_CALL_RULE(parser, expr);
@@ -327,6 +326,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
 }
 
 Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
+    PRINT_RULE(parser_rule_stmtVoidSeqRet);
     // [stmt_seqVoidSeqRet] → 
     //    | [stmt]
     //    | return
@@ -346,6 +346,7 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
 }
 
 Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term1, term3, .. , termn)
+    PRINT_RULE(func_write_call);
     parser_getNewToken(parser);
     int param_idx = 0;
     while (parser->token_current->type != TOKEN_R_BRACKET) {  
@@ -378,6 +379,7 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
 }
 
 Error parser_rule_callFunc(Parser_t *parser){
+    PRINT_RULE(callFunc);
     //[callFunction] → [functId] ([parameters])
     symtable_entry_t* entry;
     GET_NEXT_AND_CALL_RULE(parser, funcID);
@@ -502,7 +504,7 @@ Error parser_rule_paramsDef(Parser_t *parser){
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
 
-        //parser_createParam(parser);
+        parser_createParam(parser);
 
         GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
         goto success;
@@ -524,7 +526,7 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
 
-        //parser_createParam(parser);
+        parser_createParam(parser);
 
         GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
         return SUCCESS;
@@ -625,6 +627,7 @@ Error parser_rule_expr(Parser_t *parser){
 }
 
 Error parser_rule_stmtSeq(Parser_t *parser){
+    PRINT_RULE(stmtSeq)
     while (parser->token_current->type != TOKEN_RC_BRACKET){
         parser_getNewToken(parser);
         if (parser_rule_stmt(parser) == SYNTAX_ERROR){

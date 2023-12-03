@@ -12,6 +12,8 @@ Error parser_init(Parser_t *parser){
     parser->find_id_type = false;
     parser->assign = false;
     parser->if_while = false;
+    parser->token_extraToken = NULL;
+    parser->buffer = malloc(sizeof(ParamBufferT));
 
     parser->stack = malloc(sizeof(Stack));
     if (!(parser->stack)) return INTERNAL_COMPILER_ERROR; 
@@ -52,6 +54,7 @@ Error parser_createParam (Parser_t * parser){
 }
 
 void parser_dtor(Parser_t * parser){
+    param_buffer_detor(parser->buffer);
     table_dispose(parser->symtable);
     Stack_Dispose(parser->stack);
     parser->current_entry = NULL;

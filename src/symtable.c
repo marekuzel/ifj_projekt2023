@@ -305,9 +305,9 @@ Implementation of parram buffer
 
 buff_ret_t param_buffer_init(ParamBufferT *buffer) {
     buffer->length = 0;
-    buffer->cap = BUFFER_CAP_S * sizeof(param_t *);
+    buffer->cap = BUFFER_CAP_S;
 
-    buffer->bytes = calloc(buffer->cap,1);
+    buffer->bytes = calloc(buffer->cap,sizeof(param_t*));
     
     if (buffer->bytes == NULL) 
         return BUFF_INIT_FAIL;
@@ -335,9 +335,9 @@ buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param) {
 }
 
 param_t **param_buffer_export(ParamBufferT *buffer) {
-    param_t **dst = calloc(sizeof(param_t*),buffer->length+1);
+    param_t **dst = calloc(buffer->length+1, sizeof(param_t*));
     if (dst == NULL)
-        return NULL;
+        exit(INTERNAL_COMPILER_ERROR);
 
     memcpy(dst,buffer->bytes,buffer->length * sizeof(param_t *));
     buffer->length = 0;

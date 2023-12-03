@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "utils.h"
 #include "errors.h"
+#include <errno.h>
 
 buff_ret_t buffer_init(BufferT *buffer) {
     buffer->length = 0;

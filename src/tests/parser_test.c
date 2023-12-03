@@ -78,6 +78,7 @@ void test_1(){
         // print_token(parser->stack->array[parser->stack->topIndex]);
         printf("error\n");
     }
+    parser_dtor(parser);
     END_TEST("Test declaration of variable\n");
 }
 

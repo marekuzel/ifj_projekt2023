@@ -773,28 +773,3 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
     err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable, if_while);
     return err;
 }
-
-int main() {
-    TokenT *next = malloc(sizeof(TokenT));
-    next->type = TOKEN_ZERO;
-    symtable_t symTab;
-    table_init(&symTab);
-    symtable_entry_t* entry1;
-    table_insert(&symTab, "a", &entry1);
-    entry1->type = TOKEN_DT_STRING_NIL;
-    entry1->constant = true;
-
-    symtable_entry_t* entry2;
-    table_insert(&symTab, "c", &entry2);
-    entry2->type = TOKEN_DT_DOUBLE;
-
-    param_t *params[3];
-    params[0] = param_from_lit_create("a",NULL,TOKEN_DT_STRING_NIL);
-    params[1] = param_from_lit_create("b","tmp",TOKEN_DT_DOUBLE);
-    insert_builtin(&symTab, "funkcia", TOKEN_DT_INT, NULL, 0);
-
-    TokenType returnedType;
-    Error err = bu_read(&next, &symTab, &returnedType, false);
-    printf("ERROR = %d\nreturnedType = %d\n", err, returnedType);
-    return 0;
-}
