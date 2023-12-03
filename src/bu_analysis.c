@@ -265,7 +265,7 @@ Error check_rule(char* stackRule, stack_char_t* stack, stack_char_t* ruleStack) 
 
     for (int i = 0; i < NUM_OF_EXPR; i++) {
         if (!strcmp(stackRule, expr[i])) { // find rule 
-            // fprintf(stderr, "rule: %s\n", expr[i]);
+            fprintf(stderr, "rule: %s\n", expr[i]);
             stack_char_push(stack, "E");
             stack_char_push(ruleStack, stackRule);
             return SUCCESS;
@@ -380,7 +380,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
             comma = false;
         }
 
-        if (entry->params[param_idx]->name == NULL) { // [expr]
+        if (!strcmp(entry->params[param_idx]->name , "_")) { // [expr]
             token = generate_token();
             if (token->type == TOKEN_IDENTIFIER) {
                 symtable_entry_t* paramIdent;
@@ -578,11 +578,14 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
                     err = stack_insertAfterTerminal(&stack);
                     stack_char_push(&stack, symbol);
 
-                    if ((*next)->type == TOKEN_ZERO) { // token which does not belog to expr was not find 
+                    if ((*next) == NULL) { // token which does not belog to expr was not find 
                         prevToken = token;
                         token = generate_token();
 
                         if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
+                            if (prevToken->type != TOKEN_IDENTIFIER) {
+                                return SYNTAX_ERROR;
+                            }
                             TokenT* topToken;
                             Stack_Top(&tokenStack, &topToken); // change type of top string 
                             Stack_Pop(&tokenStack);
@@ -617,9 +620,9 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
                                 default:
                                     token = generate_token();
                                     break;
-                            }
+                            } 
                             Stack_Push(&tokenStack, topToken);
-                        }
+                        } 
 
                         if (prevToken->type == TOKEN_IDENTIFIER && token->type == TOKEN_L_BRACKET) { // function call
                             err = isFunc(prevToken, symTable);
@@ -672,11 +675,14 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
                 case PREC_ACTION_EQ:
                     stack_char_push(&stack, symbol);
 
-                    if ((*next)->type == TOKEN_ZERO) { // token which does not belog to expr was not found  
+                    if ((*next) == NULL) { // token which does not belog to expr was not found  
                         prevToken = token;
                         token = generate_token();
 
                         if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
+                            if (prevToken->type != TOKEN_IDENTIFIER) {
+                                return SYNTAX_ERROR;
+                            }
                             TokenT* topToken;
                             Stack_Top(&tokenStack, &topToken); // change type of top string 
                             Stack_Pop(&tokenStack);
@@ -713,7 +719,7 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
                                     break;
                             }
                             Stack_Push(&tokenStack, topToken);
-                        }
+                        } 
 
                         if (prevToken->type == TOKEN_STRING && token->type == TOKEN_L_BRACKET) { // function call
                             err = isFunc(prevToken, symTable);
@@ -774,27 +780,13 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
     return err;
 }
 
-int main() {
-    TokenT *next = malloc(sizeof(TokenT));
-    next->type = TOKEN_ZERO;
-    symtable_t symTab;
-    table_init(&symTab);
-    symtable_entry_t* entry1;
-    table_insert(&symTab, "a", &entry1);
-    entry1->type = TOKEN_DT_STRING_NIL;
-    entry1->constant = true;
-
-    symtable_entry_t* entry2;
-    table_insert(&symTab, "c", &entry2);
-    entry2->type = TOKEN_DT_DOUBLE;
-
-    param_t *params[3];
-    params[0] = param_from_lit_create("a",NULL,TOKEN_DT_STRING_NIL);
-    params[1] = param_from_lit_create("b","tmp",TOKEN_DT_DOUBLE);
-    insert_builtin(&symTab, "funkcia", TOKEN_DT_INT, NULL, 0);
-
-    TokenType returnedType;
-    Error err = bu_read(&next, &symTab, &returnedType, false);
-    printf("ERROR = %d\nreturnedType = %d\n", err, returnedType);
-    return 0;
-}
+// int main() {
+//     TokenT *next = NULL;
+//     symtable_t symTab;
+//     table_init(&symTab);
+//     TokenType returnedType;
+//     Error err = bu_read(&next, &symTab, &returnedType, false);
+//     fprintf(stderr, "here\n");
+//     fprintf(stderr,"ERROR = %d\nreturnedType = %d\n", err, returnedType);
+//     return 0;
+// }

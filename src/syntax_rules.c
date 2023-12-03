@@ -262,6 +262,9 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
                 } else {
                     return WRONG_NUM_TYPE_ERROR;
                 }
+                if (paramIdent->declared == false) { // TODO check me
+                    return UNSPECIFIED_TYPE_ERROR;
+                }
             } else {
                 return UNDEFINED_VARIABLE_ERROR;
             }
@@ -309,7 +312,7 @@ Error parser_rule_callFunc(Parser_t *parser){
             comma = false;
         }
 
-        if (entry->params[param_idx]->name == NULL) { // [expr]
+        if (entry->params[param_idx]->name == "_") { // [expr]
             parser_getNewToken(parser);
 
             if (parser->token_current->type == TOKEN_IDENTIFIER) {
