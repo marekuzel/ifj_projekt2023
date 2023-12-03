@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
 #include <stdbool.h>
 #include "utils.h"
 #include "errors.h"
@@ -62,83 +61,6 @@ void buffer_detor (BufferT *buffer) {
 
 
 
-// buff_ret_t tokenBuffer_init(tokenBufferT *buffer) {
-//     buffer->length = 0;
-//     buffer->cap = BUFFER_CAP_S;
-
-//     buffer->bytes = calloc(buffer->cap,sizeof(TokenT *));
-    
-//     if (buffer->bytes == NULL) 
-//         return BUFF_INIT_FAIL;
-
-//     return BUFF_INIT_SUCCES;
-// }
-
-
-// buff_ret_t tokenBuffer_append(tokenBufferT *buffer, const TokenT *token) {
-//     if (buffer->length >= buffer->cap) {
-//         TokenT **new_buff = realloc(buffer->bytes,buffer->cap * 2 * sizeof(TokenT *)); 
-
-//         if (new_buff == NULL)
-//         {
-//             buffer_detor(buffer);
-//             return BUFF_APPEND_FAIL;
-//         }
-        
-//         buffer->bytes = new_buff;
-//         buffer->cap *= 2;
-//     }
-
-//     buffer->bytes[buffer->length++] = token;
-//     return BUFF_APPEND_SUCCES;  
-
-// }
-
-// void tokenBuffer_clear(tokenBufferT *buffer) {
-//     buffer->length = 0;
-// }
-
-// TokenT **tokenBuffer_export(const tokenBufferT *buffer) {
-//     TokenT ** dst = calloc(buffer->length,sizeof(TokenT *));
-
-//     if (dst == NULL)
-//         return NULL;
-
-//     memcpy(dst,buffer->bytes,buffer->length * sizeof(TokenT*));
-    
-//     return dst;
-// }
-
-// void tokeBuffer_detor (tokenBufferT *buffer) {
-//     free(buffer->bytes);
-//     buffer->bytes = NULL;
-//     buffer->cap = 0;
-//     buffer->length = 0;
-// }
-
-buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
-    char tmp_str[4];
-    char *endptr = NULL;
-    errno = 0;
-
-    int num = (int ) strtol(num_str,&endptr,16);
-
-    if (errno != 0 || !num_str || *endptr) {
-        return BUFF_NUM_CVT_FAIL;
-    }
-    
-    sprintf(tmp_str, "%03d",num);
-
-    for (int str_idx = 0; tmp_str[str_idx] != '\0'; str_idx++) {
-        if (buffer_append(buffer,tmp_str[str_idx]) != BUFF_APPEND_SUCCES) {
-            return BUFF_APPEND_FAIL;
-        }
-    }
-    return BUFF_NUM_CVT_SUCCES;
-
-}
-
-
 stack_ret_t Stack_Init(Stack *stack) {
 	if (stack == NULL){
 		return STACK_INIT_FAIL;
@@ -148,7 +70,7 @@ stack_ret_t Stack_Init(Stack *stack) {
 		return STACK_INIT_FAIL;
 	}
 	stack -> topIndex = -1;
-    return STACK_INIT_SUCCES;
+  return STACK_INIT_SUCCES;
 }
 
 bool Stack_IsEmpty(const Stack *stack) {
@@ -201,8 +123,8 @@ stack_ret_t Stack_Pop( Stack *stack) {
 stack_ret_t Stack_Push( Stack *stack, TokenT *data ) {
 	if (!Stack_IsFull(stack)) {
 		stack->topIndex++;
-		stack->array[stack->topIndex] = data;
-        return STACK_PUSH_SUCCES;
+    stack->array[stack->topIndex] = data;
+      return STACK_PUSH_SUCCES;
 	}
 	else{
 		return STACK_PUSH_FAIL;

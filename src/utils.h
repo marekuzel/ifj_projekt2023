@@ -72,57 +72,6 @@ void buffer_detor (BufferT *buffer);
 
 buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str);
 
-// typedef struct token_buffer_t {
-//     TokenT **bytes;
-//     int cap;
-//     int length;
-// } tokenBufferT;
-
-/**
- * @brief Initilaize ADT buffer
- * 
- * @param buffer pointer to buffer
- * @retval ret_t BUFF_INIT_SUCCES if succesfull
- * @retval ret_t BUFF_INIT_FAIL if failed
- */
-// buff_ret_t tokenBuffer_init(tokenBufferT *buffer);
-
-/**
- * @brief Appends chr to the end of buffer 
- * 
- * @param buffer pointer to buffer
- * @param chr character to be appended
- * @retval ret_t BUFF_APPEND_SUCCES if succesfull
- * @retval ret_t BUFF_APPEND_FAIL if failed
- */
-
-// buff_ret_t tokenBuffer_append(tokenBufferT *buffer, TokenT *token);
-
-/**
- * @brief Clears buffer
- * 
- * @param buffer pointer to buffer
- */
-// void Tokenbuffer_clear(tokenBufferT *buffer);
-
-
-/**
- * @brief exports buffer to char* (chars needs to be freed after use)
- * 
- * @param buffer pointer to buffer
- * @retval array of token pointers
- */
-// TokenT **tokenBuffer_export(const tokenBufferT *buffer);
-
-/**
- * @brief frees buffer from memory
- * 
- * @param buffer pointer to buffer
- */
-// void tokenBuffer_detor (tokenBufferT *buffer);
-
-
-
 typedef union {
     char* str;
     double d;
