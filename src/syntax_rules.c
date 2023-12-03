@@ -13,14 +13,17 @@ Implementaion of syntax rules
 #define PRINT_RULE(rule)
 #endif
 
+//TODO: odkomentovat parser_createParam
 Error parser_rule_id(Parser_t *parser){
     //id ->id
+    PRINT_RULE(id);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
     return SUCCESS;
 }
 
 Error parser_rule_funcID(Parser_t *parser){
     //funcId -> id
+    PRINT_RULE(funcID);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
     return SUCCESS;
 }
@@ -126,8 +129,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
         parser->current_entry->type = parser->token_current->type;
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_ASSIGN){
-            printf ("%s\n",parser->token_current->value.str);
-            GET_NEXT_AND_CALL_RULE(parser, expr);
+            parser_rule_expr(parser);
             parser->current_entry->defined = true;
             goto success;
         }
@@ -205,22 +207,23 @@ Error parser_rule_elseF(Parser_t *parser){
 }
 
 Error parser_rule_defFunc(Parser_t *parser){
+    PRINT_RULE(defFunc)
     //func [funcId] ([parameters]) [func_ret]
-    GET_NEXT_AND_CALL_RULE(parser, funcID);
-    table_insert_global(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
-    parser->current_function = parser->token_current->value.str;
-    if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return SYNTAX_ERROR;
+    parser_rule_funcID(parser);
 
+    // table_insert_global(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
+    // parser->current_function = parser->token_current->value.str;
+    // if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return SYNTAX_ERROR;
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
-    GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
+    printf("afsdaf%s\n", parser->token_current->value.str);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
 
     return SUCCESS;
-    return SYNTAX_ERROR;
 }
 
 Error parser_rule_funcRet(Parser_t *parser){
+    PRINT_RULE(funcRet);
     if (parser->token_current->type == TOKEN_ARROW){
         GET_NEXT_AND_CALL_RULE(parser, type);
         parser->current_entry->return_type = parser->token_current->type;
@@ -419,23 +422,22 @@ Error parser_rule_callFunc(Parser_t *parser){
 }
 
 Error parser_rule_paramsDef(Parser_t *parser){
+    PRINT_RULE(paramsDef);
     //[parameters] →
     //  | ( [name] [id] : [type]  [parameters_seq]*
     //  | ( )
-    GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
     parser_getNewToken(parser);
-    if (parser->token_current->type == TOKEN_IDENTIFIER){
-        GET_NEXT_AND_CALL_RULE(parser, id); //name is id from syntax pow
-        GET_NEXT_AND_CALL_RULE(parser, id);
+    if (parser->token_current->type == TOKEN_IDENTIFIER){ //the name is checked by this conditional statement
+        parser_rule_id(parser); //name is id from syntax pow
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
 
-        parser_createParam(parser);
+        //parser_createParam(parser);
 
         GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
         goto success;
     }
-    else if (parser->token_current->type == TOKEN_L_BRACKET){
+    else if (parser->token_current->type == TOKEN_R_BRACKET){
         goto success;
     }
     success:
@@ -443,6 +445,7 @@ Error parser_rule_paramsDef(Parser_t *parser){
 }
 
 Error parser_rule_paramsDefSeq(Parser_t* parser){
+    PRINT_RULE(paramsDefSeq);
     // [parameters_seq] →
     //    | , [name] [id] : [type] [parameters_seq]
     //    | )
@@ -451,7 +454,7 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
 
-        parser_createParam(parser);
+        //parser_createParam(parser);
 
         GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
         return SUCCESS;
@@ -501,9 +504,7 @@ Error parser_rule_expr(Parser_t *parser){
     //    | [expr] ?? [expr]
     //    | [id]
     //    | [literal]
-    parser_getNewToken(parser);
-    TokenT *next = malloc(sizeof(TokenT));
-    next->type = TOKEN_ZERO;
+    TokenT *next = NULL;
     TokenType exprRet;
     Error err = bu_read(&next, parser->symtable, &exprRet);
     symtable_entry_t* entry;

@@ -558,7 +558,7 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType) {
                     err = stack_insertAfterTerminal(&stack);
                     stack_char_push(&stack, symbol);
 
-                    if ((*next)->type == TOKEN_ZERO) { // token which does not belog to expr was not find 
+                    if (*next == NULL) { // token which does not belog to expr was not find 
                         prevToken = token;
                         token = generate_token();
 
@@ -652,7 +652,7 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType) {
                 case PREC_ACTION_EQ:
                     stack_char_push(&stack, symbol);
 
-                    if ((*next)->type == TOKEN_ZERO) { // token which does not belog to expr was not found  
+                    if (*next == NULL) { // token which does not belog to expr was not found  
                         prevToken = token;
                         token = generate_token();
 

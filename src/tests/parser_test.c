@@ -73,8 +73,9 @@ void inset_test_label(char *test_name) {
 void test_1(){
     TEST("Test declaration of variable\n");
     Error err = parser_rule_stmtMainSeq(parser);
-    print_token(parser->token_current);
     if (err==SYNTAX_ERROR){
+        print_token(parser->token_current);
+        // print_token(parser->stack->array[parser->stack->topIndex]);
         printf("error\n");
     }
     END_TEST("Test declaration of variable\n");
