@@ -21,7 +21,7 @@ test_code_gen: code_gen.o symtable.o ./tests/code_gen_test.o utils.o
 	valgrind --leak-check=full --track-origins=yes -s --log-file=./tests/test_out/code_gen_test_valgrind.out ./test_code_gen > ../interpreter/test_code.txt
 	../interpreter/ic23int ../interpreter/test_code.txt > ./tests/test_out/code_gen_test.out
 	diff ./tests/test_out/code_gen_test.exp_out ./tests/test_out/code_gen_test.out && echo "code output is correct!"
-	grep -silent $(LEAKS) ./tests/test_out/code_gen_test_valgrind.out && grep -silent $(ERRORS) ./tests/test_out/code_gen_test_valgrind.out  && echo "valgrind ok!"
+	grep --silent $(LEAKS) ./tests/test_out/code_gen_test_valgrind.out && grep --silent $(ERRORS) ./tests/test_out/code_gen_test_valgrind.out  && echo "valgrind ok!"
 
 test_scanner: scanner.o utils.o ./tests/scanner_test.o	
 	$(CC) $(CFLAGS) -o $@ $^

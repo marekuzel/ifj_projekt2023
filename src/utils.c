@@ -2,121 +2,72 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 #include <stdbool.h>
 #include "utils.h"
 #include "errors.h"
 
-buff_ret_t buffer_init(BufferT *buffer) {
+void buffer_init(BufferT *buffer) {
+    assert(buffer != NULL);
+
     buffer->length = 0;
     buffer->cap = BUFFER_CAP_S;
 
     buffer->bytes = (char *) calloc(buffer->cap,1);
     
-    if (buffer->bytes == NULL) 
-        return BUFF_INIT_FAIL;
-
-    return BUFF_INIT_SUCCES;
+    CHECK_MEM_ERR(buffer->bytes)
 }
 
 
-buff_ret_t buffer_append(BufferT *buffer, const char chr) {
+void buffer_append(BufferT *buffer, const char chr) {
+    assert(buffer != NULL);
+
     if (buffer->length >= buffer->cap) {
         char *new_buff = realloc(buffer->bytes,buffer->cap * 2); 
 
-        if (new_buff == NULL)
-        {
-            buffer_detor(buffer);
-            return BUFF_APPEND_FAIL;
-        }
+        CHECK_MEM_ERR(new_buff)
         
         buffer->bytes = new_buff;
         buffer->cap *= 2;
     }
 
-    buffer->bytes[buffer->length++] = chr;
-    return BUFF_APPEND_SUCCES;  
-
+    buffer->bytes[buffer->length++] = chr; 
+    buffer->bytes[buffer->length++] = chr; 
 }
 
 void buffer_clear(BufferT *buffer) {
+    assert(buffer != NULL);
+
     buffer->length = 0;
 }
 
-char *buffer_export(const BufferT *buffer) {
+char *buffer_export(BufferT *buffer) {
+    assert(buffer != NULL);
+
     char * dst = (char * ) calloc(1,buffer->length+1);
 
-    if (dst == NULL)
-        return NULL;
+    CHECK_MEM_ERR(dst)
 
     memcpy(dst,buffer->bytes,buffer->length);
+
+    buffer_detor(buffer);
     
     return dst;
 }
 
 void buffer_detor (BufferT *buffer) {
+    assert(buffer != NULL);
+
     free(buffer->bytes);
     buffer->bytes = NULL;
     buffer->cap = 0;
     buffer->length = 0;
 }
 
-
-
-// buff_ret_t tokenBuffer_init(tokenBufferT *buffer) {
-//     buffer->length = 0;
-//     buffer->cap = BUFFER_CAP_S;
-
-//     buffer->bytes = calloc(buffer->cap,sizeof(TokenT *));
-    
-//     if (buffer->bytes == NULL) 
-//         return BUFF_INIT_FAIL;
-
-//     return BUFF_INIT_SUCCES;
-// }
-
-
-// buff_ret_t tokenBuffer_append(tokenBufferT *buffer, const TokenT *token) {
-//     if (buffer->length >= buffer->cap) {
-//         TokenT **new_buff = realloc(buffer->bytes,buffer->cap * 2 * sizeof(TokenT *)); 
-
-//         if (new_buff == NULL)
-//         {
-//             buffer_detor(buffer);
-//             return BUFF_APPEND_FAIL;
-//         }
-        
-//         buffer->bytes = new_buff;
-//         buffer->cap *= 2;
-//     }
-
-//     buffer->bytes[buffer->length++] = token;
-//     return BUFF_APPEND_SUCCES;  
-
-// }
-
-// void tokenBuffer_clear(tokenBufferT *buffer) {
-//     buffer->length = 0;
-// }
-
-// TokenT **tokenBuffer_export(const tokenBufferT *buffer) {
-//     TokenT ** dst = calloc(buffer->length,sizeof(TokenT *));
-
-//     if (dst == NULL)
-//         return NULL;
-
-//     memcpy(dst,buffer->bytes,buffer->length * sizeof(TokenT*));
-    
-//     return dst;
-// }
-
-// void tokeBuffer_detor (tokenBufferT *buffer) {
-//     free(buffer->bytes);
-//     buffer->bytes = NULL;
-//     buffer->cap = 0;
-//     buffer->length = 0;
-// }
-
 buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
+    assert(buffer != NULL);
+    assert(num_str != NULL);
+
     char tmp_str[4];
     char *endptr = NULL;
     errno = 0;
@@ -130,9 +81,7 @@ buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
     sprintf(tmp_str, "%03d",num);
 
     for (int str_idx = 0; tmp_str[str_idx] != '\0'; str_idx++) {
-        if (buffer_append(buffer,tmp_str[str_idx]) != BUFF_APPEND_SUCCES) {
-            return BUFF_APPEND_FAIL;
-        }
+        buffer_append(buffer,tmp_str[str_idx]);
     }
     return BUFF_NUM_CVT_SUCCES;
 
@@ -140,32 +89,39 @@ buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
 
 
 stack_ret_t Stack_Init(Stack *stack) {
-	if (stack == NULL){
-		return STACK_INIT_FAIL;
-	}
+    assert(stack != NULL);
+
 	stack->array = calloc(STACK_SIZE,sizeof(TokenT));
-	if (stack->array == NULL){
-		return STACK_INIT_FAIL;
-	}
+
+    CHECK_MEM_ERR(stack->array)
+
 	stack -> topIndex = -1;
+
     return STACK_INIT_SUCCES;
 }
 
 bool Stack_IsEmpty(const Stack *stack) {
+    assert(stack != NULL);
 	return stack->topIndex == -1;
 }
 
 bool Stack_IsFull(const Stack *stack) {
-		return stack->topIndex == STACK_SIZE-1;
+    assert(stack != NULL);
+    return stack->topIndex == STACK_SIZE-1;
 }
 
 void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
+    assert(stack != NULL);
+    assert(dataPtr != NULL);
+    
     if (!Stack_IsEmpty(stack)){
         *dataPtr = stack->array[stack->topIndex];
     }
 }
 
 TokenT* stack_read_token_bottom(Stack* stack) {
+  assert(stack != NULL);    
+
   Stack tmp;
   Stack_Init(&tmp);
   TokenT* token;
@@ -191,6 +147,8 @@ TokenT* stack_read_token_bottom(Stack* stack) {
 }
 
 stack_ret_t Stack_Pop( Stack *stack) {
+    assert(stack != NULL);
+
 	if (!Stack_IsEmpty(stack)){
 		stack->topIndex--;
         return STACK_POP_SUCCES;
@@ -199,6 +157,9 @@ stack_ret_t Stack_Pop( Stack *stack) {
 }
 
 stack_ret_t Stack_Push( Stack *stack, TokenT *data ) {
+    assert(stack != NULL);
+    assert(data != NULL);
+
 	if (!Stack_IsFull(stack)) {
 		stack->topIndex++;
 		stack->array[stack->topIndex] = data;
@@ -210,43 +171,33 @@ stack_ret_t Stack_Push( Stack *stack, TokenT *data ) {
 }
 
 void Stack_Dispose( Stack *stack ) {
+    assert(stack != NULL);
+
 	stack->topIndex = -1;
 	free(stack->array);
 	stack->array = NULL;
 }
 
 
-token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff) {
+void token_init(TokenT *token,TokenType type, BufferT *buff) {
+    assert(token != NULL);
+    assert(buff != NULL);
+
     token->type = type;
-    char *token_value = buffer_export(buff);
+    token->value.str = buffer_export(buff);
 
-    // fprintf(stderr, "%s \n", token_value);
-
-    if (token_value == NULL) {
-        return VALUE_ASSIGNMENT_FAIL;
+    if (type == TOKEN_INTEGER) { 
+        token->value.i = (int) strtol(token->value.str,NULL,10);  
+    } else if (type == TOKEN_DOUBLE) {
+        token->value.d = strtod(token->value.str,NULL);
     }
-
-    if (type == TOKEN_INTEGER) {
-        token->value.i = (int) strtol(token_value,NULL,10);
-        return INT_CONVERSION_SUCCES;
-
-    }
-    else if (type == TOKEN_DOUBLE) {
-        token->value.d = strtod(token_value,NULL);
-        return DOUBLE_CONVERTION_SUCCES;
-    }
-
-    buffer_detor(buff);
-
-    token->value.str = token_value;
-    return VALUE_ASSIGNMENT_SUCCES;
-
 }
 
 void token_dtor(TokenT *token) {
+    assert(token != NULL);
+
     if (token->type != TOKEN_INTEGER && token->type != TOKEN_DOUBLE)
         free(token->value.str);
-    token->value.str = NULL;
     free(token);
 }
 
@@ -284,6 +235,7 @@ void token_dtor(TokenT *token) {
 STACKDEF(char*, char)
 
 bool stack_char_2oftop(stack_char_t *stack) {
+  assert(stack != NULL);
   if (stack_char_empty(stack)) {
     return false;
   }  
@@ -308,6 +260,8 @@ bool stack_char_2oftop(stack_char_t *stack) {
 }
 
 bool isTerminal (char* stackSymbol) {
+  assert(stackSymbol != NULL);
+
   if (!strcmp(stackSymbol, "+")) {
         return true;
     } else if (!strcmp(stackSymbol, "-")) {
@@ -346,6 +300,8 @@ bool isTerminal (char* stackSymbol) {
 }
 
 Error stack_insertAfterTerminal(stack_char_t* stack) {
+  assert(stack != NULL);
+
   stack_char_t tmp;
   stack_char_init(&tmp);
 
@@ -372,6 +328,7 @@ Error stack_insertAfterTerminal(stack_char_t* stack) {
 }
 
 int stack_numOfElem(stack_char_t* stack) {
+  assert(stack != NULL);
   stack_char_t tmp;
   stack_char_init(&tmp);
   int count = 0;
@@ -393,6 +350,9 @@ int stack_numOfElem(stack_char_t* stack) {
 }
 
 void stack_topTerminal(stack_char_t* stack, char **term) {
+  assert(stack != NULL);
+  assert(term != NULL);
+
   stack_char_t tmp;
   stack_char_init(&tmp);
 
@@ -415,6 +375,7 @@ void stack_topTerminal(stack_char_t* stack, char **term) {
 }
 
 char* stack_bottom_read(stack_char_t* stack) {
+  assert(stack != NULL);
   stack_char_t tmp;
   stack_char_init(&tmp);
   char* bottom = "";
@@ -439,6 +400,8 @@ char* stack_bottom_read(stack_char_t* stack) {
 }
 
 void print_stack(stack_char_t* stack) {
+  assert(stack != NULL);
+  
   stack_char_t tmp;
   stack_char_init(&tmp);
 
@@ -454,4 +417,56 @@ void print_stack(stack_char_t* stack) {
     stack_char_push(stack, insert);
     stack_char_pop(&tmp);
   }
+}
+
+static const char *tokentype_to_string[] = {
+    "TOKEN_ZERO",
+    "TOKEN_IDENTIFIER",
+    "TOKEN_DT_DOUBLE",
+    "TOKEN_DT_DOUBLE_NIL",
+    "TOKEN_DT_INT",
+    "TOKEN_DT_INT_NIL",
+    "TOKEN_DT_STRING",
+    "TOKEN_DT_STRING_NIL",
+    "TOKEN_LET",
+    "TOKEN_VAR",
+    "TOKEN_RETURN",
+    "TOKEN_IF",
+    "TOKEN_ELSE",
+    "TOKEN_WHILE",
+    "TOKEN_FUNC",
+    "TOKEN_NIL",
+    "TOKEN_OPERATOR",
+    "TOKEN_STRING", 
+    "TOKEN_INTEGER", 
+    "TOKEN_DOUBLE",
+    "TOKEN_ASSIGN",
+    "TOKEN_L_BRACKET",
+    "TOKEN_R_BRACKET",
+    "TOKEN_LC_BRACKET",
+    "TOKEN_RC_BRACKET",
+    "TOKEN_COLON",
+    "TOKEN_COMMA",
+    "TOKEN_ARROW",
+    "TOKEN_EOF"
+};
+
+
+void print_token(TokenT *token) {
+    if (token == NULL) {
+        printf("Invalid input\n");
+        return;
+    }
+    printf("TOKEN : ");
+    switch (token->type) {
+    case TOKEN_INTEGER:
+        printf("%s %d\n",tokentype_to_string[TOKEN_INTEGER],token->value.i);
+        break;
+    case TOKEN_DOUBLE:
+        printf("%s %a\n",tokentype_to_string[TOKEN_DOUBLE],token->value.d);
+        break;
+    default:
+        printf("%s %s\n",tokentype_to_string[token->type],token->value.str);
+        break;
+    }
 }

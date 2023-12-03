@@ -4,7 +4,13 @@
 #define UTILS_H
 
 
+#define CHECK_MEM_ERR(ptr)                              \
+    if (ptr == NULL) {                                  \
+        fprintf(stderr,"Failed to allocate memory!\n"); \
+        exit(INTERNAL_COMPILER_ERROR);                  \
+    }                                                   \
 
+// #define NDEBUG
 
 /**
  * @brief Buffet ADT implementation
@@ -34,7 +40,7 @@ typedef enum buffer_ret{
  * @retval ret_t BUFF_INIT_SUCCES if succesfull
  * @retval ret_t BUFF_INIT_FAIL if failed
  */
-buff_ret_t buffer_init(BufferT *buffer);
+void buffer_init(BufferT *buffer);
 
 /**
  * @brief Appends chr to the end of buffer 
@@ -45,7 +51,7 @@ buff_ret_t buffer_init(BufferT *buffer);
  * @retval ret_t BUFF_APPEND_FAIL if failed
  */
 
-buff_ret_t buffer_append(BufferT *buffer,const char chr);
+void buffer_append(BufferT *buffer,const char chr);
 
 /**
  * @brief Clears buffer
@@ -61,7 +67,7 @@ void buffer_clear(BufferT *buffer);
  * @param buffer pointer to buffer
  * @retval char* pointer to char array
  */
-char *buffer_export(const BufferT *buffer);
+char *buffer_export(BufferT *buffer);
 
 /**
  * @brief frees buffer from memory
@@ -70,57 +76,12 @@ char *buffer_export(const BufferT *buffer);
  */
 void buffer_detor (BufferT *buffer);
 
+/**
+ * @brief converts a hex number string into decimal number string
+ * and appends it to the buffer
+*/
+
 buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str);
-
-// typedef struct token_buffer_t {
-//     TokenT **bytes;
-//     int cap;
-//     int length;
-// } tokenBufferT;
-
-/**
- * @brief Initilaize ADT buffer
- * 
- * @param buffer pointer to buffer
- * @retval ret_t BUFF_INIT_SUCCES if succesfull
- * @retval ret_t BUFF_INIT_FAIL if failed
- */
-// buff_ret_t tokenBuffer_init(tokenBufferT *buffer);
-
-/**
- * @brief Appends chr to the end of buffer 
- * 
- * @param buffer pointer to buffer
- * @param chr character to be appended
- * @retval ret_t BUFF_APPEND_SUCCES if succesfull
- * @retval ret_t BUFF_APPEND_FAIL if failed
- */
-
-// buff_ret_t tokenBuffer_append(tokenBufferT *buffer, TokenT *token);
-
-/**
- * @brief Clears buffer
- * 
- * @param buffer pointer to buffer
- */
-// void Tokenbuffer_clear(tokenBufferT *buffer);
-
-
-/**
- * @brief exports buffer to char* (chars needs to be freed after use)
- * 
- * @param buffer pointer to buffer
- * @retval array of token pointers
- */
-// TokenT **tokenBuffer_export(const tokenBufferT *buffer);
-
-/**
- * @brief frees buffer from memory
- * 
- * @param buffer pointer to buffer
- */
-// void tokenBuffer_detor (tokenBufferT *buffer);
-
 
 
 typedef union {
@@ -277,7 +238,7 @@ void Stack_Dispose(Stack *);
  * @param type: type of token
  * @param buff: pointer to a buffer
 */
-token_ret_t token_init(TokenT *token,TokenType type, BufferT *buff);
+void token_init(TokenT *token,TokenType type, BufferT *buff);
 
 
 /**
