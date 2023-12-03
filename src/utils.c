@@ -5,6 +5,7 @@
 #include <errno.h>
 #include "utils.h"
 #include "errors.h"
+#include <errno.h>
 
 buff_ret_t buffer_init(BufferT *buffer) {
     buffer->length = 0;
@@ -81,6 +82,7 @@ buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
     return BUFF_NUM_CVT_SUCCES;
 
 }
+
 
 stack_ret_t Stack_Init(Stack *stack) {
 	if (stack == NULL){

@@ -64,7 +64,7 @@ void print_token(TokenT *token) {
     inset_test_label(name);                     \
 
 #define END_TEST(name)               \
-    printf ("-------------test_%s successful-------------\n", name); \
+    printf ("\n-----------------\n-----------------\ntest_%s successful\n-----------------\n-----------------\n", name); \
 
 void inset_test_label(char *test_name) {
     printf("\n##########test_%s########\n\n",test_name);
@@ -78,6 +78,7 @@ void test_1(){
         // print_token(parser->stack->array[parser->stack->topIndex]);
         printf("error\n");
     }
+    parser_dtor(parser);
     END_TEST("Test declaration of variable\n");
 }
 
