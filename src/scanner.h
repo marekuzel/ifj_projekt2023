@@ -9,7 +9,7 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
-#ifndef SCANNER_TESTS
+#ifdef SCANNER_TESTS
     #define SCANNER_ERROR(msg) fprintf(stderr,"%s.\n",msg); return NULL;
 #else
     #define SCANNER_ERROR(msg) error_exit(token,&buffer,msg,LEXICAL_ERROR);
