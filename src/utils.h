@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdlib.h>
 #include "errors.h"
 #ifndef UTILS_H
 #define UTILS_H
@@ -151,16 +152,9 @@ typedef struct token{
 typedef struct stack{
 	TokenT **array;
 	int topIndex;
+    int bottomIndex;
+    size_t size;
 } Stack;
-
-typedef enum stack_ret{
-    STACK_INIT_SUCCES,
-    STACK_INIT_FAIL,
-    STACK_POP_SUCCES,
-    STACK_POP_FAIL,
-    STACK_PUSH_SUCCES,
-    STACK_PUSH_FAIL,
-    } stack_ret_t;
 
 /**
  * @brief Initialize stack
@@ -169,7 +163,7 @@ typedef enum stack_ret{
  * @retval stack_ret_t STACK_INIT_SUCCES succesfull initialization of stack sturcture
  * @retval stack_ret_t STACK_INIT_FAIL failed initialization of stack structure
  */
-stack_ret_t Stack_Init(Stack *);
+void Stack_Init(Stack *);
 
 /**
  * @brief If stack is empty return true, returns false otherwise
@@ -188,7 +182,6 @@ bool Stack_IsEmpty(const Stack *);
  */
 bool Stack_IsFull(const Stack *);
 
-TokenT Stack_peak();
 /**
  * @brief Assigns value of the top element of stack to dataPtr
  * 
@@ -206,7 +199,7 @@ TokenT* stack_read_token_bottom(Stack* stack);
  * @retval stack_ret_t STACK_POP_SUCCES if succesfull
  * @retval stack_ret_t STACK_POP_FAIL if failed
  */
-stack_ret_t Stack_Pop(Stack *);
+void Stack_Pop(Stack *);
 
 /**
  * @brief Stack push operation
@@ -217,7 +210,7 @@ stack_ret_t Stack_Pop(Stack *);
  * @return stack_ret_t STACK_PUSH_FAIL if failed
  */
 
-stack_ret_t Stack_Push(Stack *, TokenT*);
+void Stack_Push(Stack *, TokenT*);
 
 
 /**

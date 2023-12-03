@@ -14,4 +14,6 @@ src/tests/test_out/*.out
 src/tests/test_out/*
 rnd_tests/*
 src/googletest/*
-src/googletest/*
+src/compiler
+bin/compiler
+

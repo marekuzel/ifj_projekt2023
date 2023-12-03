@@ -88,26 +88,27 @@ buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
 }
 
 
-stack_ret_t Stack_Init(Stack *stack) {
+void Stack_Init(Stack *stack) {
     assert(stack != NULL);
 
-	stack->array = calloc(STACK_SIZE,sizeof(TokenT));
+	stack->array = calloc(STACK_SIZE,sizeof(TokenT*));
 
     CHECK_MEM_ERR(stack->array)
 
 	stack -> topIndex = -1;
+    stack->size = STACK_SIZE;
+    stack -> bottomIndex = 0;
 
-    return STACK_INIT_SUCCES;
 }
 
 bool Stack_IsEmpty(const Stack *stack) {
     assert(stack != NULL);
-	return stack->topIndex == -1;
+	return stack->bottomIndex > stack->topIndex;
 }
 
 bool Stack_IsFull(const Stack *stack) {
     assert(stack != NULL);
-    return stack->topIndex == STACK_SIZE-1;
+    return stack->topIndex == stack->size-1;
 }
 
 void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
@@ -121,59 +122,46 @@ void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
 
 TokenT* stack_read_token_bottom(Stack* stack) {
   assert(stack != NULL);    
+  assert(stack->bottomIndex <= stack->topIndex);
 
-  Stack tmp;
-  Stack_Init(&tmp);
-  TokenT* token;
-
-  while (!Stack_IsEmpty(stack)) {
-    Stack_Top(stack, &token);
-    Stack_Push(&tmp, token);
-    Stack_Pop(stack);
-  }
-
-  if (!Stack_IsEmpty(&tmp)) {
-    Stack_Pop(&tmp);
-  }
-
-  TokenT* token_tmp;
-  while (!Stack_IsEmpty(&tmp)) {
-    Stack_Top(&tmp, &token_tmp);
-    Stack_Push(stack, token_tmp);
-    Stack_Pop(&tmp);
-  }
-
-  return token;
+  return stack->array[stack->bottomIndex++];
 }
 
-stack_ret_t Stack_Pop( Stack *stack) {
+void Stack_Pop( Stack *stack) {
     assert(stack != NULL);
 
 	if (!Stack_IsEmpty(stack)){
 		stack->topIndex--;
-        return STACK_POP_SUCCES;
 	}
-    return STACK_POP_FAIL;
+
+    fprintf(stderr,"Internal stack underflow\n");
+    exit(INTERNAL_COMPILER_ERROR);
 }
 
-stack_ret_t Stack_Push( Stack *stack, TokenT *data ) {
+void Stack_Push( Stack *stack, TokenT *data ) {
     assert(stack != NULL);
     assert(data != NULL);
 
-	if (!Stack_IsFull(stack)) {
-		stack->topIndex++;
-		stack->array[stack->topIndex] = data;
-        return STACK_PUSH_SUCCES;
+    if (Stack_IsFull(stack)) {
+        TokenT **new_arr = realloc(stack->array,stack->size * 2);
+
+        CHECK_MEM_ERR(new_arr)
+
+        stack->size *= 2;
+        stack->array = new_arr;
 	}
-	else{
-		return STACK_PUSH_FAIL;
-	}
+    stack->array[stack->topIndex++] = data;
 }
 
 void Stack_Dispose( Stack *stack ) {
     assert(stack != NULL);
 
+    for (int stack_idx = 0; stack_idx < stack->size; stack_idx++) {
+        token_dtor(stack->array[stack_idx]);
+    }
+
 	stack->topIndex = -1;
+    stack->bottomIndex = 0;
 	free(stack->array);
 	stack->array = NULL;
 }

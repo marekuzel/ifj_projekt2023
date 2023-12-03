@@ -224,6 +224,7 @@ void table_add_scope(symtable_t *table) {
     assert(table != NULL);
 
     if (table->top_idx >= SYMTABLE_SIZE - 1) {
+        fprintf(stderr,"Symtable scope overflow\n");
         exit(INTERNAL_COMPILER_ERROR);
     }
 
@@ -235,6 +236,7 @@ void table_remove_scope(symtable_t *table) {
     assert(table != NULL);
 
     if (table->top_idx < 0) {
+        fprintf(stderr,"Symtable scope underflow\n");
         exit(INTERNAL_COMPILER_ERROR);
     }
 

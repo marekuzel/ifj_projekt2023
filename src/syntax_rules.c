@@ -249,8 +249,6 @@ Error parser_rule_defFunc(Parser_t *parser){
     GET_NEXT_AND_CALL_RULE(parser, funcID);
     table_insert_global(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
     parser->current_function = parser->token_current->value.str;
-    if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return INTERNAL_COMPILER_ERROR;
-
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
@@ -504,7 +502,6 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
     }
     else if (parser->token_current->type == TOKEN_R_BRACKET){
         parser->current_entry->params = param_buffer_export(parser->buffer);
-        if (parser->current_entry->params == NULL) return INTERNAL_COMPILER_ERROR;
         parser->current_entry->type = TOKEN_FUNC;
         parser->current_entry->defined = true;
         parser->current_entry->declared = true;
