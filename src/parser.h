@@ -34,7 +34,7 @@ void parser_init(Parser_t *);
 
 void parser_dtor(Parser_t*);
 
-void parser_getNewToken(Parser_t *);
+Error parser_getNewToken(Parser_t *);
 
 void parser_stashExtraToken(Parser_t *, TokenT *);
 

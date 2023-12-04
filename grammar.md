@@ -14,7 +14,6 @@
    | = [expr]
    | : [type] = [expr]
    | : [type]
-   | = [callFunction]
    
 [stmt_else] →
    | else { [stmt_seqFunc] }
@@ -59,6 +58,7 @@
    | [expr] ?? [expr]
    | [id]
    | [literal]
+   | [callFunction]
 
 [id] → *id*
 
