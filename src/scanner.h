@@ -1,3 +1,11 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: scanner.h
+ * 
+ * @brief interface of lexical analysis
+ * 
+ * @author Markéte Belatková xbelat02
+*/
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>

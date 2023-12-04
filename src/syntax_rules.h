@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: syntax_rules.h
+ * 
+ * @brief declaration of syntax rules 
+ * 
+ * @author Marek Kužel xkuzel11 
+*/
+
 #ifndef RULES_H
 #define RULES_H
 

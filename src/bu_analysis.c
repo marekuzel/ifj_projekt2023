@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: bu_analysis.c
+ * 
+ * @brief bottom up analysis implementation
+ * 
+ * @author Tímea Adamčíková xadamc09
+*/
+
 #include "utils.h"
 #include "prec_table.h"
 #include "bu_analysis.h"
@@ -366,7 +375,7 @@ Error type_check_div(TokenT* prevprev, TokenT* actual, used_types_t* usedTypes, 
     return TYPE_COMPATIBILITY_ERROR;
 }
 
-Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
+Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, Stack* streamTokens) {
     symtable_entry_t* entry;
     table_search_global(symTable, token->value.str, &entry);
     char *func_name = token->value.str;
@@ -381,7 +390,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
         }
 
         if (!strcmp(entry->params[param_idx]->name , "_")) { // [expr]
-            token = generate_token();
+            token = stack_read_token_bottom(streamTokens);
             if (token->type == TOKEN_IDENTIFIER) {
                 symtable_entry_t* paramIdent;
 
@@ -405,21 +414,21 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
             }
 
             if (comma) { // func has more params 
-                token = generate_token();
+                token = stack_read_token_bottom(streamTokens);
                 if (token->type != TOKEN_COMMA) {
                     return SYNTAX_ERROR;
                 }
             }
         } else { // [name] : [expr]
-            token = generate_token();
+            token = stack_read_token_bottom(streamTokens);
             if (token->type == TOKEN_IDENTIFIER && !strcmp(token->value.str, entry->params[param_idx]->name)) {
 
-                token = generate_token();
+                token = stack_read_token_bottom(streamTokens);
                 if (token->type != TOKEN_COLON) {
                     return SYNTAX_ERROR;
                 }
 
-                token = generate_token();
+                token = stack_read_token_bottom(streamTokens);
                 if (token->type == TOKEN_IDENTIFIER) {
                     symtable_entry_t* paramIdent;
 
@@ -442,7 +451,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
                 }
 
                 if (comma) { // func has more params 
-                    token = generate_token();
+                    token = stack_read_token_bottom(streamTokens);
                     if (token->type != TOKEN_COMMA) {
                         return SYNTAX_ERROR;
                     }
@@ -455,7 +464,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType) {
         param_idx++;
     }
 
-    token = generate_token();
+    token = stack_read_token_bottom(streamTokens);
     if (token->type == TOKEN_R_BRACKET) {
         **resType = entry->return_type;
         table_add_scope(symTable);
@@ -506,23 +515,39 @@ Error type_check_2qm(TokenT* prevprev, TokenT* actual, symtable_t* symTable) {
     return TYPE_COMPATIBILITY_ERROR;
 }
 
-Error check_if_let(TokenT* token, symtable_t* symTable) { // TODO generate
-    symtable_entry_t* entry;
-    if (table_search(symTable, token->value.str, &entry)) {
-        switch (entry->type) {
-            case TOKEN_DT_DOUBLE_NIL: case TOKEN_DT_INT_NIL: case TOKEN_DT_STRING_NIL:
-                if (entry->constant == true) {
-                    return SUCCESS;
-                }
-                return TYPE_COMPATIBILITY_ERROR; // TODO check me
-            default: 
-                return TYPE_COMPATIBILITY_ERROR; // TODO check me
-        }
+void change_type_withQM(Stack* tokenStack, used_types_t* types) {
+    TokenT* topToken;
+    Stack_Top(tokenStack, &topToken); // change type of top token
+    Stack_Pop(tokenStack);
+    switch(topToken->type) {
+        case TOKEN_DT_INT_NIL:
+            types->int_nil--;
+            if (types->int_nil == 0) {
+                types->t_int_nil = false;
+            }
+            topToken->type = TOKEN_DT_INT;
+            break;
+        case TOKEN_DT_DOUBLE_NIL:
+            types->double_nil--;
+            if (types->double_nil == 0) {
+                types->t_double_nil = false;
+            }
+            topToken->type = TOKEN_DT_DOUBLE;
+            break;
+        case TOKEN_DT_STRING_NIL:
+            types->string_nil--;
+            if (types->string_nil == 0) {
+                types->t_string_nil = false;
+            }
+            topToken->type = TOKEN_DT_STRING;
+            break;
+        default:
+            break;
     } 
-    return UNDEFINED_VARIABLE_ERROR;
+    Stack_Push(tokenStack, topToken);
 }
 
-Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool if_while) {
+Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenType* exprRetType, bool if_while) {
     used_types_t types = {.t_double = false, .t_int = false, .t_string = false, .t_int_nil = false, .int_nil = 0,
                             .t_double_nil = false, .double_nil = 0, .t_string_nil = false, .string_nil = 0};
     used_types_t divTypeResult = {.t_double = false, .t_int = false, .t_string = false, .t_int_nil = false, .int_nil = 0,
@@ -532,13 +557,7 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
     Error err;
     *exprRetType = TOKEN_ZERO;
 
-    TokenT* token = generate_token();
-    if (token->type == TOKEN_LET) {
-        token = generate_token();
-        err = check_if_let(token, symTable);
-        *next = generate_token();
-        return err;
-    }
+    TokenT* token = stack_read_token_bottom(streamTokens);
 
     Stack tokenStack;
     Stack_Init(&tokenStack);
@@ -558,7 +577,7 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
     err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol);
     if (err != SUCCESS) {
         if (err == UNDEFINED_VARIABLE_ERROR) {
-            token = generate_token();
+            token = stack_read_token_bottom(streamTokens);
             if (token->type == TOKEN_L_BRACKET) {
                 return UNDEFINED_FUNCTION_ERROR;
             }
@@ -578,57 +597,23 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
                     err = stack_insertAfterTerminal(&stack);
                     stack_char_push(&stack, symbol);
 
-                    if ((*next) == NULL) { // token which does not belog to expr was not find 
+                    if ((*next) == NULL) { // token which does not belog to expr was not found
                         prevToken = token;
-                        token = generate_token();
+                        token = stack_read_token_bottom(streamTokens);
 
                         if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
                             if (prevToken->type != TOKEN_IDENTIFIER) {
                                 return SYNTAX_ERROR;
                             }
-                            TokenT* topToken;
-                            Stack_Top(&tokenStack, &topToken); // change type of top string 
-                            Stack_Pop(&tokenStack);
-                            switch(topToken->type) {
-                                case TOKEN_DT_INT_NIL:
-                                    topToken->type = TOKEN_DT_INT;
-                                    if (types.int_nil > 0) {
-                                        types.int_nil--;
-                                    } else {
-                                        types.t_int_nil = false;
-                                    }
-                                    token = generate_token();
-                                    break;
-                                case TOKEN_DT_DOUBLE_NIL:
-                                    if (types.double_nil > 0) {
-                                        types.double_nil--;
-                                    } else {
-                                        types.t_double_nil = false;
-                                    }
-                                    topToken->type = TOKEN_DT_DOUBLE;
-                                    token = generate_token();
-                                    break;
-                                case TOKEN_DT_STRING_NIL:
-                                    if (types.string_nil > 0) {
-                                        types.string_nil--;
-                                    } else {
-                                        types.t_string_nil = false;
-                                    }
-                                    topToken->type = TOKEN_DT_STRING;
-                                    token = generate_token();
-                                    break;
-                                default:
-                                    token = generate_token();
-                                    break;
-                            } 
-                            Stack_Push(&tokenStack, topToken);
+                            change_type_withQM(&tokenStack, &types);
+                            token = stack_read_token_bottom(streamTokens);
                         } 
 
                         if (prevToken->type == TOKEN_IDENTIFIER && token->type == TOKEN_L_BRACKET) { // function call
                             err = isFunc(prevToken, symTable);
                             if (err == SUCCESS) {
-                                err = deal_with_func(prevToken, symTable, &exprRetType);
-                                *next = generate_token();
+                                err = deal_with_func(prevToken, symTable, &exprRetType, streamTokens);
+                                *next = stack_read_token_bottom(streamTokens);
                                 return err;
                             } else {
                                 return err;
@@ -677,55 +662,21 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
 
                     if ((*next) == NULL) { // token which does not belog to expr was not found  
                         prevToken = token;
-                        token = generate_token();
+                        token = stack_read_token_bottom(streamTokens);
 
                         if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
                             if (prevToken->type != TOKEN_IDENTIFIER) {
                                 return SYNTAX_ERROR;
                             }
-                            TokenT* topToken;
-                            Stack_Top(&tokenStack, &topToken); // change type of top string 
-                            Stack_Pop(&tokenStack);
-                            switch(topToken->type) {
-                                case TOKEN_DT_INT_NIL:
-                                    topToken->type = TOKEN_DT_INT;
-                                    if (types.int_nil > 0) {
-                                        types.int_nil--;
-                                    } else {
-                                        types.t_int_nil = false;
-                                    }
-                                    token = generate_token();
-                                    break;
-                                case TOKEN_DT_DOUBLE_NIL:
-                                    if (types.double_nil > 0) {
-                                        types.double_nil--;
-                                    } else {
-                                        types.t_double_nil = false;
-                                    }
-                                    topToken->type = TOKEN_DT_DOUBLE;
-                                    token = generate_token();
-                                    break;
-                                case TOKEN_DT_STRING_NIL:
-                                    if (types.string_nil > 0) {
-                                        types.string_nil--;
-                                    } else {
-                                        types.t_string_nil = false;
-                                    }
-                                    topToken->type = TOKEN_DT_STRING;
-                                    token = generate_token();
-                                    break;
-                                default:
-                                    token = generate_token();
-                                    break;
-                            }
-                            Stack_Push(&tokenStack, topToken);
+                            change_type_withQM(&tokenStack, &types);
+                            token = stack_read_token_bottom(streamTokens);
                         } 
 
                         if (prevToken->type == TOKEN_STRING && token->type == TOKEN_L_BRACKET) { // function call
                             err = isFunc(prevToken, symTable);
                             if (err == SUCCESS) {
-                                err = deal_with_func(prevToken, symTable, &exprRetType);
-                                *next = generate_token();
+                                err = deal_with_func(prevToken, symTable, &exprRetType, streamTokens);
+                                *next = stack_read_token_bottom(streamTokens);
                                 return err;
                             } else {
                                 return err;
@@ -779,14 +730,3 @@ Error bu_read(TokenT** next, symtable_t* symTable, TokenType* exprRetType, bool 
     err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable, if_while);
     return err;
 }
-
-// int main() {
-//     TokenT *next = NULL;
-//     symtable_t symTab;
-//     table_init(&symTab);
-//     TokenType returnedType;
-//     Error err = bu_read(&next, &symTab, &returnedType, false);
-//     fprintf(stderr, "here\n");
-//     fprintf(stderr,"ERROR = %d\nreturnedType = %d\n", err, returnedType);
-//     return 0;
-// }

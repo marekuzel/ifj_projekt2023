@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: code_gen.h
+ * 
+ * @brief code generation interface
+ * 
+ * @author Tomáš Zgút xzgutt00
+*/
+
 #include "utils.h"
 #include "symtable.h"
 
