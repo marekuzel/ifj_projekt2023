@@ -306,7 +306,7 @@ typedef struct param_buffer_t {
  * @retval ret_t BUFF_INIT_SUCCES if succesfull
  * @retval ret_t BUFF_INIT_FAIL if failed
  */
-buff_ret_t param_buffer_init(ParamBufferT *buffer);
+void param_buffer_init(ParamBufferT *buffer);
 
 /**
  * @brief Appends a param_t to paramBuffer 
@@ -364,10 +364,6 @@ void table_insert_builtin_funcs(symtable_t *table);
  * @returns true if given name is global false otherwise 
 */
 bool is_global(symtable_t *table, char *name);
-
-#define CHECK_ERR(err) \
-    if (ret != 0)      \
-        goto err;       \
 
 
 param_t **param_buffer_export(ParamBufferT *);

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "scanner.h"
 #include "errors.h"
 #include "utils.h"
@@ -7,7 +8,11 @@
 
 #define TEST_PARSER
 
-Error parser_init(Parser_t *parser){
+#define TEST_PARSER
+
+void parser_init(Parser_t *parser){
+    assert(parser != NULL);
+
     parser->token_current = NULL;
     parser->token_topOfStack = NULL;
     parser->return_in_func = false;
@@ -16,33 +21,30 @@ Error parser_init(Parser_t *parser){
     parser->if_while = false;
     parser->token_extraToken = NULL;
 
-    parser->stack = malloc(sizeof(Stack));
-    if (!(parser->stack)) 
-        return INTERNAL_COMPILER_ERROR; 
-    if (Stack_Init(parser->stack) == STACK_INIT_FAIL) 
-        return INTERNAL_COMPILER_ERROR;
+    parser->stack = calloc(1,sizeof(Stack));
+    CHECK_MEM_ERR(parser->stack)
+    Stack_Init(parser->stack) ;
 
-    parser->symtable = malloc(sizeof(symtable_t));
-    if (!(parser->symtable)) 
-        return INTERNAL_COMPILER_ERROR;
+    parser->symtable = calloc(1,sizeof(symtable_t));
+    CHECK_MEM_ERR(parser->symtable)
     table_init(parser->symtable);
 
-    parser->buffer = malloc(sizeof(ParamBufferT));
-    if (!(parser->buffer)) 
-        return INTERNAL_COMPILER_ERROR;
-    if (param_buffer_init(parser->buffer) != BUFF_INIT_SUCCES)
-        return INTERNAL_COMPILER_ERROR;
-
-    return SUCCESS;
+    parser->buffer = calloc(1,sizeof(ParamBufferT));
+    CHECK_MEM_ERR(parser->buffer);
+    param_buffer_init(parser->buffer);
 }
 
 void parser_stashExtraToken(Parser_t *parser, TokenT *token){
+    assert(parser != NULL);
+    assert(token != NULL);
+
     parser->token_extraToken = token;
 }
 
 Error parser_getNewToken(Parser_t *parser){
-    if (Stack_Push(parser->stack, parser->token_current) == STACK_PUSH_FAIL) 
-        return INTERNAL_COMPILER_ERROR;
+    assert(parser != NULL);
+
+    Stack_Push(parser->stack, parser->token_current);
     parser->token_topOfStack = parser->token_current;
     if (parser->token_extraToken != NULL){
         parser->token_current = parser->token_extraToken;
@@ -60,6 +62,7 @@ Error parser_getNewToken(Parser_t *parser){
 
 //takes case parser->buffer = malloc(sizeof(ParamBufferT));
 Error parser_createParam (Parser_t * parser){
+    assert(parser != NULL);
     //dont touch this
     int top = parser->stack->topIndex;
     TokenT ** ptr = parser->stack->array;
@@ -73,6 +76,7 @@ void parser_dtor(Parser_t * parser){
     param_buffer_detor(parser->buffer);
     table_dispose(parser->symtable);
     Stack_Dispose(parser->stack);
+    param_buffer_detor(parser->buffer);
     parser->current_entry = NULL;
     param_buffer_detor(parser->buffer);
     // free(parser);

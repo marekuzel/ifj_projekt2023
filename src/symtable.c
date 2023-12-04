@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "symtable.h"
 #include "errors.h"
 #include "utils.h"
@@ -14,23 +15,23 @@ Implementaion of symtalbe entry
 symtable_entry_t *entry_create(void) {
     symtable_entry_t *new_entry = calloc(1,sizeof(symtable_entry_t));
 
-    if (new_entry == NULL)
-        exit(INTERNAL_COMPILER_ERROR);
+    CHECK_MEM_ERR(new_entry)
         
     return new_entry;
 }
 
 void entry_dispose(symtable_entry_t *entry) {
+    assert(entry != NULL);
+
     if (entry->params == NULL)
         return;
 
-    int param_idx = 0;
-    while (entry->params[param_idx] != NULL) {
+    for (int param_idx = 0; entry->params[param_idx] != NULL; param_idx++) {
         free(entry->params[param_idx]->id);
         free(entry->params[param_idx]->name);
         free(entry->params[param_idx]);
-        param_idx++;
     }
+
     free(entry->params);
 }
 
@@ -42,6 +43,9 @@ Implementatoin of awl tree - helper functions
 */
 
 int key_cmp(const char *key, const char *cmp) {
+    assert(key != NULL);
+    assert(cmp != NULL);
+
     int key_idx;
     for (key_idx = 0;key[key_idx] != '\0'; key_idx++) {
         if (key[key_idx] == cmp[key_idx])
@@ -82,13 +86,13 @@ Iplementation of awl tree
 
 
 void awl_init(awl_t **awl) {
-    if (awl == NULL)
-        return;
-        
+    assert(awl != NULL);
+
     *awl = NULL;
 }
 
 bool awl_search(awl_t *awl, char *key, symtable_entry_t **entry) {
+    assert(entry != NULL);
 
     if (awl == NULL)
         return false;
@@ -106,6 +110,8 @@ bool awl_search(awl_t *awl, char *key, symtable_entry_t **entry) {
 
 
 awl_t *awl_rotate_right(awl_t *target) {
+    assert(target != NULL);
+
     awl_t *tmp = target->left;
     target->left = tmp->right;
     tmp->right = target;
@@ -117,6 +123,8 @@ awl_t *awl_rotate_right(awl_t *target) {
 
 
 awl_t *awl_rotate_left(awl_t *target) {
+    assert(target != NULL);
+
     awl_t *tmp = target->right;
     target->right = tmp->left;
     tmp->left = target;
@@ -127,6 +135,9 @@ awl_t *awl_rotate_left(awl_t *target) {
 }
 
 void awl_balance(awl_t **awl, const char *key) {
+    assert(awl != NULL);
+    assert(key != NULL);
+
     (*awl)->height = 1 + max(get_height((*awl)->left), get_height((*awl)->right));
     int balance = balance_node(*awl);
 
@@ -145,17 +156,14 @@ void awl_balance(awl_t **awl, const char *key) {
 
 
 void awl_insert(awl_t **awl, char *key, symtable_entry_t *entry) {
-
-    if (awl == NULL)
-        return;
+    assert(awl != NULL);
+    assert(entry != NULL);
 
     if (*awl == NULL) { 
 
         (*awl) = calloc(1,sizeof(awl_t));
 
-        if (*awl == NULL) {
-            exit(INTERNAL_COMPILER_ERROR);
-        }
+        CHECK_MEM_ERR(*awl)
 
 
         (*awl)->key = add_string(key);
@@ -179,7 +187,6 @@ void awl_insert(awl_t **awl, char *key, symtable_entry_t *entry) {
 
 
 void awl_dispose(awl_t **awl) {
-
     if (awl == NULL || *awl == NULL)
         return;
 
@@ -199,21 +206,25 @@ Implelentation of symtable
 */
 
 void table_init(symtable_t *table) {
+    assert(table != NULL);
+
     awl_t **new_tree_array = calloc(SYMTABLE_SIZE,sizeof(awl_t*));
-    if (new_tree_array == NULL) {
-        exit(INTERNAL_COMPILER_ERROR);
-    }
+
+    CHECK_MEM_ERR(new_tree_array)
+
     table->table_stack = new_tree_array;
     table->size = SYMTABLE_SIZE;
     table->top_idx = -1;
-    table->table_stack = new_tree_array;
     table_add_scope(table);
     table_insert_builtin_funcs(table);
 }
 
 
 void table_add_scope(symtable_t *table) {
+    assert(table != NULL);
+
     if (table->top_idx >= SYMTABLE_SIZE - 1) {
+        fprintf(stderr,"Symtable scope overflow\n");
         exit(INTERNAL_COMPILER_ERROR);
     }
 
@@ -222,7 +233,10 @@ void table_add_scope(symtable_t *table) {
 }
 
 void table_remove_scope(symtable_t *table) {
+    assert(table != NULL);
+
     if (table->top_idx < 0) {
+        fprintf(stderr,"Symtable scope underflow\n");
         exit(INTERNAL_COMPILER_ERROR);
     }
 
@@ -231,6 +245,10 @@ void table_remove_scope(symtable_t *table) {
 }
 
 void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
+    assert(table != NULL);
+    assert(key != NULL);
+    assert(entry != NULL);
+
     symtable_entry_t *new_entry = entry_create();
     symtable_entry_t *tmp_entry;
     awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
@@ -243,12 +261,19 @@ void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
 }
 
 void table_insert_global(symtable_t *table, char *key, symtable_entry_t **entry) {
+    assert(table != NULL);
+    assert(key != NULL);
+    assert(entry != NULL);
+
     symtable_entry_t *new_entry = entry_create();
     awl_insert(&(table->table_stack[0]), key, new_entry);
     *entry = new_entry;
 }
 
 void table_function_insert(symtable_t *table, char *key, param_t **params, TokenType return_type) {
+    assert(table != NULL);
+    assert(key != NULL);
+
     symtable_entry_t *entry;
     table_insert_global(table, key, &entry);
     entry->type = TOKEN_FUNC;
@@ -257,6 +282,10 @@ void table_function_insert(symtable_t *table, char *key, param_t **params, Token
 }
 
 bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
+    assert(table != NULL);
+    assert(key != NULL);
+    assert(entry != NULL);
+
     bool found = false;
     int table_idx = table->top_idx == -1 ? 0 : table->top_idx;
     while(table_idx >= 0 && !found) {
@@ -267,12 +296,19 @@ bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
 }
 
 bool table_search_global(symtable_t *table, char *key, symtable_entry_t **entry) {
+    assert(table != NULL);
+    assert(key != NULL);
+    assert(entry != NULL);
+
     return awl_search(table->table_stack[0],key,entry);
 }
 
 void table_dispose(symtable_t *table) {
+    assert(table != NULL);
+
     for(int i =0; table->table_stack[i] != NULL; i++)
         awl_dispose(&(table->table_stack[i]));
+
     free(table->table_stack);
     table->size = 0;
     table->top_idx = -1;
@@ -280,9 +316,10 @@ void table_dispose(symtable_t *table) {
 
 
 void awl_traverse(awl_t* awl, action_t action){
-    if(awl == NULL) {
-        return;
-    } 
+    assert(action != NULL);
+
+    if(awl == NULL)
+        return; 
 
     action(awl);
     awl_traverse(awl->left,action);
@@ -290,9 +327,11 @@ void awl_traverse(awl_t* awl, action_t action){
 }
 
 void table_traverse(symtable_t *table, action_t action) {
-    for (int table_idx = table->top_idx; table_idx >= 1; table_idx--) {
+    assert(table != NULL);
+    assert(action != NULL);
+
+    for (int table_idx = table->top_idx; table_idx >= 1; table_idx--)
         awl_traverse(table->table_stack[table_idx],action);
-    }
 }
 
 
@@ -303,28 +342,26 @@ Implementation of parram buffer
 *********************************
 */
 
-buff_ret_t param_buffer_init(ParamBufferT *buffer) {
+void param_buffer_init(ParamBufferT *buffer) {
+    assert(buffer != NULL);
+
     buffer->length = 0;
     buffer->cap = BUFFER_CAP_S;
 
     buffer->bytes = calloc(buffer->cap,sizeof(param_t*));
     
-    if (buffer->bytes == NULL) 
-        return BUFF_INIT_FAIL;
-
-    return BUFF_INIT_SUCCES;
+    CHECK_MEM_ERR(buffer->bytes)
 }
 
 
 buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param) {
+    assert(buffer != NULL);
+    assert(param != NULL);
+
     if (buffer->length >= buffer->cap) {
         param_t **new_buff = realloc(buffer->bytes,buffer->cap * 2); 
 
-        if (new_buff == NULL)
-        {
-            param_buffer_detor(buffer);
-            return BUFF_APPEND_FAIL;
-        }
+        CHECK_MEM_ERR(new_buff)
         
         buffer->bytes = new_buff;
         buffer->cap *= 2;
@@ -342,16 +379,21 @@ buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param) {
 }
 
 param_t **param_buffer_export(ParamBufferT *buffer) {
-    param_t **dst = calloc(buffer->length+1, sizeof(param_t*));
-    if (dst == NULL)
-        exit(INTERNAL_COMPILER_ERROR);
+    assert(buffer != NULL);
+
+    param_t **dst = calloc(sizeof(param_t*),buffer->length+1);
+    
+    CHECK_MEM_ERR(dst)
 
     memcpy(dst,buffer->bytes,buffer->length * sizeof(param_t *));
+
     buffer->length = 0;
     return dst;
 }
 
 void param_buffer_detor(ParamBufferT *buffer) {
+    assert(buffer != NULL);
+
     free(buffer->bytes);
     buffer->bytes = NULL;
     buffer->cap = 0;
@@ -360,6 +402,9 @@ void param_buffer_detor(ParamBufferT *buffer) {
 
 
 void param_value_init(symtable_t *table, param_t *param, litValue value, TokenType type) {
+    assert(table != NULL);
+    assert(param != NULL);
+
     switch (type)
     {
     case TOKEN_INTEGER:
@@ -388,11 +433,12 @@ void param_value_init(symtable_t *table, param_t *param, litValue value, TokenTy
 
 
 param_t *param_create(char *id, char *name, TokenType type) {
+    assert(name != NULL);
+    assert(id != NULL);
+
     param_t *new_param = calloc(1,sizeof(param_t));
 
-    if (new_param == NULL) {
-        exit(INTERNAL_COMPILER_ERROR);
-    }
+    CHECK_MEM_ERR(new_param)
 
     new_param->id = add_string(id);
     new_param->name = add_string(name);
@@ -402,12 +448,15 @@ param_t *param_create(char *id, char *name, TokenType type) {
 }
 
 void insert_builtin(symtable_t *table, char *name, TokenType ret_type, param_t **params, int param_num) {
+    assert(table != NULL);
+    assert(name != NULL);
+
     param_t **new_params = NULL;
+
     if (param_num > 0) {
         new_params = calloc(param_num + 1, sizeof(param_t *));
 
-        if (new_params == NULL)
-            exit(INTERNAL_COMPILER_ERROR);
+        CHECK_MEM_ERR(new_params)
 
         memcpy(new_params,params,sizeof(param_t*)*param_num);
     }
@@ -416,6 +465,8 @@ void insert_builtin(symtable_t *table, char *name, TokenType ret_type, param_t *
 }
 
 void table_insert_builtin_funcs(symtable_t *table) {
+    assert(table != NULL);
+
     param_t *params[3];
 
     /**readString*/
@@ -460,18 +511,21 @@ void table_insert_builtin_funcs(symtable_t *table) {
 }
 
 bool is_global(symtable_t *table, char *name) {
+    assert(table != NULL);
+    assert(name);
+
     symtable_entry_t *entry;
     return table_search_global(table,name,&entry);
 }
 
 
 char* add_string(char *str) {
+    assert(str != NULL);
+
     size_t str_len = strlen(str);
     char *new_str = calloc(str_len+1,1);
 
-    if (new_str == NULL) {
-        exit(INTERNAL_COMPILER_ERROR);
-    }
+    CHECK_MEM_ERR(new_str)
 
     memcpy(new_str,str,str_len);
     return new_str;
@@ -479,6 +533,9 @@ char* add_string(char *str) {
 
 
 void add_params_to_scope(symtable_t *table, symtable_entry_t *entry) {
+    assert(table != NULL);
+    assert(entry != NULL);
+    
     symtable_entry_t *tmp;
     for (int param_idx = 0; entry->params[param_idx] != NULL; param_idx++) {
         table_insert(table,entry->params[param_idx]->id,&tmp);
