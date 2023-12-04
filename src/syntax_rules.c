@@ -267,9 +267,6 @@ Error parser_rule_defFunc(Parser_t *parser){
     PRINT_RULE(defFunc)
     //func [funcId] ([parameters]) [func_ret]
     parser_rule_funcID(parser);
-
-    table_insert_global(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
-    parser->current_function = parser->token_current->value.str;
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
     int cont_label = get_cont_label();
@@ -284,7 +281,6 @@ Error parser_rule_funcRet(Parser_t *parser){
     PRINT_RULE(funcRet);
     if (parser->token_current->type == TOKEN_ARROW){
         GET_NEXT_AND_CALL_RULE(parser, type);
-        parser->current_entry->return_type = parser->token_current->type;
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
         GET_NEXT_AND_CALL_RULE(parser, stmtSeqRet);
         return SUCCESS;
@@ -499,8 +495,6 @@ Error parser_rule_paramsDef(Parser_t *parser){
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
 
-        parser_createParam(parser);
-
         GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
         goto success;
     }
@@ -521,17 +515,10 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
         GET_NEXT_AND_CALL_RULE(parser, id);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
-
-        parser_createParam(parser);
-
         GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
         return SUCCESS;
     }
     else if (parser->token_current->type == TOKEN_R_BRACKET){
-        parser->current_entry->params = param_buffer_export(parser->buffer);
-        parser->current_entry->type = TOKEN_FUNC;
-        parser->current_entry->defined = true;
-        parser->current_entry->declared = true;
         return SUCCESS;
     }
     else{

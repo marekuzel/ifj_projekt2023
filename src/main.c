@@ -7,15 +7,25 @@
 #include "utils.h"
 #include "code_gen.h"
 #include "syntax_rules.h"
-
+#include "first_traverse.h"
 
 int main() {
     Parser_t parser;
     Error err;
     parser_init(&parser);
 
+    err = find_allFuncDef(&parser);
+
+    if (err != SUCCESS) {
+        return err;
+    }
+
     err = parser_rule_stmtMainSeq(&parser);
     
+    if (err != SUCCESS) {
+        return err;
+    }
+
     parser_dtor(&parser);
     return err;
 }

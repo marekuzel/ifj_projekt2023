@@ -39,14 +39,13 @@ void parser_stashExtraToken(Parser_t *parser, TokenT *token){
 Error parser_getNewToken(Parser_t *parser){
     assert(parser != NULL);
 
-    Stack_Push(parser->stack, parser->token_current);
     parser->token_topOfStack = parser->token_current;
     if (parser->token_extraToken != NULL){
         parser->token_current = parser->token_extraToken;
         parser->token_extraToken = NULL;
     }
     else{
-        parser->token_current = generate_token();
+        parser->token_current = stack_read_token_bottom(parser->stack);
     }
     return SUCCESS;
 }

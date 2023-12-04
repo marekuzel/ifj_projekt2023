@@ -10,16 +10,16 @@ compilerPath="../bin/compiler"
 # 4. expected return code
 execTest () {
 	echo -e "\e[33m--------------------------------\e[0m"
-	bash -c "$compilerPath < $2 > tmp_output.txt 2>&1"
+	bash -c "$compilerPath < $2 >> tmp_output.txt 2>&1"
 	returnCode=$?
 	touch tmp_output2.txt
 	if [ "$returnCode" = "0" ]; then
-		ic23int tmp_output.txt > tmp_output2.txt
+		../interpreter/ic23int tmp_output.txt > tmp_output2.txt
 	fi
 	printf "\n" >> tmp_output2.txt
 	if [ $returnCode -ne $4 ]; then
 		printf "\e[1m\e[31mFailed\e[0m Test %02d: $1:\n" $testNum
-		printf "\tWrong return code, expected $4, got $returnCode"
+		printf "\tWrong return code, expected $4, got $returnCode\n"
 	elif [ -z "$(diff --ignore-trailing-space --ignore-blank-lines tmp_output2.txt $3)" ]; then
 		printf "\e[1m\e[32mPassed\e[0m Test %02d: $1\n" $testNum
 	else
@@ -27,7 +27,7 @@ execTest () {
 		diff tmp_output2.txt $3 | colordiff
 	fi
 	testNum=$((testNum+1))
-	rm -f tmp_output.txt tmp_output2.txt
+	#rm -f tmp_output.txt tmp_output2.txt
 }
 
 execTest "Empty program" "input/empty.swift" "output/empty.txt" 0
