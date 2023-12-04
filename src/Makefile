@@ -7,10 +7,10 @@ ERRORS = "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)"
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o
+$(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o first_traverse.o main.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-.PHONY: clean, valgrind, test_code_gen, test_scanner 
+.PHONY: clean, valgrind, test_code_gen, test_scanner, test_parser
 clean:
 	rm -f $(EXECUTABLE) tests/*.o test_code_gen bu test_scanner *.o
 valgrind: $(EXECUTABLE)
@@ -21,7 +21,7 @@ test_code_gen: code_gen.o symtable.o ./tests/code_gen_test.o utils.o
 	valgrind --leak-check=full --track-origins=yes -s --log-file=./tests/test_out/code_gen_test_valgrind.out ./test_code_gen > ../interpreter/test_code.txt
 	../interpreter/ic23int ../interpreter/test_code.txt > ./tests/test_out/code_gen_test.out
 	diff ./tests/test_out/code_gen_test.exp_out ./tests/test_out/code_gen_test.out && echo "code output is correct!"
-	grep -silent $(LEAKS) ./tests/test_out/code_gen_test_valgrind.out && grep -silent $(ERRORS) ./tests/test_out/code_gen_test_valgrind.out  && echo "valgrind ok!"
+	grep --silent $(LEAKS) ./tests/test_out/code_gen_test_valgrind.out && grep --silent $(ERRORS) ./tests/test_out/code_gen_test_valgrind.out  && echo "valgrind ok!"
 
 test_scanner: scanner.o utils.o ./tests/scanner_test.o	
 	$(CC) $(CFLAGS) -o $@ $^
@@ -31,4 +31,8 @@ test_scanner: scanner.o utils.o ./tests/scanner_test.o
 
 test_parser: parser.o symtable.o utils.o ./tests/parser_test.o syntax_rules.o prec_table.o bu_analysis.o scanner.o code_gen.o
 	$(CC) $(CFLAGS) -o $@ $^
-	../test_parser 1  < /test_in/parser_test_1.txt > test_out/test_parser.out
+	./test_parser < ./tests/test_in/parser_test_1.txt > ./tests/test_out/parser_test_1.out
+
+	./test_parser < ./tests/test_in/parser_test_2.txt > ./tests/test_out/parser_test_2.out
+	
+	./test_parser < ./tests/test_in/parser_test_3.txt > ./tests/test_out/parser_test_3.out

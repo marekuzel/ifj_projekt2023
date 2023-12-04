@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "scanner.h"
 #include "errors.h"
 #include "utils.h"
@@ -5,7 +6,9 @@
 #include "parser.h"
 #include "code_gen.h"
 
-Error Parser_init(Parser_t *parser){
+void parser_init(Parser_t *parser){
+    assert(parser != NULL);
+
     parser->token_current = NULL;
     parser->token_topOfStack = NULL;
     parser->return_in_func = false;
@@ -13,21 +16,29 @@ Error Parser_init(Parser_t *parser){
     parser->assign = false;
     parser->if_while = false;
 
-    parser->stack = malloc(sizeof(Stack));
-    if (!(parser->stack)) return INTERNAL_COMPILER_ERROR; 
-    if (Stack_Init(parser->stack) == STACK_INIT_FAIL) return INTERNAL_COMPILER_ERROR;
+    parser->stack = calloc(1,sizeof(Stack));
+    CHECK_MEM_ERR(parser->stack)
+    Stack_Init(parser->stack) ;
 
-    parser->symtable = malloc(sizeof(symtable_t));
-    if (!(parser->symtable)) return INTERNAL_COMPILER_ERROR;
+    parser->symtable = calloc(1,sizeof(symtable_t));
+    CHECK_MEM_ERR(parser->symtable)
     table_init(parser->symtable);
-    return SUCCESS;
+
+    parser->buffer = calloc(1,sizeof(ParamBufferT));
+    CHECK_MEM_ERR(parser->buffer);
+    param_buffer_init(parser->buffer);
 }
 
 void parser_stashExtraToken(Parser_t *parser, TokenT *token){
+    assert(parser != NULL);
+    assert(token != NULL);
+
     parser->token_extraToken = token;
 }
 
-void parser_getNewToken(Parser_t *parser){
+Error parser_getNewToken(Parser_t *parser){
+    assert(parser != NULL);
+
     Stack_Push(parser->stack, parser->token_current);
     parser->token_topOfStack = parser->token_current;
     if (parser->token_extraToken != NULL){
@@ -37,22 +48,26 @@ void parser_getNewToken(Parser_t *parser){
     else{
         parser->token_current = generate_token();
     }
+    return SUCCESS;
 }
 
 //takes case parser->buffer = malloc(sizeof(ParamBufferT));
 Error parser_createParam (Parser_t * parser){
+    assert(parser != NULL);
     //dont touch this
     int top = parser->stack->topIndex;
     TokenT ** ptr = parser->stack->array;
-    param_t* param = param_create(ptr[top-2]->value.str,ptr[top-3]->value.str, ptr[top]->type);
-    if (param == NULL) return INTERNAL_COMPILER_ERROR;
-    table_insert_param(parser->buffer, param);
+    param_t* param = param_create(ptr[top-3]->value.str,ptr[top-4]->value.str, ptr[top-1]->type); 
+    if (table_insert_param(parser->buffer, param) != BUFF_APPEND_SUCCES)
+        return ANOTHER_SEMANTIC_ERROR;
     return SUCCESS;
 }
 
 void parser_dtor(Parser_t * parser){
+    param_buffer_detor(parser->buffer);
     table_dispose(parser->symtable);
     Stack_Dispose(parser->stack);
+    param_buffer_detor(parser->buffer);
     parser->current_entry = NULL;
     free(parser);
 }

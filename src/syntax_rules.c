@@ -6,22 +6,32 @@
 Implementaion of syntax rules
 *****************************
 */
+#define TEST_PARSER
+#ifdef TEST_PARSER
+#define PRINT_RULE(rule) printf("rule %s\n", #rule);
+#else
+#define PRINT_RULE(rule)
+#endif
 
 Error parser_rule_id(Parser_t *parser){
     //id ->id
+    PRINT_RULE(id);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
     return SUCCESS;
 }
 
 Error parser_rule_funcID(Parser_t *parser){
     //funcId -> id
+    PRINT_RULE(funcID);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
     return SUCCESS;
 }
 
 Error parser_rule_stmt(Parser_t *parser){
+    PRINT_RULE(stmt);
     //stmt -> let <id> <stmt_assign>
     if (parser->token_current->type == TOKEN_LET){
+        PRINT_RULE(Let);
         GET_NEXT_AND_CALL_RULE(parser, id);
         if (table_search(parser->symtable,parser->token_current->value.str,&(parser->current_entry))) {
             if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
@@ -38,6 +48,7 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> var <id> <stmt_assign>
     else if (parser->token_current->type == TOKEN_VAR){
+        PRINT_RULE(var);
         GET_NEXT_AND_CALL_RULE(parser, id);
         if (table_search(parser->symtable,parser->token_current->value.str,&(parser->current_entry))) {
             if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
@@ -56,6 +67,7 @@ Error parser_rule_stmt(Parser_t *parser){
      // | if <expr> { <stmtSeq> }
     //  | if let [id] [stmtAssign] [stmtSeq] [stmt_else]
     else if (parser->token_current->type == TOKEN_IF){ //add local symbol table
+        PRINT_RULE(ifS);
         table_add_scope(parser->symtable);
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_LET){
@@ -96,7 +108,7 @@ Error parser_rule_stmt(Parser_t *parser){
         else{
             parser->if_while = true;
             int cnd_label = get_cond_label();
-            GET_NEXT_AND_CALL_RULE(parser, expr); //with note that expr will handle the brackets
+            parser_rule_expr(parser); //with note that expr will handle the brackets
             GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
             gen_local_scope(parser->symtable);
             gen_cnd_jump(ELSE_L,cnd_label);
@@ -115,12 +127,13 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> while [expr] { [stmt_seqFunc] }
     else if (parser->token_current->type == TOKEN_WHILE){
+        PRINT_RULE (whileS);
         parser->if_while = true;
         int loop_label = get_loop_label();
         table_add_scope(parser->symtable);
         gen_local_scope(parser->symtable);
         gen_loop_label(loop_label);
-        GET_NEXT_AND_CALL_RULE(parser, expr);
+        parser_rule_expr(parser);
         gen_cnd_jump(LOOP_END_L,loop_label);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
         
@@ -140,13 +153,16 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> [id] = [expr]
     else if (parser->token_current->type == TOKEN_IDENTIFIER){
+        PRINT_RULE(stmtID);
         parser->current_id = parser->token_current->value.str;
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
         parser->assign = true;
-        GET_NEXT_AND_CALL_RULE(parser, expr);
+        parser_rule_expr(parser);
         goto success;
     }
     else{
+        
+        PRINT_RULE(SYNTAX_ERROR);
         return SYNTAX_ERROR;
     }
     success:
@@ -154,10 +170,11 @@ Error parser_rule_stmt(Parser_t *parser){
 }
 
 Error parser_rule_stmtAssign(Parser_t *parser){
+    PRINT_RULE(stmtAssign);
     //stmt_assign -> = <expr>
     if (parser->token_current->type == TOKEN_ASSIGN){
         parser->find_id_type = true;
-        GET_NEXT_AND_CALL_RULE(parser, expr);
+        parser_rule_expr(parser);
 
         if (parser->current_entry->defined == false) {
             parser->current_entry->defined = true;
@@ -167,19 +184,20 @@ Error parser_rule_stmtAssign(Parser_t *parser){
         goto success;
     }
     //stmt_assign -> : <type>
+    //stmt_assign -> : <type> = [expr]
     else if (parser->token_current->type == TOKEN_COLON){
         GET_NEXT_AND_CALL_RULE(parser, type);
         parser->current_entry->type = parser->token_current->type;
-        goto success;
-    }
-    //stmt_assign -> : <type> = <expr>
-    else if (parser->token_current->type == TOKEN_COLON){
-        GET_NEXT_AND_CALL_RULE(parser, type);
-        parser->current_entry->type = parser->token_current->type;
-        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
-        GET_NEXT_AND_CALL_RULE(parser, expr);
-        parser->current_entry->defined = true;
-        goto success;
+        parser_getNewToken(parser);
+        if (parser->token_current->type == TOKEN_ASSIGN){
+            parser_rule_expr(parser);
+            parser->current_entry->defined = true;
+            goto success;
+        }
+        else{
+            parser_stashExtraToken(parser, parser->token_current);
+            goto success;
+        }
     }
     else{
         return SYNTAX_ERROR;
@@ -189,6 +207,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
 }
 
 Error parser_rule_paramsCall (Parser_t *parser){
+    PRINT_RULE(paramsCall);
     //     [parametersCall] →
     //    | [name] : [expr] [parameters_seqCall]
     //    | empty
@@ -198,7 +217,7 @@ Error parser_rule_paramsCall (Parser_t *parser){
         GET_NEXT_AND_CALL_RULE(parser, id); //name is id from syntax pow
 
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
-        GET_NEXT_AND_CALL_RULE(parser, expr);
+        parser_rule_expr(parser);
         
         GET_NEXT_AND_CALL_RULE(parser, paramsCallSeq);
         goto success;
@@ -217,7 +236,7 @@ Error parser_rule_paramsCallSeq (Parser_t * parser){
     if (parser->token_current->type == TOKEN_COMMA){
         GET_NEXT_AND_CALL_RULE(parser, id);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
-        GET_NEXT_AND_CALL_RULE(parser, expr);
+        parser_rule_expr(parser);
         GET_NEXT_AND_CALL_RULE(parser, paramsCallSeq);
         return SUCCESS;
     }
@@ -245,26 +264,24 @@ Error parser_rule_elseF(Parser_t *parser){
 }
 
 Error parser_rule_defFunc(Parser_t *parser){
+    PRINT_RULE(defFunc)
     //func [funcId] ([parameters]) [func_ret]
-    GET_NEXT_AND_CALL_RULE(parser, funcID);
+    parser_rule_funcID(parser);
+
     table_insert_global(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
     parser->current_function = parser->token_current->value.str;
-    if (param_buffer_init((parser)->buffer) == BUFF_INIT_FAIL)return INTERNAL_COMPILER_ERROR;
-
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
-    GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
     int cont_label = get_cont_label();
     gen_cont_label(cont_label);
     gen_func_def(parser->current_function);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
     jump_cont_label(cont_label + 1);
-
     return SUCCESS;
-    return SYNTAX_ERROR;
 }
 
 Error parser_rule_funcRet(Parser_t *parser){
+    PRINT_RULE(funcRet);
     if (parser->token_current->type == TOKEN_ARROW){
         GET_NEXT_AND_CALL_RULE(parser, type);
         parser->current_entry->return_type = parser->token_current->type;
@@ -280,14 +297,19 @@ Error parser_rule_funcRet(Parser_t *parser){
 }
 
 Error parser_rule_stmtSeqRet(Parser_t *parser){
+    PRINT_RULE(stmtSeqRet)
     // [stmt_seqFunc] → 
     //    | [stmt]
     //    | return [expr]
-    while (parser->token_current->type != TOKEN_RC_BRACKET){
-        parser_getNewToken(parser);
+    while (1){
         if (parser->token_current->type == TOKEN_RETURN){
             parser->return_in_func = true;
-            GET_NEXT_AND_CALL_RULE(parser, expr);
+            parser_rule_expr(parser);
+            parser_getNewToken(parser);
+            continue;
+        }
+        else if (parser->token_current->type == TOKEN_RC_BRACKET){
+            return SUCCESS;
         }
         else{
             if (parser_rule_stmt(parser) == SYNTAX_ERROR){ 
@@ -300,6 +322,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
 }
 
 Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
+    PRINT_RULE(parser_rule_stmtVoidSeqRet);
     // [stmt_seqVoidSeqRet] → 
     //    | [stmt]
     //    | return
@@ -319,6 +342,7 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
 }
 
 Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term1, term3, .. , termn)
+    PRINT_RULE(func_write_call);
     parser_getNewToken(parser);
     int param_idx = 0;
     while (parser->token_current->type != TOKEN_R_BRACKET) {  
@@ -351,6 +375,7 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
 }
 
 Error parser_rule_callFunc(Parser_t *parser){
+    PRINT_RULE(callFunc);
     //[callFunction] → [functId] ([parameters])
     symtable_entry_t* entry;
     GET_NEXT_AND_CALL_RULE(parser, funcID);
@@ -465,13 +490,11 @@ Error parser_rule_callFunc(Parser_t *parser){
 }
 
 Error parser_rule_paramsDef(Parser_t *parser){
+    PRINT_RULE(paramsDef);
     //[parameters] →
     //  | ( [name] [id] : [type]  [parameters_seq]*
     //  | ( )
-    GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
-    parser_getNewToken(parser);
-    if (parser->token_current->type == TOKEN_IDENTIFIER){
-        GET_NEXT_AND_CALL_RULE(parser, id); //name is id from syntax pow
+    if (parser->token_current->type == TOKEN_IDENTIFIER){ //the name is checked by this conditional statement
         GET_NEXT_AND_CALL_RULE(parser, id);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
@@ -481,7 +504,7 @@ Error parser_rule_paramsDef(Parser_t *parser){
         GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
         goto success;
     }
-    else if (parser->token_current->type == TOKEN_L_BRACKET){
+    else if (parser->token_current->type == TOKEN_R_BRACKET){
         goto success;
     }
     success:
@@ -489,10 +512,12 @@ Error parser_rule_paramsDef(Parser_t *parser){
 }
 
 Error parser_rule_paramsDefSeq(Parser_t* parser){
+    PRINT_RULE(paramsDefSeq);
     // [parameters_seq] →
     //    | , [name] [id] : [type] [parameters_seq]
     //    | )
     if (parser->token_current->type == TOKEN_COMMA){
+        GET_NEXT_AND_CALL_RULE(parser, id);
         GET_NEXT_AND_CALL_RULE(parser, id);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
@@ -504,7 +529,6 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
     }
     else if (parser->token_current->type == TOKEN_R_BRACKET){
         parser->current_entry->params = param_buffer_export(parser->buffer);
-        if (parser->current_entry->params == NULL) return INTERNAL_COMPILER_ERROR;
         parser->current_entry->type = TOKEN_FUNC;
         parser->current_entry->defined = true;
         parser->current_entry->declared = true;
@@ -516,12 +540,19 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
 }
 
 Error parser_rule_type(Parser_t *parser){
+    PRINT_RULE(datatype)
     switch (parser->token_current->type){
-        case TOKEN_INTEGER:
+        case TOKEN_DT_DOUBLE:
             return SUCCESS;
-        case TOKEN_STRING:
+        case TOKEN_DT_DOUBLE_NIL:
             return SUCCESS;
-        case TOKEN_NIL:
+        case TOKEN_DT_INT:
+            return SUCCESS;
+        case TOKEN_DT_INT_NIL:
+            return SUCCESS;
+        case TOKEN_DT_STRING:
+            return SUCCESS;
+        case TOKEN_DT_STRING_NIL:
             return SUCCESS;
         default:
             return SYNTAX_ERROR;
@@ -529,6 +560,7 @@ Error parser_rule_type(Parser_t *parser){
 }
 
 Error parser_rule_expr(Parser_t *parser){
+    PRINT_RULE(expr);
     //  [expr] →
     //    | ( [expr] )
     //    | [expr] + [expr]
@@ -539,9 +571,7 @@ Error parser_rule_expr(Parser_t *parser){
     //    | [expr] ?? [expr]
     //    | [id]
     //    | [literal]
-    parser_getNewToken(parser);
-    TokenT *next = malloc(sizeof(TokenT));
-    next->type = TOKEN_ZERO;
+    TokenT *next = NULL;
     TokenType exprRet;
     Error err = bu_read(&next, parser->symtable, &exprRet, parser->if_while);
     if (parser->if_while) {
@@ -592,6 +622,7 @@ Error parser_rule_expr(Parser_t *parser){
 }
 
 Error parser_rule_stmtSeq(Parser_t *parser){
+    PRINT_RULE(stmtSeq)
     while (parser->token_current->type != TOKEN_RC_BRACKET){
         parser_getNewToken(parser);
         if (parser_rule_stmt(parser) == SYNTAX_ERROR){
@@ -602,11 +633,14 @@ Error parser_rule_stmtSeq(Parser_t *parser){
 }
 
 Error parser_rule_stmtMainSeq(Parser_t *parser){
-    while (parser->token_current->type != TOKEN_EOF){
+    do {
         parser_getNewToken(parser);
+        if (parser->token_current->type == TOKEN_EOF) {
+            break;
+        }
         if (parser_rule_stmt(parser) == SYNTAX_ERROR){
             return SYNTAX_ERROR;
         }
-    }
+    } while (1); 
     return SUCCESS;
 }
