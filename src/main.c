@@ -11,9 +11,7 @@
 int main() {
     Parser_t parser;
     Error err;
-    err = parser_init(&parser);
-    if (err != SUCCESS)
-        return INTERNAL_COMPILER_ERROR;
+    parser_init(&parser);
     gen_prog();
     err =parser_rule_stmtMainSeq(&parser);
 

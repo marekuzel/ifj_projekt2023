@@ -9,10 +9,7 @@ char datatypes[NOF_DATATYPES][MAX_DTT_KWD_LEN] = {
 };
 
 void append_and_check(BufferT *buffer, const char ch) {
-    if (buffer_append(buffer, ch) != BUFF_APPEND_SUCCES) {
-        fprintf(stderr, "Internal compiler error. \n");
-        exit(INTERNAL_COMPILER_ERROR);
-    }
+    buffer_append(buffer, ch);
 }
 
 int append_hex(BufferT *buffer, char* number_buffer) {

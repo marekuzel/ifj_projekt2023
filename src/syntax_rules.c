@@ -13,6 +13,8 @@ Implementaion of syntax rules
 #define //PRINT_RULE(rule)
 #endif
 
+Error RuleErr = SUCCESS; //global value for success of the rules
+
 Error parser_rule_id(Parser_t *parser){
     //id ->id
     //PRINT_RULE(id);
