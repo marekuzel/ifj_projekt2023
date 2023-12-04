@@ -5,6 +5,8 @@
 #include "parser.h"
 #include "code_gen.h"
 
+#define TEST_PARSER
+
 Error parser_init(Parser_t *parser){
     parser->token_current = NULL;
     parser->token_topOfStack = NULL;
@@ -47,7 +49,11 @@ Error parser_getNewToken(Parser_t *parser){
         parser->token_extraToken = NULL;
     }
     else{
+        #ifndef TEST_PARSER
+        parser->token_current = stack_read_token_bottom(parser->stack);
+        #else
         parser->token_current = generate_token();
+        #endif
     }
     return SUCCESS;
 }

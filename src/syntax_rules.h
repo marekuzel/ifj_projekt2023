@@ -64,9 +64,8 @@ Error parser_rule_stmtMainSeq (Parser_t *);
         if (parser->token_current->type == TOKEN_EOF) { \
             return SYNTAX_ERROR; \
         } \
-        if (parser_rule_##rule(parser) == SYNTAX_ERROR){ \
-            return SYNTAX_ERROR; \
-        } \
+        Error err = parser_rule_##rule(parser); \
+        if (err != SUCCESS) return err; \
     } while(0)
 
 #define GET_NEXT_AND_CHECK_TYPE(parser, expected_type) \
