@@ -1,3 +1,14 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: utils.c
+ * 
+ * @brief utilities implementation for all project files 
+ * 
+ * @authors Tomáš Zgút xzgutt00
+ *          Tímea Adamčíková xadamc09
+ *          Marek Kužel xkuzel11 
+*/
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

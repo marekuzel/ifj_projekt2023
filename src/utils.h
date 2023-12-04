@@ -1,3 +1,15 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: utils.h
+ * 
+ * @brief utilities interface for all project files 
+ * 
+ * @authors Tomáš Zgút xzgutt00
+ *          Markéta Belatková xbelat02
+ *          Tímea Adamčíková xadamc09
+ *          Marek Kužel xkuzel11 
+*/
+
 #include <stdbool.h>
 #include "errors.h"
 #ifndef UTILS_H
@@ -255,13 +267,60 @@ void token_dtor(TokenT *token);
   bool stack_##TNAME##_empty(stack_##TNAME##_t *stack);                        \
 
 STACKDEC(char*, char)
-
+/**
+ * @brief compare top 2 strings from stack
+ * 
+ * @param stack pointer to stack
+ * @return true if on top is end of expresion
+ * @return false otherwise
+*/
 bool stack_char_2oftop(stack_char_t *stack);
+
+/**
+ * @brief insert after term on stack
+ * 
+ * @param stack pointer to stack
+ * @return SUCCESS when terminal found and item was added
+ * @return SYNTAX ERROR otherwise
+*/
 Error stack_insertAfterTerminal(stack_char_t* stack);
+
+/**
+ * @brief count of elements in stack
+ * 
+ * @param stack pointer to stack
+ * @return number of elements
+*/
 int stack_numOfElem(stack_char_t* stack);
+
+/**
+ * @brief search for first term
+ * 
+ * @param stack pointer to stack
+ * @param term first term
+*/
 void stack_topTerminal(stack_char_t* stack, char **term);
+
+/**
+ * @brief read from the bottom of stack
+ * 
+ * @param stack pointer to stack
+ * @return string at the bottom of stack
+*/
 char* stack_bottom_read(stack_char_t* stack);
+
+/**
+ * @brief print elements of stack
+ * 
+ * @param stack pointer to stack
+*/
 void print_stack(stack_char_t* stack);
+
+/**
+ * @brief print token values
+ * 
+ * @param token pointer to token
+*/
 void print_token(TokenT *token);
 
 #endif

@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: parser.c
+ * 
+ * @brief implementation of functions for syntax analysis
+ * 
+ * @author Marek Kužel xkuzel11
+*/
+
 #include <assert.h>
 #include "scanner.h"
 #include "errors.h"

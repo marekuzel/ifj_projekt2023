@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: prec_table.c
+ * 
+ * @brief implementation of precedence table
+ * 
+ * @author Tímea Adamčíková xadamc09
+*/
+
 #include "prec_table.h"
 #include "errors.h"
 #include <string.h>

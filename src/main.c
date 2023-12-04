@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: main.c
+ * 
+ * @brief implementation of main function
+ * 
+ * @author Tomáš Zgút xzgutt00
+*/
+
 #include "symtable.h"
 #include "parser.h"
 #include "scanner.h"

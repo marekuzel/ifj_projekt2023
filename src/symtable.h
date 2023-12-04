@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: symtable.h
+ * 
+ * @brief symbols table interface
+ * 
+ * @author Tomáš Zgút xzgutt00
+*/
+
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
 #define SYMTABLE_SIZE 256
@@ -367,9 +376,6 @@ bool is_global(symtable_t *table, char *name);
 
 
 param_t **param_buffer_export(ParamBufferT *);
-
-//TODO vymaz
-void insert_builtin(symtable_t *table, char *name, TokenType ret_type, param_t **params, int param_num);
 
 void add_params_to_scope(symtable_t *table, symtable_entry_t *entry);
 

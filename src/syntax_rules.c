@@ -1,11 +1,18 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: syntax_rules.c
+ * 
+ * @brief implementation of syntax rules and generation
+ * 
+ * @authors Marek Kužel xkuzel11 
+ *          Tomáš Zgút xzgutt00
+ *          Tímea Adamčíková xadamc09 
+*/
+
 #include "syntax_rules.h"
 #include "parser.h"
 #include "code_gen.h"
-/*
-*****************************
-Implementaion of syntax rules
-*****************************
-*/
+
 #define TEST_PARSER
 #ifdef TEST_PARSER
 #define PRINT_RULE(rule) fprintf(stderr,"rule %s\n", #rule);
@@ -356,6 +363,9 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
                 } else {
                     return WRONG_NUM_TYPE_ERROR;
                 }
+                if (paramIdent->declared == false) { // TODO check me
+                    return UNSPECIFIED_TYPE_ERROR;
+                }
             } else {
                 return UNDEFINED_VARIABLE_ERROR;
             }
@@ -404,7 +414,7 @@ Error parser_rule_callFunc(Parser_t *parser){
             comma = false;
         }
 
-        if (entry->params[param_idx]->name == NULL) { // [expr]
+        if (!strcmp(entry->params[param_idx]->name,"_")) { // [expr]
             parser_getNewToken(parser);
 
             if (parser->token_current->type == TOKEN_IDENTIFIER) {
@@ -561,6 +571,19 @@ Error parser_rule_type(Parser_t *parser){
     }
 }
 
+bool expr_var_match(TokenType exprRet, TokenType entry_type) {
+    if (exprRet == TOKEN_DT_INT && (entry_type == TOKEN_DT_INT || entry_type == TOKEN_DT_INT_NIL)) {
+        return true;
+    } else if (exprRet == TOKEN_DT_DOUBLE && (entry_type == TOKEN_DT_DOUBLE || entry_type == TOKEN_DT_DOUBLE_NIL)) {
+        return true;
+    } else if (exprRet == TOKEN_DT_STRING && (entry_type == TOKEN_DT_STRING || entry_type == TOKEN_DT_STRING_NIL)) {
+        return true;
+    } else if (exprRet == TOKEN_NIL && (entry_type == TOKEN_DT_INT_NIL || entry_type == TOKEN_DT_DOUBLE_NIL || entry_type == TOKEN_DT_STRING_NIL)) {
+        return true;
+    }
+    return false;
+}
+
 Error parser_rule_expr(Parser_t *parser){
     //PRINT_RULE(expr);
     //  [expr] →
@@ -575,8 +598,7 @@ Error parser_rule_expr(Parser_t *parser){
     //    | [literal]
     TokenT *next = NULL;
     TokenType exprRet;
-    parser->current_id = parser->token_current->value.str;
-    Error err = bu_read(&next, parser->symtable, &exprRet, parser->if_while);
+    Error err = bu_read(&next, parser->stack, parser->symtable, &exprRet, parser->if_while); // TODO not this stack
     if (parser->if_while) {
         parser->if_while = false;
     }
@@ -602,10 +624,12 @@ Error parser_rule_expr(Parser_t *parser){
             if (table_search(parser->symtable, parser->current_id, &entry)) {
                 if (entry->constant && entry->modified) {
                     return ANOTHER_SEMANTIC_ERROR;
+                } else if (entry->constant && !entry->modified) {
+                    entry->modified = true;
                 }
-                if (exprRet != entry->type) {
+                if (!expr_var_match(exprRet, entry->type)) {
                     return TYPE_COMPATIBILITY_ERROR;
-                }
+                } 
                 parser->assign = false;
             } else {
                 return UNDEFINED_VARIABLE_ERROR;
@@ -613,9 +637,9 @@ Error parser_rule_expr(Parser_t *parser){
             
         } else { // stmt_assign -> <type> = <expr>  
             table_search(parser->symtable, parser->current_id, &entry);
-            if (exprRet != entry->type) {
+            if (!expr_var_match(exprRet, entry->type)) {
                 return TYPE_COMPATIBILITY_ERROR;
-            }
+            } 
             entry->defined = true;
         }
         Stack_Push(parser->stack, parser->token_current);
