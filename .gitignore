@@ -16,4 +16,6 @@ bin/compiler
 src/googletest/*
 rnd_tests/*
 src/googletest/*
-src/googletest/*
+src/compiler
+bin/compiler
+

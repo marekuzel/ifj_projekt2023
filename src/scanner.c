@@ -8,31 +8,6 @@ char datatypes[NOF_DATATYPES][MAX_DTT_KWD_LEN] = {
     "Double", "Int", "String"
 };
 
-void append_and_check(BufferT *buffer, const char ch) {
-    if (buffer_append(buffer, ch) != BUFF_APPEND_SUCCES) {
-        fprintf(stderr, "Internal compiler error. \n");
-        exit(INTERNAL_COMPILER_ERROR);
-    }
-}
-
-int append_hex(BufferT *buffer, char* number_buffer) {
-    buff_ret_t ret = buffer_apend_hex_num(buffer, number_buffer);
-    if (ret == BUFF_NUM_CVT_FAIL) {
-        return 0;
-    } 
-    else if (ret == BUFF_APPEND_FAIL) {
-        fprintf(stderr, "Internal compiler error. \n");
-        exit(INTERNAL_COMPILER_ERROR);
-    }
-    return 1;
-}
-
-void error_exit(TokenT *token, BufferT *buffer, char* message, int exit_code) {
-    // token_dtor(token); // free(token) bude v token_dtor 
-    buffer_detor(buffer);
-    fprintf(stderr, "%s.\n", message);
-    exit(exit_code);
-}
 
 bool check_for_keyword(char* text) {
     for(int i = 0; i < NOF_KEYWORDS; i++) {
@@ -107,22 +82,22 @@ TokenType datatype_to_token(char* datatype) {
 }
 
 ScannerState handle_escape_sequence(BufferT* buffer, char ch) {
-    int hex_ret;
+    buff_ret_t hex_ret;
     switch (ch) {
         case '"':
-            hex_ret = append_hex(buffer, "22");
+            hex_ret = buffer_apend_hex_num(buffer, "22");
             break;
         case 'n':
-            hex_ret = append_hex(buffer, "a");
+            hex_ret = buffer_apend_hex_num(buffer, "a");
             break;
         case 'r':
-            hex_ret = append_hex(buffer, "d");
+            hex_ret = buffer_apend_hex_num(buffer, "d");
             break;
         case 't':
-            hex_ret = append_hex(buffer, "9");
+            hex_ret = buffer_apend_hex_num(buffer, "9");
             break;
         case '\\':
-            hex_ret = append_hex(buffer, "5c");
+            hex_ret = buffer_apend_hex_num(buffer, "5c");
             break;
         case 'u':
             return STATE_ESCAPE_SEQUENCE;
@@ -131,7 +106,7 @@ ScannerState handle_escape_sequence(BufferT* buffer, char ch) {
             return STATE_START;
             break;
     }
-    if (hex_ret != 1) {
+    if (hex_ret != BUFF_NUM_CVT_SUCCES) {
         return STATE_START;
     }
     return STATE_STRING;
@@ -141,15 +116,12 @@ TokenT* generate_token() {
     FILE* stream = stdin;
     ScannerState state = STATE_START;
     BufferT buffer;
-    if (buffer_init(&buffer) != BUFF_INIT_SUCCES) {
-        fprintf(stderr, "Internal compiler error. \n");
-        exit(INTERNAL_COMPILER_ERROR);
-    }
-    TokenT* token = (TokenT*)malloc(sizeof(TokenT)); // uvolnit v parseru
-    if (token == NULL) {
-        fprintf(stderr, "Internal compiler error. \n");
-        exit(INTERNAL_COMPILER_ERROR);
-    }
+    
+    buffer_init(&buffer);
+
+    TokenT* token = (TokenT*)calloc(1,sizeof(TokenT)); // uvolnit v parseru
+
+    CHECK_MEM_ERR(token)
 
     int multiline_string_counter = 0;
     bool multiline_string_ok = false;
@@ -171,77 +143,81 @@ TokenT* generate_token() {
 
         switch (state) {
             case STATE_START:
-                if (isalpha(ch) || ch == '_') {
+                if (isalpha(ch)) {
                     state = STATE_TEXT;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
+                }
+                else if (ch == '_') {
+                    state = STATE_UNDERSCORE;
+                    buffer_append(&buffer, ch);
                 }
                 else if (isdigit(ch) || ch == '0') {
                     state = STATE_NUMBER;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else if (isspace(ch)) {
                     continue;
                 }
                 else if (ch == '/') {
                     state = STATE_SLASH;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else if (ch == '"') {
                     state = STATE_STRING;
                 }
                 else if (ch == EOF) {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_EOF, &buffer);
                     return token;
                 }
                 else if (ch == '+' || ch == '*') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_OPERATOR, &buffer);
                     return token;
                 }
                 else if (ch == '-') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     state = STATE_DASH;
                 }
                 else if (ch == '!' || ch == '<' || ch == '>') {
                     state = STATE_OPERATOR;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else if (ch == '=') {
                     state = STATE_EQUALS;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else if (ch == '?') {
                     state = STATE_QUESTION;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else if (ch == '(') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_L_BRACKET, &buffer);
                     return token;
                 }
                 else if (ch == ')') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_R_BRACKET, &buffer);
                     return token;
                 }
                 else if (ch == ':') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_COLON, &buffer);
                     return token;
                 }
                 else if (ch == '{') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_LC_BRACKET, &buffer);
                     return token;
                 }
                 else if (ch == '}') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_RC_BRACKET, &buffer);
                     return token;
                 }
                 else if (ch == ',') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_COMMA, &buffer);
                     return token;
                 }
@@ -252,14 +228,14 @@ TokenT* generate_token() {
 
             case STATE_TEXT:
                 if (isalpha(ch) || ch == '_' || isdigit(ch)) {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 } else {
                     if (check_for_keyword(buffer.bytes)) {
                         token_init(token, keyword_to_token(buffer.bytes), &buffer);
                         ungetc(ch, stream);
                     } else if(check_for_datatype(buffer.bytes)) {
                         if (ch == '?') {
-                            append_and_check(&buffer, ch);
+                            buffer_append(&buffer, ch);
                         } else {
                             ungetc(ch, stream);
                         }
@@ -269,6 +245,16 @@ TokenT* generate_token() {
                         ungetc(ch, stream);
                     }
                     return token;
+                }
+                break;
+
+            case STATE_UNDERSCORE:
+                if (isalpha(ch) || ch == '_' || isdigit(ch)) {
+                    state = STATE_UNDERSCORE;
+                    buffer_append(&buffer, ch);
+                } else {
+                    token_init(token, TOKEN_UNDERSCORE, &buffer);
+                    ungetc(ch, stream);
                 }
                 break;
 
@@ -310,7 +296,7 @@ TokenT* generate_token() {
 
             case STATE_STRING:
                 if (escape_next) {
-                    append_and_check(&buffer, '\\');
+                    buffer_append(&buffer, '\\');
                     state = handle_escape_sequence(&buffer, ch);
                     if (state == 0) { 
                         SCANNER_ERROR("Invalid escape sequence")
@@ -332,7 +318,7 @@ TokenT* generate_token() {
                     escape_next = true;
                     break;
                 }
-                append_and_check(&buffer, ch);
+                buffer_append(&buffer, ch);
                 break;
 
             case STATE_TWO_DOUBLE_QUOTES:
@@ -349,7 +335,7 @@ TokenT* generate_token() {
 
             case STATE_MULTILINE_STRING:
                 if (escape_next) {
-                    append_and_check(&buffer, '\\');
+                    buffer_append(&buffer, '\\');
                     state = handle_escape_sequence(&buffer, ch);
                     if (state == 0) {
                         SCANNER_ERROR("Invalid escape sequence")
@@ -386,12 +372,12 @@ TokenT* generate_token() {
                         }
                     } 
                 }
-                append_and_check(&buffer, ch);
+                buffer_append(&buffer, ch);
                 break;
 
             case STATE_DASH:
                 if (ch == '>') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_ARROW, &buffer);
                 }
                 else {
@@ -402,7 +388,7 @@ TokenT* generate_token() {
 
             case STATE_OPERATOR:
                 if (ch == '=') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 } 
                 else {
                     ungetc(ch, stream);
@@ -412,7 +398,7 @@ TokenT* generate_token() {
 
             case STATE_EQUALS:
                 if (ch == '=') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_OPERATOR, &buffer);
                 } 
                 else {
@@ -423,7 +409,7 @@ TokenT* generate_token() {
 
             case STATE_QUESTION:
                 if (ch == '?') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                     token_init(token, TOKEN_OPERATOR, &buffer);
                     return token;
                 } 
@@ -435,14 +421,14 @@ TokenT* generate_token() {
             case STATE_NUMBER:
                 if (ch == '.') {
                     state = STATE_DECIMAL_POINT;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else if (isdigit(ch) || ch == '0') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 } 
                 else if (ch == 'e' || ch == 'E') {
                     state = STATE_EXPONENT;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else {
                     token_init(token, TOKEN_INTEGER, &buffer);
@@ -457,17 +443,17 @@ TokenT* generate_token() {
                 }
                 else {
                     state = STATE_DECIMAL;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 break;
 
             case STATE_DECIMAL:
                 if (isdigit(ch) || ch == '0') {
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else if (ch == 'e' || ch == 'E') {
                     state = STATE_EXPONENT;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else {
                     token_init(token, TOKEN_DOUBLE, &buffer);
@@ -479,11 +465,11 @@ TokenT* generate_token() {
             case STATE_EXPONENT:
                 if ((ch == '+' || ch == '-') && exp_sign == false) {
                     exp_sign = true;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 } 
                 else if (isdigit(ch) || ch == '0') {
                     empty_exp = false;
-                    append_and_check(&buffer, ch);
+                    buffer_append(&buffer, ch);
                 }
                 else {
                     if (empty_exp) {
@@ -510,7 +496,7 @@ TokenT* generate_token() {
                 }
                 else if ((esc_sqv_cnt == 3 || esc_sqv_cnt == 4) && ch == '}') {
                     number_buffer[esc_sqv_cnt-2] = '\0';
-                    append_hex(&buffer, number_buffer);
+                    buffer_apend_hex_num(&buffer, number_buffer);
                     if (multiline_mode) {
                         state = STATE_MULTILINE_STRING;
                     } else {
