@@ -148,7 +148,7 @@ TokenT* generate_token() {
                     buffer_append(&buffer, ch);
                 }
                 else if (ch == '_') {
-                    state = STATE_TEXT;
+                    state = STATE_UNDERSCORE;
                     buffer_append(&buffer, ch);
                 }
                 else if (isdigit(ch) || ch == '0') {
@@ -318,6 +318,9 @@ TokenT* generate_token() {
                 else if (ch == '\\') {
                     escape_next = true;
                     break;
+                }
+                else if (ch == '\n') {
+                    SCANNER_ERROR("One-line string containing an illegal new line")
                 }
                 buffer_append(&buffer, ch);
                 break;
