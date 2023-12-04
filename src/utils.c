@@ -105,7 +105,7 @@ void Stack_Init(Stack *stack) {
 
     CHECK_MEM_ERR(stack->array)
 
-	stack -> topIndex = -1;
+	stack -> topIndex = 0;
     stack->size = STACK_SIZE;
     stack -> bottomIndex = 0;
 }
@@ -117,7 +117,7 @@ bool Stack_IsEmpty(const Stack *stack) {
 
 bool Stack_IsFull(const Stack *stack) {
     assert(stack != NULL);
-    return stack->topIndex == stack->size-1;
+    return stack->topIndex == stack->size;
 }
 
 void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
@@ -151,7 +151,7 @@ void Stack_Push( Stack *stack, TokenT *data ) {
     assert(stack != NULL);
 
     if (Stack_IsFull(stack)) {
-        TokenT **new_arr = realloc(stack->array,stack->size * 2);
+        TokenT **new_arr = realloc(stack->array,stack->size * 2 * sizeof(TokenT*));
 
         CHECK_MEM_ERR(new_arr)
 
