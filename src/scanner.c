@@ -143,8 +143,12 @@ TokenT* generate_token() {
 
         switch (state) {
             case STATE_START:
-                if (isalpha(ch) || ch == '_') {
+                if (isalpha(ch)) {
                     state = STATE_TEXT;
+                    buffer_append(&buffer, ch);
+                }
+                else if (ch == '_') {
+                    state = STATE_UNDERSCORE;
                     buffer_append(&buffer, ch);
                 }
                 else if (isdigit(ch) || ch == '0') {
@@ -241,6 +245,16 @@ TokenT* generate_token() {
                         ungetc(ch, stream);
                     }
                     return token;
+                }
+                break;
+
+            case STATE_UNDERSCORE:
+                if (isalpha(ch) || ch == '_' || isdigit(ch)) {
+                    state = STATE_UNDERSCORE;
+                    buffer_append(&buffer, ch);
+                } else {
+                    token_init(token, TOKEN_UNDERSCORE, &buffer);
+                    ungetc(ch, stream);
                 }
                 break;
 
