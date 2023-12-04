@@ -10,22 +10,25 @@
 #include "first_traverse.h"
 
 int main() {
-    Parser_t parser;
+    Parser_t *parser = calloc(1,sizeof(Parser_t));
     Error err;
-    parser_init(&parser);
+    parser_init(parser);
 
-    err = find_allFuncDef(&parser);
+    err = find_allFuncDef(parser);
 
     if (err != SUCCESS) {
+        parser_dtor(parser);
         return err;
     }
 
-    err = parser_rule_stmtMainSeq(&parser);
+
+    err = parser_rule_stmtMainSeq(parser);
     
     if (err != SUCCESS) {
+        parser_dtor(parser);
         return err;
     }
 
-    parser_dtor(&parser);
+    parser_dtor(parser);
     return err;
 }

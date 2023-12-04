@@ -94,7 +94,7 @@ void Stack_Init(Stack *stack) {
 
     CHECK_MEM_ERR(stack->array)
 
-	stack -> topIndex = -1;
+	stack -> topIndex = 0;
     stack->size = STACK_SIZE;
     stack -> bottomIndex = 0;
 }
@@ -106,7 +106,7 @@ bool Stack_IsEmpty(const Stack *stack) {
 
 bool Stack_IsFull(const Stack *stack) {
     assert(stack != NULL);
-    return stack->topIndex == stack->size-1;
+    return stack->topIndex == stack->size;
 }
 
 void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
@@ -141,24 +141,23 @@ void Stack_Push( Stack *stack, TokenT *data ) {
     assert(data != NULL);
 
     if (Stack_IsFull(stack)) {
-        TokenT **new_arr = realloc(stack->array,stack->size * 2);
-
+        stack->size *= 2;
+        TokenT **new_arr = realloc(stack->array,stack->size * sizeof(TokenT *));
         CHECK_MEM_ERR(new_arr)
 
-        stack->size *= 2;
         stack->array = new_arr;
-	}
+    }
     stack->array[stack->topIndex++] = data;
 }
 
 void Stack_Dispose( Stack *stack ) {
     assert(stack != NULL);
 
-    for (int stack_idx = 0; stack_idx < stack->size; stack_idx++) {
+    for (int stack_idx = 0; stack_idx < stack->topIndex; stack_idx++) {
         token_dtor(stack->array[stack_idx]);
     }
 
-	stack->topIndex = -1;
+	stack->topIndex = 0;
     stack->bottomIndex = 0;
 	free(stack->array);
 	stack->array = NULL;
@@ -180,7 +179,9 @@ void token_init(TokenT *token,TokenType type, BufferT *buff) {
 }
 
 void token_dtor(TokenT *token) {
-    assert(token != NULL);
+    if (token == NULL) {
+        return;
+    }
 
     if (token->type != TOKEN_INTEGER && token->type != TOKEN_DOUBLE)
         free(token->value.str);
@@ -434,25 +435,26 @@ static const char *tokentype_to_string[] = {
     "TOKEN_COLON",
     "TOKEN_COMMA",
     "TOKEN_ARROW",
+    "TOKEN_UNDERSCORE"
     "TOKEN_EOF"
 };
 
 
 void print_token(TokenT *token) {
     if (token == NULL) {
-        printf("Invalid input\n");
+        fprintf(stderr,"Invalid input\n");
         return;
     }
-    printf("TOKEN : ");
+    fprintf(stderr,"TOKEN : ");
     switch (token->type) {
     case TOKEN_INTEGER:
-        printf("%s %d\n",tokentype_to_string[TOKEN_INTEGER],token->value.i);
+        fprintf(stderr,"%s %d\n",tokentype_to_string[TOKEN_INTEGER],token->value.i);
         break;
     case TOKEN_DOUBLE:
-        printf("%s %a\n",tokentype_to_string[TOKEN_DOUBLE],token->value.d);
+        fprintf(stderr,"%s %a\n",tokentype_to_string[TOKEN_DOUBLE],token->value.d);
         break;
     default:
-        printf("%s %s\n",tokentype_to_string[token->type],token->value.str);
+        fprintf(stderr,"%s %s\n",tokentype_to_string[token->type],token->value.str);
         break;
     }
 }

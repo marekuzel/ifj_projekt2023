@@ -56,7 +56,7 @@ Error parser_createParam (Parser_t * parser){
     //dont touch this
     int top = parser->stack->topIndex;
     TokenT ** ptr = parser->stack->array;
-    param_t* param = param_create(ptr[top-3]->value.str,ptr[top-4]->value.str, ptr[top-1]->type); 
+    param_t* param = param_create(ptr[top-4]->value.str,ptr[top-5]->value.str, ptr[top-2]->type); 
     if (table_insert_param(parser->buffer, param) != BUFF_APPEND_SUCCES)
         return ANOTHER_SEMANTIC_ERROR;
     return SUCCESS;
@@ -68,5 +68,8 @@ void parser_dtor(Parser_t * parser){
     Stack_Dispose(parser->stack);
     param_buffer_detor(parser->buffer);
     parser->current_entry = NULL;
+    free(parser->buffer);
+    free(parser->symtable);
+    free(parser->stack);
     free(parser);
 }
