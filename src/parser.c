@@ -69,5 +69,10 @@ void parser_dtor(Parser_t * parser){
     Stack_Dispose(parser->stack);
     param_buffer_detor(parser->buffer);
     parser->current_entry = NULL;
+    param_buffer_detor(parser->buffer);
+    free(parser->buffer);
+    free(parser->symtable);
+    free(parser->token_current);
+    free(parser->stack);
     free(parser);
 }

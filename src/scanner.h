@@ -9,7 +9,7 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
-#define SCANNER_ERROR(msg) fprintf(stderr,"%s.\n",msg); return NULL;
+#define SCANNER_ERROR(msg) fprintf(stderr,"%s.\n",msg); exit(LEXICAL_ERROR);
 
 typedef enum fsm_state_e {
     STATE_START,

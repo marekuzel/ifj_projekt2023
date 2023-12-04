@@ -1,5 +1,5 @@
 #Makefile
-EXECUTABLE = scanner
+EXECUTABLE = compiler
 CC = gcc
 CFLAGS = -g -Wall --std=c11 -g --pedantic -Wextra
 LEAKS = "All heap blocks were freed -- no leaks are possible"
@@ -9,6 +9,7 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o first_traverse.o main.o
 	$(CC) $(CFLAGS) -o $@ $^
+	cp ./compiler ../bin/compiler
 
 .PHONY: clean, valgrind, test_code_gen, test_scanner, test_parser
 clean:
