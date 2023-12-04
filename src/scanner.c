@@ -250,11 +250,12 @@ TokenT* generate_token() {
 
             case STATE_UNDERSCORE:
                 if (isalpha(ch) || ch == '_' || isdigit(ch)) {
-                    state = STATE_UNDERSCORE;
+                    state = STATE_TEXT;
                     buffer_append(&buffer, ch);
                 } else {
                     token_init(token, TOKEN_UNDERSCORE, &buffer);
                     ungetc(ch, stream);
+                    return token;
                 }
                 break;
 

@@ -434,6 +434,7 @@ static const char *tokentype_to_string[] = {
     "TOKEN_COLON",
     "TOKEN_COMMA",
     "TOKEN_ARROW",
+    "TOKEN_UNDERSCORE",
     "TOKEN_EOF"
 };
 
