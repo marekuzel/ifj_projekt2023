@@ -95,7 +95,6 @@ void buffer_detor (BufferT *buffer);
 
 buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str);
 
-
 typedef union {
     char* str;
     double d;
@@ -105,7 +104,8 @@ typedef union {
 typedef enum tokentype_e {
     TOKEN_ZERO,
     TOKEN_IDENTIFIER,
-
+    TOKEN_UNDERSCORE,
+    
     TOKEN_DT_DOUBLE,
     TOKEN_DT_DOUBLE_NIL,
     TOKEN_DT_INT,
