@@ -83,7 +83,6 @@ void buffer_detor (BufferT *buffer);
 
 buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str);
 
-
 typedef union {
     char* str;
     double d;

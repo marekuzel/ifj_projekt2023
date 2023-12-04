@@ -148,7 +148,7 @@ TokenT* generate_token() {
                     buffer_append(&buffer, ch);
                 }
                 else if (ch == '_') {
-                    state = STATE_UNDERSCORE;
+                    state = STATE_TEXT;
                     buffer_append(&buffer, ch);
                 }
                 else if (isdigit(ch) || ch == '0') {

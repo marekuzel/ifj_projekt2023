@@ -138,7 +138,6 @@ void Stack_Pop( Stack *stack) {
 
 void Stack_Push( Stack *stack, TokenT *data ) {
     assert(stack != NULL);
-    assert(data != NULL);
 
     if (Stack_IsFull(stack)) {
         TokenT **new_arr = realloc(stack->array,stack->size * 2);
@@ -148,13 +147,14 @@ void Stack_Push( Stack *stack, TokenT *data ) {
         stack->size *= 2;
         stack->array = new_arr;
 	}
-    stack->array[stack->topIndex++] = data;
+    stack->topIndex++;
+    stack->array[stack->topIndex] = data;
 }
 
 void Stack_Dispose( Stack *stack ) {
     assert(stack != NULL);
 
-    for (int stack_idx = 0; stack_idx < stack->size; stack_idx++) {
+    for (int stack_idx = 0; stack_idx <= stack->topIndex; stack_idx++) {
         token_dtor(stack->array[stack_idx]);
     }
 
@@ -180,7 +180,9 @@ void token_init(TokenT *token,TokenType type, BufferT *buff) {
 }
 
 void token_dtor(TokenT *token) {
-    assert(token != NULL);
+    if (token == NULL) {
+        return;
+    }
 
     if (token->type != TOKEN_INTEGER && token->type != TOKEN_DOUBLE)
         free(token->value.str);
