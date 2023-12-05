@@ -22,7 +22,6 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
     while (!stack_char_empty(ruleStack)) {
         char* rule = stack_bottom_read(ruleStack);
         TokenT* token;
-
         if(!strcmp(rule, "i")) {
             token = stack_read_token_bottom(tokenStack);
             if (token->type == TOKEN_DT_DOUBLE || token->type == TOKEN_DT_INT || token->type == TOKEN_DT_STRING || 

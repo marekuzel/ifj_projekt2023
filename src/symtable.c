@@ -292,7 +292,7 @@ void table_function_insert(symtable_t *table, char *key, param_t **params, Token
 
 bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
     assert(table != NULL);
-    assert(key != NULL);
+    // assert(key != NULL);
     assert(entry != NULL);
 
     bool found = false;
@@ -338,7 +338,8 @@ void awl_traverse(awl_t* awl, action_t action){
 void table_traverse(symtable_t *table, action_t action) {
     assert(table != NULL);
     assert(action != NULL);
-
+    if (table->top_idx == 1)
+        return;
     for (int table_idx = table->top_idx; table_idx >= 1; table_idx--)
         awl_traverse(table->table_stack[table_idx],action);
 }
@@ -374,10 +375,10 @@ buff_ret_t table_insert_param(ParamBufferT *buffer, param_t *param) {
         
         buffer->bytes = new_buff;
         buffer->cap *= 2;
-    } 
+    }
     for (int idx = 0; idx < buffer->length; idx ++) {
         if (strcmp(param->id,buffer->bytes[idx]->id) == 0 ||
-        (strcmp(param->name,buffer->bytes[idx]->name) == 0 && strcmp(param->name,"_"))) {
+        (strcmp(param->name,buffer->bytes[idx]->name) == 0 && strcmp(param->name,"_") != 0)) {
             return BUFF_APPEND_FAIL;
         }
 
