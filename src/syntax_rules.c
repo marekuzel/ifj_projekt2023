@@ -14,7 +14,7 @@
 #include "code_gen.h"
 
 #define TEST_PARSER
-#ifdef TEST_PARSER
+#ifndef TEST_PARSER
 #define PRINT_RULE(rule) printf("# rule %s\n", #rule);
 #else
 #define PRINT_RULE(rule)
@@ -33,6 +33,7 @@ Error parser_rule_id(Parser_t *parser){
 Error parser_rule_funcID(Parser_t *parser){
     //funcId -> id
     PRINT_RULE(funcID);
+    // print_token(parser->token_current);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
     parser->current_function = parser->token_current->value.str;
     return SUCCESS;
@@ -41,6 +42,7 @@ Error parser_rule_funcID(Parser_t *parser){
 Error parser_rule_stmt(Parser_t *parser){
     //stmt -> let <id> <stmt_assign>
     PRINT_RULE(stmt);
+    // print_token(parser->token_current);
     if (parser->token_current->type == TOKEN_LET){
         PRINT_RULE(Let);
         GET_NEXT_AND_CALL_RULE(parser, id);
@@ -181,14 +183,24 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> [id] = [expr]
     else if (parser->token_current->type == TOKEN_IDENTIFIER){
-        PRINT_RULE(stmtID);
-        parser->current_id = parser->token_current->value.str;
-        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
-        parser->assign = true;
-        RuleErr = parser_rule_expr(parser);
-        RETURN_ERROR;
-        gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
-        goto success;
+        symtable_entry_t *tmp;
+        if (table_search_global(parser->symtable,parser->token_current->value.str,&tmp) && tmp->type == TOKEN_FUNC) {
+            parser->current_function = parser->token_current->value.str;
+            PRINT_RULE(callFunc)
+            RuleErr = parser_rule_callFunc(parser);
+            RETURN_ERROR;
+            goto success;
+
+        } else {
+            PRINT_RULE(stmtID);
+            parser->current_id = parser->token_current->value.str;
+            GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
+            parser->assign = true;
+            RuleErr = parser_rule_expr(parser);
+            RETURN_ERROR;
+            gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
+            goto success;
+        }
     }
     else{
         
@@ -312,6 +324,8 @@ Error parser_rule_defFunc(Parser_t *parser){
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
     gen_func_def(parser->current_function);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
+    // print_token(parser->token_current);
+    gen_func_return();
     return SUCCESS;
 }
 
@@ -350,7 +364,6 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
             RuleErr= parser_rule_stmt(parser);
             RETURN_ERROR;
         }
-    gen_func_return();
     return SUCCESS;
     }
 }
@@ -361,7 +374,6 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
     //    | [stmt]
     //    | return
     while (parser->token_current->type != TOKEN_RC_BRACKET){
-        parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_RETURN){
             continue;
         }
@@ -370,8 +382,8 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
                 return SYNTAX_ERROR;
             }
         }
+        parser_getNewToken(parser);
     }
-    gen_func_return();
     return SUCCESS;
 }
 
@@ -402,14 +414,15 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
             return WRONG_NUM_TYPE_ERROR;
         }
         parser_getNewToken(parser);
-        if (parser->token_current->type != TOKEN_COMMA) { // after term has to be comma
+        if (parser->token_current->type == TOKEN_COMMA) { // after term has to be comma
+            parser_getNewToken(parser);
+            continue;
+        }
+        if (parser->token_current->type != TOKEN_R_BRACKET) {
             return SYNTAX_ERROR;
-        } 
-        parser_getNewToken(parser);
-        entry->params[param_idx]->type = parser->token_current->type;
+        }
         gen_write_arg(entry->params[param_idx]);
     }
-    
     return SUCCESS;
 }
 
@@ -417,8 +430,9 @@ Error parser_rule_callFunc(Parser_t *parser){
     PRINT_RULE(callFunc);
     //[callFunction] → [functId] ([parameters])
     symtable_entry_t* entry;
-    GET_NEXT_AND_CALL_RULE(parser, funcID);
-    if (table_search_global(parser->symtable, parser->token_current->value.str, &entry) == false) {
+    // print_token(parser->token_current);
+    // GET_NEXT_AND_CALL_RULE(parser, funcID);
+    if (table_search_global(parser->symtable, parser->current_function, &entry) == false) {
         return UNDEFINED_FUNCTION_ERROR;
     }
 
