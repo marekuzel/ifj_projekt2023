@@ -14,7 +14,7 @@
 #include "code_gen.h"
 
 #define TEST_PARSER
-#ifndef TEST_PARSER
+#ifdef TEST_PARSER
 #define PRINT_RULE(rule) printf("# rule %s\n", #rule);
 #else
 #define PRINT_RULE(rule)
@@ -40,7 +40,6 @@ Error parser_rule_funcID(Parser_t *parser){
 
 Error parser_rule_stmt(Parser_t *parser){
     //stmt -> let <id> <stmt_assign>
-    print_token(parser->token_current);
     PRINT_RULE(stmt);
     if (parser->token_current->type == TOKEN_LET){
         PRINT_RULE(Let);
@@ -187,6 +186,7 @@ Error parser_rule_stmt(Parser_t *parser){
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
         parser->assign = true;
         RuleErr = parser_rule_expr(parser);
+        RETURN_ERROR;
         gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
         goto success;
     }
@@ -205,6 +205,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
     if (parser->token_current->type == TOKEN_ASSIGN){
         parser->find_id_type = true;
         RuleErr = parser_rule_expr(parser);
+        RETURN_ERROR;
         gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
         if (parser->current_entry->defined == false) {
             parser->current_entry->defined = true;
@@ -222,6 +223,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
         if (parser->token_current->type == TOKEN_ASSIGN){
             parser->current_entry->defined = true;
             RuleErr = parser_rule_expr(parser);
+            RETURN_ERROR;
             gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
             if (RuleErr != SUCCESS)
                 return RuleErr;
@@ -681,9 +683,8 @@ Error parser_rule_stmtSeq(Parser_t *parser){
     PRINT_RULE(stmtSeq)
     while (parser->token_current->type != TOKEN_RC_BRACKET){
         parser_getNewToken(parser);
-        if (parser_rule_stmt(parser) == SYNTAX_ERROR){
-            return SYNTAX_ERROR;
-        }
+        RuleErr = parser_rule_stmt(parser);
+        RETURN_ERROR;
     }
     return SUCCESS;
 }

@@ -122,7 +122,7 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
 Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while) {
     bool convert = false; // convert int to float
     bool conc = false; // concatenate strings
-    Error err;
+    Error err = SUCCESS;
 
     if (if_while) { // check if true or false will be the result
         err = check_comb(ruleStack, false, false, if_while);
