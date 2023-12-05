@@ -60,6 +60,7 @@ Error parser_getNewToken(Parser_t *parser){
     else{
         #ifdef TEST_PARSER
         parser->token_current = stack_read_token_bottom(parser->stack);
+        // print_token(parser->token_current);
         #else
         parser->token_current = generate_token();
         #endif

@@ -328,7 +328,7 @@ Error parser_rule_defFunc(Parser_t *parser){
     PRINT_RULE(defFunc)
     //func [funcId] ([parameters]) [func_ret]
     // GET_NEXT_AND_CALL_RULE(parser, funcID);
-    parser_rule_funcID(parser);
+    RuleErr=  parser_rule_funcID(parser);
     RETURN_ERROR;
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
@@ -383,7 +383,10 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
     //    | [stmt]
     //    | return
     while (parser->token_current->type != TOKEN_RC_BRACKET){
+        // print_token(parser->token_current);
         if (parser->token_current->type == TOKEN_RETURN){
+            gen_func_return();
+            parser_getNewToken(parser);
             continue;
         }
         else{
@@ -649,18 +652,20 @@ Error parser_rule_expr(Parser_t *parser){
     TokenT *next = NULL;
     TokenType exprRet;
     Error err = bu_read(&next, parser->stack, parser->symtable, &exprRet, parser->if_while); // TODO not this stack
+
     if (parser->if_while) {
         parser->if_while = false;
     }
     symtable_entry_t* entry;
     if (err == SUCCESS) {
-        if (parser->return_in_func) { // return [expr]
+        if (parser->return_in_func) {
             table_search_global(parser->symtable, parser->current_function, &entry);
             if (exprRet != entry->return_type) {
                 return WRONG_NUM_TYPE_ERROR;
             }
             parser->return_in_func = false;
-        }
+            return err;
+        } 
         if (parser->find_id_type) { //stmt_assign -> = <expr>  
             table_search(parser->symtable, parser->current_id, &entry);
             if (exprRet == TOKEN_ZERO || exprRet == TOKEN_NIL) { // cant be NIL
@@ -676,6 +681,7 @@ Error parser_rule_expr(Parser_t *parser){
                     return ANOTHER_SEMANTIC_ERROR;
                 } else if (entry->constant && !entry->modified) {
                     entry->modified = true;
+                    printf("%d\n",entry->modified);
                 }
                 if (!expr_var_match(exprRet, entry->type)) {
                     return TYPE_COMPATIBILITY_ERROR;
@@ -690,6 +696,9 @@ Error parser_rule_expr(Parser_t *parser){
             if (!expr_var_match(exprRet, entry->type)) {
                 return TYPE_COMPATIBILITY_ERROR;
             } 
+            if (entry->constant) {
+                entry->modified = true;
+            }
             entry->defined = true;
         }
         Stack_Push(parser->stack, parser->token_current);

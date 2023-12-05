@@ -24,10 +24,10 @@ execTest () {
 		printf "\e[1m\e[32mPassed\e[0m Test %02d: $1\n" $testNum
 	else
 		printf "\e[1m\e[31mFailed\e[0m Test %02d: $1\n" $testNum
-		diff tmp_output2.txt $3 | colordiff
+		diff tmp_output2.txt $3
 	fi
 	testNum=$((testNum+1))
-	# rm -f tmp_output.txt tmp_output2.txt
+	rm -f tmp_output.txt tmp_output2.txt
 }
 
 execTest "Empty program" "input/empty.swift" "output/empty.txt" 0
@@ -43,7 +43,7 @@ execTest "Nil type deduction" "input/nil_type_deduction.swift" "output/empty.txt
 execTest "Comments" "input/comments.swift" "output/empty.txt" 0 
 execTest "Variable redefinition" "input/variable_redefinition.swift" "output/empty.txt" 3 todo fix marek?
 execTest "Variable shadowing" "input/variable_shadowing.swift" "output/variable_shadowing.txt" 0
-execTest "Variable out of scope" "input/variable_out_of_scope.swift" "output/empty.txt" 5 todo fix marek?
+execTest "Variable out of scope" "input/variable_out_of_scope.swift" "output/empty.txt" 5 
 execTest "Undefined variable" "input/undefined_variable.swift" "output/empty.txt" 5 todo fix marek?
 execTest "Default nil initialisation" "input/default_nil_init.swift" "output/default_nil_init.txt" 0 todo fix marek?
 execTest "Uninitialised variable" "input/uninitialised_variable.swift" "output/empty.txt" 5 todo fix?

@@ -52,7 +52,7 @@ Implementatoin of awl tree - helper functions
 */
 
 int key_cmp(const char *key, const char *cmp) {
-    assert(key != NULL);
+    // assert(key != NULL);
     assert(cmp != NULL);
 
     int key_idx;
@@ -290,7 +290,7 @@ void table_function_insert(symtable_t *table, char *key, param_t **params, Token
 
 bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
     assert(table != NULL);
-    assert(key != NULL);
+    // assert(key != NULL);
     assert(entry != NULL);
     int table_idx = table->top_idx;
     bool found = false;
@@ -565,5 +565,6 @@ void add_params_to_scope(symtable_t *table, symtable_entry_t *entry) {
     symtable_entry_t *tmp;
     for (int param_idx = 0; entry->params[param_idx] != NULL; param_idx++) {
         table_insert(table,entry->params[param_idx]->id,&tmp);
+        tmp->type = entry->params[param_idx]->type;
     }
 }
