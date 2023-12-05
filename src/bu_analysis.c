@@ -247,6 +247,10 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
                         types->string_nil++;
                         symbol->type = TOKEN_DT_STRING_NIL;
                         break;
+                    case TOKEN_FUNC:
+                        *next = symbol;
+                        *symbolRet = "$"; 
+                        return SUCCESS;
                     default: 
                         break;
                 }
@@ -273,7 +277,7 @@ Error check_rule(char* stackRule, stack_char_t* stack, stack_char_t* ruleStack) 
 
     for (int i = 0; i < NUM_OF_EXPR; i++) {
         if (!strcmp(stackRule, expr[i])) { // find rule 
-            fprintf(stderr, "rule: %s\n", expr[i]);
+            fprintf(stderr, "# rule: %s\n", expr[i]);
             stack_char_push(stack, "E");
             stack_char_push(ruleStack, stackRule);
             return SUCCESS;

@@ -14,7 +14,7 @@
 #include "code_gen.h"
 
 #define TEST_PARSER
-#ifndef TEST_PARSER
+#ifdef TEST_PARSER
 #define PRINT_RULE(rule) printf("# rule %s\n", #rule);
 #else
 #define PRINT_RULE(rule)
@@ -62,12 +62,6 @@ Error parser_rule_stmt(Parser_t *parser){
     else if (parser->token_current->type == TOKEN_VAR){
         PRINT_RULE(var);
         GET_NEXT_AND_CALL_RULE(parser, id);
-        if (table_search(parser->symtable,parser->current_id,&(parser->current_entry))) {
-            if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
-                // fprintf(stderr,"here\n");
-                return UNDEFINED_FUNCTION_ERROR;
-            }
-        }
         //add variable to symtable and assign that its declared
         table_insert(parser->symtable, parser->current_id, &(parser->current_entry));
         parser->current_entry->declared = true;
@@ -130,6 +124,7 @@ Error parser_rule_stmt(Parser_t *parser){
             int cnd_label = get_cond_label();
             parser->stack->bottomIndex--;
             RuleErr = parser_rule_expr(parser); //with note that expr will handle the brackets
+
             RETURN_ERROR;
             GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
             gen_local_scope(parser->symtable);
@@ -237,8 +232,6 @@ Error parser_rule_stmtAssign(Parser_t *parser){
             RuleErr = parser_rule_expr(parser);
             RETURN_ERROR;
             gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
-            if (RuleErr != SUCCESS)
-                return RuleErr;
             goto success;
         }
         else{
@@ -324,7 +317,6 @@ Error parser_rule_defFunc(Parser_t *parser){
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
     gen_func_def(parser->current_function);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
-    // print_token(parser->token_current);
     gen_func_return();
     return SUCCESS;
 }
@@ -691,11 +683,14 @@ Error parser_rule_expr(Parser_t *parser){
 
 Error parser_rule_stmtSeq(Parser_t *parser){
     PRINT_RULE(stmtSeq)
-    while (parser->token_current->type != TOKEN_RC_BRACKET){
-        parser_getNewToken(parser);
+    do {
+        if (parser->token_current->type == TOKEN_RC_BRACKET) {
+            break;
+        }
         RuleErr = parser_rule_stmt(parser);
         RETURN_ERROR;
-    }
+        parser_getNewToken(parser);
+    } while (1);
     return SUCCESS;
 }
 
