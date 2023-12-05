@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: code_gen.c
+ * 
+ * @brief code generation implementation
+ * 
+ * @author Tomáš Zgút xzgutt00
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include "utils.h"

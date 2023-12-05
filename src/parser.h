@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: parser.h
+ * 
+ * @brief declaration of functions for syntax analysis
+ * 
+ * @author Marek Kužel xkuzel11
+*/
+
 #ifndef PARSER_H
 #define PARSER_H
 

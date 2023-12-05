@@ -1,3 +1,13 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: scanner.c
+ * 
+ * @brief implementation of lexical analysis
+ * 
+ * @author Markéte Belatková xbelat02
+ *         Tomáš Zgút xzgutt00
+*/
+
 #include "scanner.h"
 
 char keywords[NOF_KEYWORDS][MAX_DTT_KWD_LEN] = {
@@ -143,7 +153,11 @@ TokenT* generate_token() {
 
         switch (state) {
             case STATE_START:
-                if (isalpha(ch) || ch == '_') {
+                if (isalpha(ch)) {
+                    state = STATE_TEXT;
+                    buffer_append(&buffer, ch);
+                }
+                else if (ch == '_') {
                     state = STATE_TEXT;
                     buffer_append(&buffer, ch);
                 }
@@ -241,6 +255,16 @@ TokenT* generate_token() {
                         ungetc(ch, stream);
                     }
                     return token;
+                }
+                break;
+
+            case STATE_UNDERSCORE:
+                if (isalpha(ch) || ch == '_' || isdigit(ch)) {
+                    state = STATE_UNDERSCORE;
+                    buffer_append(&buffer, ch);
+                } else {
+                    token_init(token, TOKEN_UNDERSCORE, &buffer);
+                    ungetc(ch, stream);
                 }
                 break;
 

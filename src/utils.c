@@ -1,8 +1,20 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: utils.c
+ * 
+ * @brief utilities implementation for all project files 
+ * 
+ * @authors Tomáš Zgút xzgutt00
+ *          Tímea Adamčíková xadamc09
+ *          Marek Kužel xkuzel11 
+*/
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <errno.h>
 #include <errno.h>
 #include "utils.h"
 #include "errors.h"
@@ -95,6 +107,7 @@ void Stack_Init(Stack *stack) {
     CHECK_MEM_ERR(stack->array)
 
 	stack -> topIndex = 0;
+	stack -> topIndex = 0;
     stack->size = STACK_SIZE;
     stack -> bottomIndex = 0;
 }
@@ -106,6 +119,7 @@ bool Stack_IsEmpty(const Stack *stack) {
 
 bool Stack_IsFull(const Stack *stack) {
     assert(stack != NULL);
+    return stack->topIndex == stack->size;
     return stack->topIndex == stack->size;
 }
 
@@ -138,7 +152,6 @@ void Stack_Pop( Stack *stack) {
 
 void Stack_Push( Stack *stack, TokenT *data ) {
     assert(stack != NULL);
-    assert(data != NULL);
 
     if (Stack_IsFull(stack)) {
         stack->size *= 2;

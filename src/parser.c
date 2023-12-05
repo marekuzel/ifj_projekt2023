@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: parser.c
+ * 
+ * @brief implementation of functions for syntax analysis
+ * 
+ * @author Marek Kužel xkuzel11
+*/
+
 #include <assert.h>
 #include "scanner.h"
 #include "errors.h"
@@ -5,6 +14,10 @@
 #include "symtable.h"
 #include "parser.h"
 #include "code_gen.h"
+
+#define TEST_PARSER
+
+#define TEST_PARSER
 
 void parser_init(Parser_t *parser){
     assert(parser != NULL);
@@ -15,6 +28,7 @@ void parser_init(Parser_t *parser){
     parser->find_id_type = false;
     parser->assign = false;
     parser->if_while = false;
+    parser->token_extraToken = NULL;
 
     parser->stack = calloc(1,sizeof(Stack));
     CHECK_MEM_ERR(parser->stack)
@@ -45,7 +59,11 @@ Error parser_getNewToken(Parser_t *parser){
         parser->token_extraToken = NULL;
     }
     else{
+        #ifndef TEST_PARSER
         parser->token_current = stack_read_token_bottom(parser->stack);
+        #else
+        parser->token_current = generate_token();
+        #endif
     }
     return SUCCESS;
 }

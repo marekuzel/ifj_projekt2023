@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: syntax_rules.h
+ * 
+ * @brief declaration of syntax rules 
+ * 
+ * @author Marek Kužel xkuzel11 
+*/
+
 #ifndef RULES_H
 #define RULES_H
 
@@ -64,9 +73,8 @@ Error parser_rule_stmtMainSeq (Parser_t *);
         if (parser->token_current->type == TOKEN_EOF) { \
             return SYNTAX_ERROR; \
         } \
-        if (parser_rule_##rule(parser) == SYNTAX_ERROR){ \
-            return SYNTAX_ERROR; \
-        } \
+        RuleErr = parser_rule_##rule(parser); \
+        if (RuleErr != SUCCESS) return RuleErr; \
     } while(0)
 
 #define GET_NEXT_AND_CHECK_TYPE(parser, expected_type) \

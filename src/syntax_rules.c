@@ -1,17 +1,26 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: syntax_rules.c
+ * 
+ * @brief implementation of syntax rules and generation
+ * 
+ * @authors Marek Kužel xkuzel11 
+ *          Tomáš Zgút xzgutt00
+ *          Tímea Adamčíková xadamc09 
+*/
+
 #include "syntax_rules.h"
 #include "parser.h"
 #include "code_gen.h"
-/*
-*****************************
-Implementaion of syntax rules
-*****************************
-*/
+
 #define TEST_PARSER
 #ifdef TEST_PARSER
-#define PRINT_RULE(rule) printf("rule %s\n", #rule);
+#define PRINT_RULE(rule) fprintf(stderr,"rule %s\n", #rule);
 #else
-#define PRINT_RULE(rule)
+#define //PRINT_RULE(rule)
 #endif
+
+Error RuleErr = SUCCESS; //global value for success of the rules
 
 Error parser_rule_id(Parser_t *parser){
     //id ->id
@@ -28,10 +37,10 @@ Error parser_rule_funcID(Parser_t *parser){
 }
 
 Error parser_rule_stmt(Parser_t *parser){
-    PRINT_RULE(stmt);
     //stmt -> let <id> <stmt_assign>
+    PRINT_RULE(stmt);
     if (parser->token_current->type == TOKEN_LET){
-        PRINT_RULE(Let);
+        //PRINT_RULE(Let);
         GET_NEXT_AND_CALL_RULE(parser, id);
         if (table_search(parser->symtable,parser->token_current->value.str,&(parser->current_entry))) {
             if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
@@ -52,6 +61,7 @@ Error parser_rule_stmt(Parser_t *parser){
         GET_NEXT_AND_CALL_RULE(parser, id);
         if (table_search(parser->symtable,parser->token_current->value.str,&(parser->current_entry))) {
             if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
+                // fprintf(stderr,"here\n");
                 return UNDEFINED_FUNCTION_ERROR;
             }
         }
@@ -67,7 +77,7 @@ Error parser_rule_stmt(Parser_t *parser){
      // | if <expr> { <stmtSeq> }
     //  | if let [id] [stmtAssign] [stmtSeq] [stmt_else]
     else if (parser->token_current->type == TOKEN_IF){ //add local symbol table
-        PRINT_RULE(ifS);
+        //PRINT_RULE(ifS);
         table_add_scope(parser->symtable);
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_LET){
@@ -162,7 +172,7 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     else{
         
-        PRINT_RULE(SYNTAX_ERROR);
+        //PRINT_RULE(SYNTAX_ERROR);
         return SYNTAX_ERROR;
     }
     success:
@@ -190,8 +200,8 @@ Error parser_rule_stmtAssign(Parser_t *parser){
         parser->current_entry->type = parser->token_current->type;
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_ASSIGN){
-            parser_rule_expr(parser);
             parser->current_entry->defined = true;
+            parser_rule_expr(parser);
             goto success;
         }
         else{
@@ -266,6 +276,7 @@ Error parser_rule_elseF(Parser_t *parser){
 Error parser_rule_defFunc(Parser_t *parser){
     PRINT_RULE(defFunc)
     //func [funcId] ([parameters]) [func_ret]
+    // GET_NEXT_AND_CALL_RULE(parser, funcID);
     parser_rule_funcID(parser);
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
@@ -350,6 +361,9 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
                 } else {
                     return WRONG_NUM_TYPE_ERROR;
                 }
+                if (paramIdent->declared == false) { // TODO check me
+                    return UNSPECIFIED_TYPE_ERROR;
+                }
             } else {
                 return UNDEFINED_VARIABLE_ERROR;
             }
@@ -398,7 +412,7 @@ Error parser_rule_callFunc(Parser_t *parser){
             comma = false;
         }
 
-        if (entry->params[param_idx]->name == NULL) { // [expr]
+        if (!strcmp(entry->params[param_idx]->name,"_")) { // [expr]
             parser_getNewToken(parser);
 
             if (parser->token_current->type == TOKEN_IDENTIFIER) {
@@ -546,6 +560,19 @@ Error parser_rule_type(Parser_t *parser){
     }
 }
 
+bool expr_var_match(TokenType exprRet, TokenType entry_type) {
+    if (exprRet == TOKEN_DT_INT && (entry_type == TOKEN_DT_INT || entry_type == TOKEN_DT_INT_NIL)) {
+        return true;
+    } else if (exprRet == TOKEN_DT_DOUBLE && (entry_type == TOKEN_DT_DOUBLE || entry_type == TOKEN_DT_DOUBLE_NIL)) {
+        return true;
+    } else if (exprRet == TOKEN_DT_STRING && (entry_type == TOKEN_DT_STRING || entry_type == TOKEN_DT_STRING_NIL)) {
+        return true;
+    } else if (exprRet == TOKEN_NIL && (entry_type == TOKEN_DT_INT_NIL || entry_type == TOKEN_DT_DOUBLE_NIL || entry_type == TOKEN_DT_STRING_NIL)) {
+        return true;
+    }
+    return false;
+}
+
 Error parser_rule_expr(Parser_t *parser){
     PRINT_RULE(expr);
     //  [expr] →
@@ -560,7 +587,7 @@ Error parser_rule_expr(Parser_t *parser){
     //    | [literal]
     TokenT *next = NULL;
     TokenType exprRet;
-    Error err = bu_read(&next, parser->symtable, &exprRet, parser->if_while);
+    Error err = bu_read(&next, parser->stack, parser->symtable, &exprRet, parser->if_while); // TODO not this stack
     if (parser->if_while) {
         parser->if_while = false;
     }
@@ -586,10 +613,12 @@ Error parser_rule_expr(Parser_t *parser){
             if (table_search(parser->symtable, parser->current_id, &entry)) {
                 if (entry->constant && entry->modified) {
                     return ANOTHER_SEMANTIC_ERROR;
+                } else if (entry->constant && !entry->modified) {
+                    entry->modified = true;
                 }
-                if (exprRet != entry->type) {
+                if (!expr_var_match(exprRet, entry->type)) {
                     return TYPE_COMPATIBILITY_ERROR;
-                }
+                } 
                 parser->assign = false;
             } else {
                 return UNDEFINED_VARIABLE_ERROR;
@@ -597,9 +626,9 @@ Error parser_rule_expr(Parser_t *parser){
             
         } else { // stmt_assign -> <type> = <expr>  
             table_search(parser->symtable, parser->current_id, &entry);
-            if (exprRet != entry->type) {
+            if (!expr_var_match(exprRet, entry->type)) {
                 return TYPE_COMPATIBILITY_ERROR;
-            }
+            } 
             entry->defined = true;
         }
         Stack_Push(parser->stack, parser->token_current);
@@ -628,6 +657,7 @@ Error parser_rule_stmtMainSeq(Parser_t *parser){
         if (parser_rule_stmt(parser) == SYNTAX_ERROR){
             return SYNTAX_ERROR;
         }
-    } while (1); 
+    } while (1);
+    gen_prog_end(0); 
     return SUCCESS;
 }

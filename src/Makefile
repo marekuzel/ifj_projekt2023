@@ -1,5 +1,6 @@
 #Makefile
 EXECUTABLE = compiler
+EXECUTABLE = compiler
 CC = gcc
 CFLAGS = -g -Wall --std=c11 -g --pedantic -Wextra
 LEAKS = "All heap blocks were freed -- no leaks are possible"

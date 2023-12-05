@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: errors.h
+ * 
+ * @brief definition of error types
+ * 
+ * @author Markéta Belatková xbelat02
+*/
+
 #ifndef IFJ__ERRORS_H__
 #define IFJ__ERRORS_H__
 
