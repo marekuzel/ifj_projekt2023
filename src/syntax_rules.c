@@ -22,21 +22,21 @@
 
 Error parser_rule_id(Parser_t *parser){
     //id ->id
-    //PRINT_RULE(id);
+    PRINT_RULE(id);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
     return SUCCESS;
 }
 
 Error parser_rule_funcID(Parser_t *parser){
     //funcId -> id
-    //PRINT_RULE(funcID);
+    PRINT_RULE(funcID);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
     return SUCCESS;
 }
 
 Error parser_rule_stmt(Parser_t *parser){
-    //PRINT_RULE(stmt);
     //stmt -> let <id> <stmt_assign>
+    PRINT_RULE(stmt);
     if (parser->token_current->type == TOKEN_LET){
         //PRINT_RULE(Let);
         GET_NEXT_AND_CALL_RULE(parser, id);
@@ -161,7 +161,7 @@ Error parser_rule_stmt(Parser_t *parser){
     }
     //stmt -> [id] = [expr]
     else if (parser->token_current->type == TOKEN_IDENTIFIER){
-        //PRINT_RULE(stmtID);
+        PRINT_RULE(stmtID);
         parser->current_id = parser->token_current->value.str;
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
         parser->assign = true;
@@ -178,7 +178,7 @@ Error parser_rule_stmt(Parser_t *parser){
 }
 
 Error parser_rule_stmtAssign(Parser_t *parser){
-    //PRINT_RULE(stmtAssign);
+    PRINT_RULE(stmtAssign);
     //stmt_assign -> = <expr>
     if (parser->token_current->type == TOKEN_ASSIGN){
         parser->find_id_type = true;
@@ -198,8 +198,8 @@ Error parser_rule_stmtAssign(Parser_t *parser){
         parser->current_entry->type = parser->token_current->type;
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_ASSIGN){
-            parser_rule_expr(parser);
             parser->current_entry->defined = true;
+            parser_rule_expr(parser);
             goto success;
         }
         else{
@@ -215,7 +215,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
 }
 
 Error parser_rule_paramsCall (Parser_t *parser){
-    //PRINT_RULE(paramsCall);
+    PRINT_RULE(paramsCall);
     //     [parametersCall] →
     //    | [name] : [expr] [parameters_seqCall]
     //    | empty
@@ -290,7 +290,7 @@ Error parser_rule_defFunc(Parser_t *parser){
 }
 
 Error parser_rule_funcRet(Parser_t *parser){
-    //PRINT_RULE(funcRet);
+    PRINT_RULE(funcRet);
     if (parser->token_current->type == TOKEN_ARROW){
         GET_NEXT_AND_CALL_RULE(parser, type);
         parser->current_entry->return_type = parser->token_current->type;
@@ -502,7 +502,7 @@ Error parser_rule_callFunc(Parser_t *parser){
 }
 
 Error parser_rule_paramsDef(Parser_t *parser){
-    //PRINT_RULE(paramsDef);
+    PRINT_RULE(paramsDef);
     //[parameters] →
     //  | ( [name] [id] : [type]  [parameters_seq]*
     //  | ( )
@@ -524,7 +524,7 @@ Error parser_rule_paramsDef(Parser_t *parser){
 }
 
 Error parser_rule_paramsDefSeq(Parser_t* parser){
-    //PRINT_RULE(paramsDefSeq);
+    PRINT_RULE(paramsDefSeq);
     // [parameters_seq] →
     //    | , [name] [id] : [type] [parameters_seq]
     //    | )
@@ -552,7 +552,7 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
 }
 
 Error parser_rule_type(Parser_t *parser){
-    //PRINT_RULE(datatype)
+    PRINT_RULE(datatype)
     switch (parser->token_current->type){
         case TOKEN_DT_DOUBLE:
             return SUCCESS;
@@ -585,7 +585,7 @@ bool expr_var_match(TokenType exprRet, TokenType entry_type) {
 }
 
 Error parser_rule_expr(Parser_t *parser){
-    //PRINT_RULE(expr);
+    PRINT_RULE(expr);
     //  [expr] →
     //    | ( [expr] )
     //    | [expr] + [expr]
