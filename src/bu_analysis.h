@@ -90,10 +90,11 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
  * @param tokenStack stack for storing terms
  * @param types used types in expression
  * @param symbolRet symbol for precedence table
+ * @param varCounter number of terms
  * @return UNDEFINED_VARIABLE_ERROR when variable is not found in symtable
  * @return SUCCESS otherwise
 */
-Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_t* types, symtable_t* symTable, char** symbolRet);
+Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_t* types, symtable_t* symTable, char** symbolRet, int* varCounter);
 
 /**
  * @brief find rule
