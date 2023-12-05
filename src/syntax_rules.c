@@ -251,7 +251,8 @@ Error parser_rule_paramsCall (Parser_t *parser){
     PRINT_RULE(paramsCall);
     //     [parametersCall] →
     //    | [name] : [expr] [parameters_seqCall]
-    //    | empty
+    //    | [expr] [parameters_seqCall]
+    //    | )
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_R_BRACKET);
     parser_getNewToken(parser);
     if (parser->token_current->type == TOKEN_IDENTIFIER){
@@ -268,6 +269,12 @@ Error parser_rule_paramsCall (Parser_t *parser){
     else if (parser->token_current->type == TOKEN_L_BRACKET){
         goto success;
     }
+    else {
+        parser->stack->bottomIndex--;
+        RuleErr =parser_rule_expr(parser);
+        RETURN_ERROR;
+        GET_NEXT_AND_CALL_RULE(parser, paramsCallSeq);
+    }
     success:
         return SUCCESS;
 }
@@ -275,22 +282,31 @@ Error parser_rule_paramsCall (Parser_t *parser){
 Error parser_rule_paramsCallSeq (Parser_t * parser){
     // [parameters_seqCall] →
     //    | , [name] : [expr] [parameters_seq]
+    //    | , [expr]
     //    | // empty
     if (parser->token_current->type == TOKEN_COMMA){
-        GET_NEXT_AND_CALL_RULE(parser, id);
-        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
-        RuleErr = parser_rule_expr(parser);
-        RETURN_ERROR;
-        GET_NEXT_AND_CALL_RULE(parser, paramsCallSeq);
-        return SUCCESS;
+
+        parser_getNewToken(parser);
+        if (parser->token_current->type == TOKEN_IDENTIFIER){
+            GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
+            RuleErr = parser_rule_expr(parser);
+            RETURN_ERROR;
+            GET_NEXT_AND_CALL_RULE(parser, paramsCallSeq);
+            return SUCCESS;
+        }
+        else{
+            parser->stack->bottomIndex--;
+            RuleErr =parser_rule_expr(parser);
+            RETURN_ERROR;
+            GET_NEXT_AND_CALL_RULE(parser, paramsCallSeq);
+            return SUCCESS;
+        }
     }
     else if (parser->token_current->type == TOKEN_R_BRACKET){
         table_remove_scope(parser->symtable);
         return SUCCESS;
     }
-    else{
-        return SYNTAX_ERROR;
-    }
+    return SYNTAX_ERROR;
 }
 
 Error parser_rule_elseF(Parser_t *parser){
