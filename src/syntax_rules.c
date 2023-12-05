@@ -300,7 +300,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
     while (1){
         if (parser->token_current->type == TOKEN_RETURN){
             parser->return_in_func = true;
-            parser_rule_expr(parser);
+            err = parser_rule_expr(parser);
             parser_getNewToken(parser);
             continue;
         }
@@ -308,8 +308,8 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
             return SUCCESS;
         }
         else{
-            if (parser_rule_stmt(parser) == SYNTAX_ERROR){ 
-                return SYNTAX_ERROR;
+            err = parser_rule_stmt(parser); 
+            if (err != SUCCESS) return err;
             }
         }
     }
