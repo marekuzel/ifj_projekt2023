@@ -1,2 +1,2 @@
 let id12 : Int = 12 * 5
-var id13
+write("\n")

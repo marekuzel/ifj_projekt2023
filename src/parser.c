@@ -46,7 +46,6 @@ void parser_init(Parser_t *parser){
 void parser_stashExtraToken(Parser_t *parser, TokenT *token){
     assert(parser != NULL);
     assert(token != NULL);
-
     parser->token_extraToken = token;
 }
 
@@ -59,7 +58,7 @@ Error parser_getNewToken(Parser_t *parser){
         parser->token_extraToken = NULL;
     }
     else{
-        #ifndef TEST_PARSER
+        #ifdef TEST_PARSER
         parser->token_current = stack_read_token_bottom(parser->stack);
         #else
         parser->token_current = generate_token();

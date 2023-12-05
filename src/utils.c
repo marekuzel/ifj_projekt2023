@@ -107,7 +107,6 @@ void Stack_Init(Stack *stack) {
     CHECK_MEM_ERR(stack->array)
 
 	stack -> topIndex = 0;
-	stack -> topIndex = 0;
     stack->size = STACK_SIZE;
     stack -> bottomIndex = 0;
 }
@@ -159,7 +158,7 @@ void Stack_Push( Stack *stack, TokenT *data ) {
         CHECK_MEM_ERR(new_arr)
 
         stack->array = new_arr;
-    }
+	}
     stack->array[stack->topIndex++] = data;
 }
 
@@ -448,7 +447,7 @@ static const char *tokentype_to_string[] = {
     "TOKEN_COLON",
     "TOKEN_COMMA",
     "TOKEN_ARROW",
-    "TOKEN_UNDERSCORE"
+    "TOKEN_UNDERSCORE",
     "TOKEN_EOF"
 };
 

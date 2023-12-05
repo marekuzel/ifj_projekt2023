@@ -32,12 +32,12 @@ execTest () {
 execTest "Empty program" "input/empty.swift" "output/empty.txt" 0
 execTest "Unfinished multiline comment" "input/multiline_comment_unfinished.swift" "output/empty.txt" 1
 execTest "Legal variable names" "input/variable_name.swift" "output/empty.txt" 0
-# execTest "Variable name as single underscore" "input/variable_name_underscore.swift" "output/empty.txt" 2 todo fix maky/timea?
+execTest "Variable name as single underscore" "input/variable_name_underscore.swift" "output/empty.txt" 2 
 execTest "Variable names starting with numbers" "input/variable_name_number.swift" "output/empty.txt" 2
 execTest "Variable name as keyword" "input/variable_name_keyword.swift" "output/empty.txt" 2
 execTest "Legal nil initialization" "input/nil_init.swift" "output/empty.txt" 0
-# execTest "Illegal nil initialization" "input/nil_init_illegal.swift" "output/empty.txt" 7 todo fix timea?
-# execTest "Type deduction" "input/type_deduction.swift" "output/empty.txt" 0 todo fix timea?
+execTest "Illegal nil initialization" "input/nil_init_illegal.swift" "output/empty.txt" 7 
+execTest "Type deduction" "input/type_deduction.swift" "output/empty.txt" 0 
 # execTest "Nil type deduction" "input/nil_type_deduction.swift" "output/empty.txt" 8
 # execTest "Comments" "input/comments.swift" "output/empty.txt" 0 todo fix
 # execTest "Variable redefinition" "input/variable_redefinition.swift" "output/empty.txt" 3 todo fix marek?

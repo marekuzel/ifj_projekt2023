@@ -292,7 +292,7 @@ void table_function_insert(symtable_t *table, char *key, param_t **params, Token
 
 bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
     assert(table != NULL);
-    assert(key != NULL);
+    // assert(key != NULL);
     assert(entry != NULL);
 
     bool found = false;

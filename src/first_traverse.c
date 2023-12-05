@@ -62,7 +62,6 @@ Error find_allFuncDef(Parser_t* parser) {
     NEXT_TOKEN
 
     while (token->type != TOKEN_EOF) {
-        printf("here\n");
         if (token->type != TOKEN_FUNC) {
             NEXT_TOKEN
             continue;
