@@ -131,6 +131,8 @@ TokenT* generate_token() {
     bool multiline_mode = false;
     char number_buffer[3];
     int esc_sqv_cnt = 0;
+    int mlt_comments_cnt = 0;
+    bool mlt_cmt_mode = false;
     // V pripade ze chci vratit charakter do stdin:
     // ungetc(ch, stream);
 
@@ -260,13 +262,18 @@ TokenT* generate_token() {
                 break;
 
             case STATE_SLASH:
-                if (ch == '/') {
+                if (ch == '/' && mlt_cmt_mode == false) {
                     state = STATE_LINE_COMMENT;
                     buffer_clear(&buffer);
                 }
                 else if (ch == '*') {
                     state = STATE_BLOCK_COMMENT;
                     buffer_clear(&buffer);
+                    mlt_comments_cnt++;
+                    mlt_cmt_mode = true;
+                }
+                else if (mlt_cmt_mode == true) {
+                    state = STATE_BLOCK_COMMENT;
                 }
                 else {
                     token_init(token, TOKEN_OPERATOR, &buffer);
@@ -285,11 +292,21 @@ TokenT* generate_token() {
                 if (ch == '*') {
                     state = STATE_END_BLOCK_COMMENT;
                 }
+                else if (ch == '/') {
+                    state = STATE_SLASH;
+                }
                 break;
 
             case STATE_END_BLOCK_COMMENT:
                 if (ch == '/') {
-                    state = STATE_START;
+                    mlt_comments_cnt--;
+                    if (mlt_comments_cnt == 0) {
+                        state = STATE_START;
+                        mlt_cmt_mode = false;
+                    }
+                    else {
+                        state = STATE_BLOCK_COMMENT;
+                    }
                 } else {
                     state = STATE_BLOCK_COMMENT;
                 }
