@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: main.c
+ * 
+ * @brief implementation of main function
+ * 
+ * @author Tomáš Zgút xzgutt00
+*/
+
 #include "symtable.h"
 #include "parser.h"
 #include "scanner.h"
@@ -9,17 +18,17 @@
 #include "syntax_rules.h"
 
 int main() {
-    Parser_t parser;
+    Parser_t *parser = calloc(1,sizeof(Parser_t));
     Error err;
-    parser_init(&parser);
+    parser_init(parser);
     gen_prog();
-    err =parser_rule_stmtMainSeq(&parser);
+    err = parser_rule_stmtMainSeq(parser);
 
     if (err != SUCCESS) {
         return err;
     }
 
 
-    parser_dtor(&parser);
+    parser_dtor(parser);
     return SUCCESS;
 }

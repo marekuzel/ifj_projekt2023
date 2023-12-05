@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: symtable.c
+ * 
+ * @brief implementation of symbols table
+ * 
+ * @author Tomáš Zgút xzgutt00
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

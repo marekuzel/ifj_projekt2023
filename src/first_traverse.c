@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: first_traverse.c
+ * 
+ * @brief first traverse implementation
+ * 
+ * @author Tomáš Zgút xzgutt00
+*/
+
 #include <stdbool.h>
 #include "errors.h"
 #include "syntax_rules.h"

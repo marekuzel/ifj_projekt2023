@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: first_traverse.h
+ * 
+ * @brief first traverse interface
+ * 
+ * @author Tomáš Zgút xzgutt00
+*/
+
 #include "utils.h"
 #include "scanner.h"
 #include "errors.h"

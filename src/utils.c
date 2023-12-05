@@ -1,3 +1,14 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: utils.c
+ * 
+ * @brief utilities implementation for all project files 
+ * 
+ * @authors Tomáš Zgút xzgutt00
+ *          Tímea Adamčíková xadamc09
+ *          Marek Kužel xkuzel11 
+*/
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -95,7 +106,7 @@ void Stack_Init(Stack *stack) {
 
     CHECK_MEM_ERR(stack->array)
 
-	stack -> topIndex = -1;
+	stack -> topIndex = 0;
     stack->size = STACK_SIZE;
     stack -> bottomIndex = 0;
 }
@@ -107,7 +118,7 @@ bool Stack_IsEmpty(const Stack *stack) {
 
 bool Stack_IsFull(const Stack *stack) {
     assert(stack != NULL);
-    return stack->topIndex == stack->size-1;
+    return stack->topIndex == stack->size;
 }
 
 void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
@@ -139,23 +150,23 @@ void Stack_Pop( Stack *stack) {
 
 void Stack_Push( Stack *stack, TokenT *data ) {
     assert(stack != NULL);
-    assert(data != NULL);
 
     if (Stack_IsFull(stack)) {
-        TokenT **new_arr = realloc(stack->array,stack->size * 2);
+        TokenT **new_arr = realloc(stack->array,stack->size * 2 * sizeof(TokenT*));
 
         CHECK_MEM_ERR(new_arr)
 
         stack->size *= 2;
         stack->array = new_arr;
 	}
-    stack->array[stack->topIndex++] = data;
+    stack->topIndex++;
+    stack->array[stack->topIndex] = data;
 }
 
 void Stack_Dispose( Stack *stack ) {
     assert(stack != NULL);
 
-    for (int stack_idx = 0; stack_idx < stack->size; stack_idx++) {
+    for (int stack_idx = 0; stack_idx <= stack->topIndex; stack_idx++) {
         token_dtor(stack->array[stack_idx]);
     }
 
