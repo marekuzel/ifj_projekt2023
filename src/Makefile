@@ -1,5 +1,6 @@
 #Makefile
 EXECUTABLE = compiler
+EXECUTABLE = compiler
 CC = gcc
 CFLAGS = -g -Wall --std=c11 -g --pedantic -Wextra
 LEAKS = "All heap blocks were freed -- no leaks are possible"
@@ -9,9 +10,9 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): scanner.o utils.o symtable.o bu_analysis.o prec_table.o code_gen.o parser.o syntax_rules.o first_traverse.o main.o
 	$(CC) $(CFLAGS) -o $@ $^
-	cp ./compiler ../bin/compiler
+	cp ./compiler ../bin/
 
-.PHONY: clean, valgrind, test_code_gen, test_scanner, test_parser
+.PHONY: clean, valgrind, test_code_gen, test_scanner, test_parser, test_first_traverse
 clean:
 	rm -f $(EXECUTABLE) tests/*.o test_code_gen bu test_scanner *.o
 valgrind: $(EXECUTABLE)
@@ -37,3 +38,7 @@ test_parser: parser.o symtable.o utils.o ./tests/parser_test.o syntax_rules.o pr
 	./test_parser < ./tests/test_in/parser_test_2.txt > ./tests/test_out/parser_test_2.out
 	
 	./test_parser < ./tests/test_in/parser_test_3.txt > ./tests/test_out/parser_test_3.out
+	
+test_first_traverse: scanner.o utils.o parser.o symtable.o first_traverse.o ./tests/test_first_traverse.o
+	$(CC) $(CFLAGS) -o $@ $^
+	./test_first_traverse < ./tests/test_in/test_first_traverse_in.txt

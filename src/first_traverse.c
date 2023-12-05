@@ -13,6 +13,7 @@
 #include "symtable.h"
 #include "parser.h"
 #include "first_traverse.h"
+#include "utils.h"
 
 bool is_token_data_type(TokenT *token) {
     return TOKEN_DT_DOUBLE <= token->type  && token->type <= TOKEN_DT_STRING_NIL;
@@ -23,8 +24,11 @@ Error get_param_def(Parser_t *parser, symtable_entry_t *entry) {
     TokenT *token;
 
     do {
-        GET_NEXT_AND_CHEK_TOKEN(TOKEN_IDENTIFIER)
-
+        NEXT_TOKEN
+        if (token->type != TOKEN_IDENTIFIER && token->type != TOKEN_UNDERSCORE) {
+            return SYNTAX_ERROR;
+        }   
+        
         GET_NEXT_AND_CHEK_TOKEN(TOKEN_IDENTIFIER)
 
         GET_NEXT_AND_CHEK_TOKEN(TOKEN_COLON)
@@ -42,7 +46,6 @@ Error get_param_def(Parser_t *parser, symtable_entry_t *entry) {
         }
 
         CHECK_TOKEN(TOKEN_R_BRACKET)
-        
         ADD_AND_CHECK_PARAM
         entry->params = param_buffer_export(parser->buffer);
         return SUCCESS;
@@ -83,7 +86,7 @@ Error find_allFuncDef(Parser_t* parser) {
         NEXT_TOKEN
         if (token->type == TOKEN_LC_BRACKET) {
             entry->return_type = TOKEN_NIL;
-            return SUCCESS;
+            continue;
         }
 
         CHECK_TOKEN(TOKEN_ARROW)

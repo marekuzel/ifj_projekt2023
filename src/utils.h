@@ -104,7 +104,6 @@ typedef union {
 typedef enum tokentype_e {
     TOKEN_ZERO,
     TOKEN_IDENTIFIER,
-    TOKEN_UNDERSCORE,
     
     TOKEN_DT_DOUBLE,
     TOKEN_DT_DOUBLE_NIL,
@@ -136,7 +135,8 @@ typedef enum tokentype_e {
     TOKEN_RC_BRACKET,
     TOKEN_COLON,
     TOKEN_COMMA,
-    TOKEN_ARROW, //->
+    TOKEN_ARROW,
+    TOKEN_UNDERSCORE,
 
     TOKEN_EOF
 } TokenType;

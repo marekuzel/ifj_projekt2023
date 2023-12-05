@@ -18,4 +18,5 @@ rnd_tests/*
 src/googletest/*
 src/compiler
 bin/compiler
+src/test_first_traverse
 

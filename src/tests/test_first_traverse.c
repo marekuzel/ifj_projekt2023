@@ -8,7 +8,7 @@ int main () {
 
     Parser_t *parser = calloc(1,sizeof(Parser_t));
 
-    Parser_init(parser);
+    parser_init(parser);
 
     Error err = find_allFuncDef(parser);
     printf("\nerror code %d\n",err);
