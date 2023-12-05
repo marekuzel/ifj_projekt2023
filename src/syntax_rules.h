@@ -84,4 +84,11 @@ Error parser_rule_name (Parser_t *);
         parser_getNewToken(parser); \
         CHECK_TOKEN_TYPE(parser, expected_type); \
     } while(0)
+
+#define RETURN_ERROR   \
+    do{ \
+        if (RuleErr != SUCCESS){ \
+         return RuleErr; \
+        } \
+    }while(0)
 #endif

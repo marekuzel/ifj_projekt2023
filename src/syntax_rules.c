@@ -109,7 +109,14 @@ Error parser_rule_stmt(Parser_t *parser){
             gen_jmp(IF_END_L,cond_label);
             gen_cond_else_label(cond_label);
             entry->type++; //changing datatype back to with ?
-            GET_NEXT_AND_CALL_RULE(parser, elseF);
+            parser_getNewToken(parser);
+            if (parser->token_current->type == TOKEN_ELSE){
+                RuleErr = parser_rule_elseF(parser);
+                RETURN_ERROR;
+            }
+            else {
+                parser_stashExtraToken(parser, parser->token_current);
+            }
             gen_end_label(IF_L,cond_label);
             gen_drop_local_scope(parser->symtable);
             table_remove_scope(parser->symtable);
@@ -120,6 +127,7 @@ Error parser_rule_stmt(Parser_t *parser){
             parser->if_while = true;
             int cnd_label = get_cond_label();
             RuleErr = parser_rule_expr(parser); //with note that expr will handle the brackets
+            RETURN_ERROR;
             GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
             gen_local_scope(parser->symtable);
             gen_cnd_jump(ELSE_L,cnd_label);
@@ -145,6 +153,7 @@ Error parser_rule_stmt(Parser_t *parser){
         gen_local_scope(parser->symtable);
         gen_loop_label(loop_label);
         RuleErr = parser_rule_expr(parser);
+        RETURN_ERROR;
         gen_cnd_jump(LOOP_END_L,loop_label);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
         
@@ -173,6 +182,7 @@ Error parser_rule_stmt(Parser_t *parser){
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
         parser->assign = true;
         RuleErr = parser_rule_expr(parser);
+        RETURN_ERROR;
         goto success;
     }
     else{
@@ -236,6 +246,7 @@ Error parser_rule_paramsCall (Parser_t *parser){
 
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         RuleErr = parser_rule_expr(parser);
+        RETURN_ERROR;
         
         GET_NEXT_AND_CALL_RULE(parser, paramsCallSeq);
         goto success;
@@ -255,6 +266,7 @@ Error parser_rule_paramsCallSeq (Parser_t * parser){
         GET_NEXT_AND_CALL_RULE(parser, id);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         RuleErr = parser_rule_expr(parser);
+        RETURN_ERROR;
         GET_NEXT_AND_CALL_RULE(parser, paramsCallSeq);
         return SUCCESS;
     }
@@ -286,6 +298,7 @@ Error parser_rule_defFunc(Parser_t *parser){
     //func [funcId] ([parameters]) [func_ret]
     // GET_NEXT_AND_CALL_RULE(parser, funcID);
     parser_rule_funcID(parser);
+    RETURN_ERROR;
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
     gen_func_def(parser->current_function);
@@ -317,6 +330,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
         if (parser->token_current->type == TOKEN_RETURN){
             parser->return_in_func = true;
             RuleErr = parser_rule_expr(parser);
+            RETURN_ERROR;
             parser_getNewToken(parser);
             continue;
         }
@@ -324,12 +338,12 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
             return SUCCESS;
         }
         else{
-            RuleErr= parser_rule_stmt(parser); 
-            if (RuleErr != SUCCESS) return RuleErr;
-            }
+            RuleErr= parser_rule_stmt(parser);
+            RETURN_ERROR;
         }
     gen_func_return();
     return SUCCESS;
+    }
 }
 
 Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
@@ -661,9 +675,8 @@ Error parser_rule_stmtSeq(Parser_t *parser){
     PRINT_RULE(stmtSeq)
     while (parser->token_current->type != TOKEN_RC_BRACKET){
         parser_getNewToken(parser);
-        if (parser_rule_stmt(parser) == SYNTAX_ERROR){
-            return SYNTAX_ERROR;
-        }
+        RuleErr = parser_rule_stmt(parser);
+        RETURN_ERROR;
     }
     return SUCCESS;
 }
@@ -675,9 +688,8 @@ Error parser_rule_stmtMainSeq(Parser_t *parser){
         if (parser->token_current->type == TOKEN_EOF) {
             break;
         }
-        if (parser_rule_stmt(parser) != SUCCESS){
-            return RuleErr;
-        }
+        RuleErr = parser_rule_stmt(parser);
+        RETURN_ERROR;
     } while (1);
     gen_prog_end(0); 
     return SUCCESS;
