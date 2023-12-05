@@ -338,7 +338,8 @@ void awl_traverse(awl_t* awl, action_t action){
 void table_traverse(symtable_t *table, action_t action) {
     assert(table != NULL);
     assert(action != NULL);
-
+    if (table->top_idx == 1)
+        return;
     for (int table_idx = table->top_idx; table_idx >= 1; table_idx--)
         awl_traverse(table->table_stack[table_idx],action);
 }
