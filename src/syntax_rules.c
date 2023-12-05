@@ -181,7 +181,7 @@ Error parser_rule_stmt(Parser_t *parser){
         gen_cont_label(cont_label);
         goto success;
     }
-    //stmt -> [id] = [expr]
+    //stmt -> [id] -> = [expr]
     else if (parser->token_current->type == TOKEN_IDENTIFIER){
         symtable_entry_t *tmp;
         if (table_search_global(parser->symtable,parser->token_current->value.str,&tmp) && tmp->type == TOKEN_FUNC) {
@@ -378,9 +378,8 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
             continue;
         }
         else{
-            if (parser_rule_stmt(parser) == SYNTAX_ERROR){ 
-                return SYNTAX_ERROR;
-            }
+            RuleErr = parser_rule_stmt(parser);
+            RETURN_ERROR;
         }
         parser_getNewToken(parser);
     }
@@ -430,12 +429,9 @@ Error parser_rule_callFunc(Parser_t *parser){
     PRINT_RULE(callFunc);
     //[callFunction] → [functId] ([parameters])
     symtable_entry_t* entry;
-    // print_token(parser->token_current);
-    // GET_NEXT_AND_CALL_RULE(parser, funcID);
-    if (table_search_global(parser->symtable, parser->current_function, &entry) == false) {
+    if (table_search_global(parser->symtable, parser->token_current->value.str, &entry) == false) {
         return UNDEFINED_FUNCTION_ERROR;
     }
-
     char *func_name = parser->token_current->value.str;
     int param_idx = 0;
 
@@ -588,7 +584,7 @@ Error parser_rule_name(Parser_t *parser){
     if (parser->token_current->type == TOKEN_IDENTIFIER){
         return SUCCESS;
     }
-    else if (parser->token_current->type == TOKEN_ARROW){
+    else if (parser->token_current->type == TOKEN_UNDERSCORE){
         return SUCCESS;
     }
     else{

@@ -10,6 +10,7 @@ compilerPath="../bin/compiler"
 execTest () {
 	echo -e "\e[33m--------------------------------\e[0m"
 	bash -c "$compilerPath < $2 > tmp_output.txt 2>&1"
+	bash -c "$compilerPath < $2 > tmp_output.txt 2>&1"
 	returnCode=$?
 	touch tmp_output2.txt
 	if [ "$returnCode" = "0" ]; then
