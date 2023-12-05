@@ -1,2 +1,1 @@
-let id12 : Int = 12 * 5
 write("\n")

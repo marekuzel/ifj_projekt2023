@@ -26,6 +26,7 @@ Error parser_rule_id(Parser_t *parser){
     //id ->id
     PRINT_RULE(id);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
+    parser->current_id = parser->token_current->value.str;
     return SUCCESS;
 }
 
@@ -33,6 +34,7 @@ Error parser_rule_funcID(Parser_t *parser){
     //funcId -> id
     PRINT_RULE(funcID);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
+    parser->current_function = parser->token_current->value.str;
     return SUCCESS;
 }
 
@@ -42,16 +44,15 @@ Error parser_rule_stmt(Parser_t *parser){
     if (parser->token_current->type == TOKEN_LET){
         PRINT_RULE(Let);
         GET_NEXT_AND_CALL_RULE(parser, id);
-        if (table_search(parser->symtable,parser->token_current->value.str,&(parser->current_entry))) {
+        if (table_search(parser->symtable,parser->current_id,&(parser->current_entry))) {
             if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
                 return UNDEFINED_FUNCTION_ERROR;
             }
         }
-        table_insert(parser->symtable,parser->token_current->value.str,&(parser->current_entry));
-        parser->current_id = parser->token_current->value.str;
+        table_insert(parser->symtable,parser->current_id,&(parser->current_entry));
         parser->current_entry->declared = true;
         parser->current_entry->constant = true;
-        gen_def_var(parser->token_current->value.str,is_global(parser->symtable,parser->token_current->value.str),parser->current_entry->type);
+        gen_def_var(parser->current_id,is_global(parser->symtable,parser->current_id),parser->current_entry->type);
         GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         goto success;
     }
@@ -59,17 +60,17 @@ Error parser_rule_stmt(Parser_t *parser){
     else if (parser->token_current->type == TOKEN_VAR){
         PRINT_RULE(var);
         GET_NEXT_AND_CALL_RULE(parser, id);
-        if (table_search(parser->symtable,parser->token_current->value.str,&(parser->current_entry))) {
+        if (table_search(parser->symtable,parser->current_id,&(parser->current_entry))) {
             if (parser->current_entry->declared || !(parser->current_entry->redeclared)) {
                 // fprintf(stderr,"here\n");
                 return UNDEFINED_FUNCTION_ERROR;
             }
         }
         //add variable to symtable and assign that its declared
-        table_insert(parser->symtable, parser->token_current->value.str, &(parser->current_entry));
+        table_insert(parser->symtable, parser->current_id, &(parser->current_entry));
         parser->current_entry->declared = true;
         parser->current_entry->constant = false;
-        gen_def_var(parser->token_current->value.str,is_global(parser->symtable,parser->token_current->value.str),parser->current_entry->type);
+        gen_def_var(parser->current_id,is_global(parser->symtable,parser->current_id),parser->current_entry->type);
         GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         goto success;
     }
@@ -83,7 +84,7 @@ Error parser_rule_stmt(Parser_t *parser){
         if (parser->token_current->type == TOKEN_LET){
             GET_NEXT_AND_CALL_RULE(parser, id);
             symtable_entry_t* entry;
-            if (table_search(parser->symtable, parser->token_current->value.str, &entry)) {
+            if (table_search(parser->symtable, parser->current_id, &entry)) {
                 switch (entry->type) {
                     case TOKEN_DT_DOUBLE_NIL: case TOKEN_DT_INT_NIL: case TOKEN_DT_STRING_NIL:
                         if (entry->constant != true) {
@@ -98,7 +99,7 @@ Error parser_rule_stmt(Parser_t *parser){
             }
             int cond_label = get_cond_label();
             litValue value = {.d = 0.0};
-            gen_push_var(parser->token_current->value.str,is_global(parser->symtable,parser->token_current->value.str));
+            gen_push_var(parser->current_id,is_global(parser->symtable,parser->current_id));
             gen_push_lit(value,TOKEN_NIL);
             gen_cond(NEQ);
             gen_cnd_jump(ELSE_L,cond_label);
@@ -160,14 +161,15 @@ Error parser_rule_stmt(Parser_t *parser){
     else if (parser->token_current->type == TOKEN_FUNC){
         int cont_label = get_cont_label();
         jump_cont_label(cont_label);
+        //table_add_scope(parser->symtable);
         GET_NEXT_AND_CALL_RULE(parser, defFunc);
+        //table_drop_scope_symtable
         gen_cont_label(cont_label);
         goto success;
     }
     //stmt -> [id] = [expr]
     else if (parser->token_current->type == TOKEN_IDENTIFIER){
         PRINT_RULE(stmtID);
-        parser->current_id = parser->token_current->value.str;
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
         parser->assign = true;
         RuleErr = parser_rule_expr(parser);
@@ -188,7 +190,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
     if (parser->token_current->type == TOKEN_ASSIGN){
         parser->find_id_type = true;
         RuleErr = parser_rule_expr(parser);
-
+        gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
         if (parser->current_entry->defined == false) {
             parser->current_entry->defined = true;
         } else {
@@ -205,6 +207,7 @@ Error parser_rule_stmtAssign(Parser_t *parser){
         if (parser->token_current->type == TOKEN_ASSIGN){
             parser->current_entry->defined = true;
             RuleErr = parser_rule_expr(parser);
+            gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
             if (RuleErr != SUCCESS)
                 return RuleErr;
             goto success;
