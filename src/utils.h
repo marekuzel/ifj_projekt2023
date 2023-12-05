@@ -136,8 +136,7 @@ typedef enum tokentype_e {
     TOKEN_RC_BRACKET,
     TOKEN_COLON,
     TOKEN_COMMA,
-    TOKEN_ARROW, //->
-    TOKEN_UNDERSCORE,
+    TOKEN_ARROW,
 
     TOKEN_EOF
 } TokenType;

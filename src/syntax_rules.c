@@ -15,7 +15,7 @@
 
 #define TEST_PARSER
 #ifdef TEST_PARSER
-#define PRINT_RULE(rule) fprintf(stderr,"rule %s\n", #rule);
+#define PRINT_RULE(rule) fprintf(stderr,"# rule %s\n", #rule);
 #else
 #define //PRINT_RULE(rule)
 #endif
@@ -311,7 +311,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
     while (1){
         if (parser->token_current->type == TOKEN_RETURN){
             parser->return_in_func = true;
-            err = parser_rule_expr(parser);
+            RuleErr = parser_rule_expr(parser);
             parser_getNewToken(parser);
             continue;
         }
@@ -319,11 +319,10 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
             return SUCCESS;
         }
         else{
-            err = parser_rule_stmt(parser); 
-            if (err != SUCCESS) return err;
+            RuleErr= parser_rule_stmt(parser); 
+            if (RuleErr != SUCCESS) return RuleErr;
             }
         }
-    }
     gen_func_return();
     return SUCCESS;
 }
@@ -504,7 +503,7 @@ Error parser_rule_paramsDef(Parser_t *parser){
     //[parameters] →
     //  | ( [name] [id] : [type]  [parameters_seq]*
     //  | ( )
-    if (parser->token_current->type == TOKEN_IDENTIFIER){ //the name is checked by this conditional statement
+    if (parser_rule_name(parser) == SUCCESS){
         GET_NEXT_AND_CALL_RULE(parser, id);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
@@ -525,7 +524,7 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
     //    | , [name] [id] : [type] [parameters_seq]
     //    | )
     if (parser->token_current->type == TOKEN_COMMA){
-        GET_NEXT_AND_CALL_RULE(parser, id);
+        GET_NEXT_AND_CALL_RULE(parser, name);
         GET_NEXT_AND_CALL_RULE(parser, id);
         GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
         GET_NEXT_AND_CALL_RULE(parser, type);
@@ -533,6 +532,19 @@ Error parser_rule_paramsDefSeq(Parser_t* parser){
         return SUCCESS;
     }
     else if (parser->token_current->type == TOKEN_R_BRACKET){
+        return SUCCESS;
+    }
+    else{
+        return SYNTAX_ERROR;
+    }
+}
+
+Error parser_rule_name(Parser_t *parser){
+    PRINT_RULE(name)
+    if (parser->token_current->type == TOKEN_IDENTIFIER){
+        return SUCCESS;
+    }
+    else if (parser->token_current->type == TOKEN_ARROW){
         return SUCCESS;
     }
     else{
