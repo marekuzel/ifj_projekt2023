@@ -228,9 +228,13 @@ Error parser_rule_stmtAssign(Parser_t *parser){
     else if (parser->token_current->type == TOKEN_COLON){
         GET_NEXT_AND_CALL_RULE(parser, type);
         parser->current_entry->type = parser->token_current->type;
+        if (parser->token_current->type == TOKEN_DT_DOUBLE || parser->token_current->type == TOKEN_DT_DOUBLE) {
+            parser->assign_to_double = true;
+        }
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_ASSIGN){
             parser->current_entry->defined = true;
+            parser->assign_type_expr = true;
             RuleErr = parser_rule_expr(parser);
             RETURN_ERROR;
             gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
@@ -653,12 +657,27 @@ Error parser_rule_expr(Parser_t *parser){
     //    | [literal]
     TokenT *next = NULL;
     TokenType exprRet;
-    Error err = bu_read(&next, parser->stack, parser->symtable, &exprRet, parser->if_while); // TODO not this stack
+    symtable_entry_t* entry;
+
+    if (parser->assign) { // [id] = [expr]
+        if (table_search(parser->symtable, parser->current_id, &entry)) {
+            if (entry->type == TOKEN_DT_DOUBLE || entry->type == TOKEN_DT_DOUBLE_NIL) {
+                parser->assign_to_double = true;
+            }
+        } else {
+            return UNDEFINED_VARIABLE_ERROR;
+        }
+    }
+
+    Error err = bu_read(&next, parser->stack, parser->symtable, &exprRet, parser->if_while, parser->assign_to_double); 
+
+    parser->assign_to_double = false;
 
     if (parser->if_while) {
         parser->if_while = false;
+        // return err;
     }
-    symtable_entry_t* entry;
+    
     if (err == SUCCESS) {
         if (parser->return_in_func) {
             table_search_global(parser->symtable, parser->current_function, &entry);
@@ -678,22 +697,19 @@ Error parser_rule_expr(Parser_t *parser){
             entry->defined = true;
             parser->find_id_type = false;
         } else if (parser->assign) { // [id] = [expr]
-            if (table_search(parser->symtable, parser->current_id, &entry)) {
-                if (entry->constant && entry->modified) {
-                    return ANOTHER_SEMANTIC_ERROR;
-                } else if (entry->constant && !entry->modified) {
-                    entry->modified = true;
-                    printf("%d\n",entry->modified);
-                }
-                if (!expr_var_match(exprRet, entry->type)) {
-                    return TYPE_COMPATIBILITY_ERROR;
-                } 
-                parser->assign = false;
-            } else {
-                return UNDEFINED_VARIABLE_ERROR;
+            table_search(parser->symtable, parser->current_id, &entry);
+            if (entry->constant && entry->modified) {
+                return ANOTHER_SEMANTIC_ERROR;
+            } else if (entry->constant && !entry->modified) {
+                entry->modified = true;
+                printf("%d\n",entry->modified);
             }
+            if (!expr_var_match(exprRet, entry->type)) {
+                return TYPE_COMPATIBILITY_ERROR;
+            } 
+            parser->assign = false;
             
-        } else { // stmt_assign -> <type> = <expr>  
+        } else if (parser->assign_type_expr){ // stmt_assign -> <type> = <expr>  
             table_search(parser->symtable, parser->current_id, &entry);
             if (!expr_var_match(exprRet, entry->type)) {
                 return TYPE_COMPATIBILITY_ERROR;
@@ -702,6 +718,7 @@ Error parser_rule_expr(Parser_t *parser){
                 entry->modified = true;
             }
             entry->defined = true;
+            parser->assign_type_expr = false;
         }
         Stack_Push(parser->stack, parser->token_current);
         parser_stashExtraToken(parser, next);
