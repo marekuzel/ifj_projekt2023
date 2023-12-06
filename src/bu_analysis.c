@@ -63,6 +63,7 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
         } else if (!strcmp(rule, "E??E")) {
             gen_expr_binop('?');
         }
+        free(rule);
     }
 
     return SUCCESS;
@@ -82,8 +83,8 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
                 relation_op_counter++;
             }
         } else if (typeNil) { // cant use this rules with nil
-            if (!strcmp(rule, "E/E") || !strcmp(rule, "E-E") || !strcmp(rule, "E*E") || !strcmp(rule, "E==E") ||
-            !strcmp(rule, "E!=E") || !strcmp(rule, "E<E") || !strcmp(rule, "E<=E") || !strcmp(rule, "E>E") || !strcmp(rule, "E>=E")) {
+            if (!strcmp(rule, "E/E") || !strcmp(rule, "E-E") || !strcmp(rule, "E*E") || !strcmp(rule, "E<E") || !strcmp(rule, "E<=E") || 
+            !strcmp(rule, "E>E") || !strcmp(rule, "E>=E")) {
                 return TYPE_COMPATIBILITY_ERROR;
             }
         } else if (only_strings) {
@@ -202,6 +203,11 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
         return SUCCESS;
     }
 
+    if (symbol->type == TOKEN_L_BRACKET || symbol->type == TOKEN_R_BRACKET) {
+        *symbolRet = symbol->value.str;
+        return SUCCESS;
+    }
+
     if (symbol->type == TOKEN_IDENTIFIER || symbol->type == TOKEN_STRING || symbol->type == TOKEN_INTEGER ||
     symbol->type == TOKEN_DOUBLE || symbol->type == TOKEN_NIL) {
         symtable_entry_t* entry;
@@ -256,10 +262,10 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
                         types->string_nil++;
                         symbol->type = TOKEN_DT_STRING_NIL;
                         break;
-                    case TOKEN_FUNC:
-                        *next = symbol;
-                        *symbolRet = "$"; 
-                        return SUCCESS;
+                    // case TOKEN_FUNC:
+                    //     *next = symbol;
+                    //     *symbolRet = "$"; 
+                    //     return SUCCESS;
                     default: 
                         break;
                 }
@@ -274,6 +280,7 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
         *symbolRet = "i";
         return SUCCESS;
     }
+
     (*varCounter)--;
     *symbolRet = symbol->value.str;
     return SUCCESS;
@@ -286,7 +293,6 @@ Error check_rule(char* stackRule, stack_char_t* stack, stack_char_t* ruleStack) 
 
     for (int i = 0; i < NUM_OF_EXPR; i++) {
         if (!strcmp(stackRule, expr[i])) { // find rule 
-            // fprintf(stderr, "rule: %s\n", expr[i]);
             stack_char_push(stack, "E");
             stack_char_push(ruleStack, stackRule);
             return SUCCESS;
@@ -407,6 +413,11 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
                 symtable_entry_t* paramIdent;
 
                 if (table_search(symTable, token->value.str, &paramIdent)) { // find variable in symtable
+                    if (paramIdent->type == TOKEN_ZERO) {
+                        symTable->top_idx--;
+                        table_search(symTable, token->value.str, &paramIdent);
+                        symTable->top_idx++;
+                    }
                     if (paramIdent->type != entry->params[param_idx]->type) { // parameters in func definition and func call must have same type
                         return WRONG_NUM_TYPE_ERROR;
                     }
@@ -482,6 +493,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
         table_add_scope(symTable);
         add_params_to_scope(symTable,entry);
         gen_func_call(func_name,entry);
+        table_remove_scope(symTable);
         return SUCCESS;
     }
 
