@@ -124,17 +124,18 @@ TokenT* generate_token() {
     CHECK_MEM_ERR(token)
 
     int multiline_string_counter = 0;
-    bool multiline_string_ok = false;
-    bool escape_next = false;
-    bool exp_sign = false;
-    bool empty_exp = true;
+    bool multiline_first = true;
     bool multiline_mode = false;
+
+    bool escape_next = false;
     char number_buffer[3];
     int esc_sqv_cnt = 0;
+
+    bool exp_sign = false;
+    bool empty_exp = true;
+
     int mlt_comments_cnt = 0;
     bool mlt_cmt_mode = false;
-    // V pripade ze chci vratit charakter do stdin:
-    // ungetc(ch, stream);
 
     int ch;
     while (true) {
@@ -344,13 +345,21 @@ TokenT* generate_token() {
 
             case STATE_TWO_DOUBLE_QUOTES:
                 if (ch == '"') {
-                    state = STATE_MULTILINE_STRING;
+                    state = STATE_MULTILINE_STRING_START;
                     multiline_mode = true;
                 } 
                 else {
                     ungetc(ch, stream);
                     token_init(token, TOKEN_STRING, &buffer);
                     return token;
+                }
+                break;
+
+            case STATE_MULTILINE_STRING_START:
+                if (ch == '\n') {
+                    state = STATE_MULTILINE_STRING;
+                } else {
+                    SCANNER_ERROR("Missing line feed after multiline string beginning");
                 }
                 break;
 
@@ -370,28 +379,24 @@ TokenT* generate_token() {
                 }
                 else if (ch == '"') {
                     if (++multiline_string_counter >= 3) {
-                        if (buffer.bytes[buffer.length-3] != '\n') {
+                        if (!multiline_first && buffer.bytes[buffer.length-3] != '\n') {
                             SCANNER_ERROR("Lexical error")
                         }
-                        buffer.bytes[buffer.length-3] = '\0';
+                        if (buffer.length > 2) {
+                            buffer.bytes[buffer.length-3] = '\0';
+                        } else {
+                            buffer.bytes[0] = '\0';
+                        }
                         token_init(token, TOKEN_STRING, &buffer);
                         return token;
                     }
-                } 
-                else if (ch == '\\') {
+                } else {
+                    multiline_string_counter = 0;
+                    multiline_first = false;
+                }
+                if (ch == '\\') {
                     escape_next = true;
                     break;
-                }
-                else {
-                    multiline_string_counter = 0;
-                    if (!multiline_string_ok) {
-                        if (ch != '\n') {
-                            SCANNER_ERROR("Lexical error - invalid multiline string")
-                        } else {
-                            multiline_string_ok = true;
-                            break;
-                        }
-                    } 
                 }
                 buffer_append(&buffer, ch);
                 break;

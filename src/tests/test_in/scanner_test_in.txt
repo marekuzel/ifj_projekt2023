@@ -134,3 +134,11 @@ write("hello")
 this should be ignored
 */
 
+nknjk"""
+"""
+"""
+
+
+
+"""
+let
