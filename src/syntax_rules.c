@@ -86,12 +86,9 @@ Error parser_rule_stmt(Parser_t *parser){
             if (table_search(parser->symtable, parser->current_id, &entry)) {
                 switch (entry->type) {
                     case TOKEN_DT_DOUBLE_NIL: case TOKEN_DT_INT_NIL: case TOKEN_DT_STRING_NIL:
-                        if (entry->constant != true) {
-                            return TYPE_COMPATIBILITY_ERROR; // TODO check me
-                        } 
                         break;
                     default: 
-                        return TYPE_COMPATIBILITY_ERROR; // TODO check me
+                        return ANOTHER_SEMANTIC_ERROR; // TODO check me
                 }
             } else {
                 return UNDEFINED_VARIABLE_ERROR;
@@ -104,12 +101,14 @@ Error parser_rule_stmt(Parser_t *parser){
             gen_cnd_jump(ELSE_L,cond_label);
             table_add_scope(parser->symtable);
             entry->type--; //changeing datatype to without ?
+            entry->constant = true;
             gen_local_scope(parser->symtable);
             GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
             GET_NEXT_AND_CALL_RULE(parser, stmtSeq);
             gen_jmp(IF_END_L,cond_label);
             gen_cond_else_label(cond_label);
             entry->type++; //changing datatype back to with ?
+            entry->constant = false;
             parser_getNewToken(parser);
             if (parser->token_current->type == TOKEN_ELSE){
                 RuleErr = parser_rule_elseF(parser);
@@ -367,6 +366,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
         if (parser->token_current->type == TOKEN_RETURN){
             parser->return_in_func = true;
             RuleErr = parser_rule_expr(parser);
+            gen_func_return();
             RETURN_ERROR;
             parser_getNewToken(parser);
             continue;
@@ -692,11 +692,11 @@ Error parser_rule_expr(Parser_t *parser){
             parser->find_id_type = false;
         } else if (parser->assign) { // [id] = [expr]
             if (table_search(parser->symtable, parser->current_id, &entry)) {
-                if (entry->constant && entry->modified) {
+                if (entry->constant && entry->defined) {
                     return ANOTHER_SEMANTIC_ERROR;
-                } else if (entry->constant && !entry->modified) {
-                    entry->modified = true;
-                    printf("%d\n",entry->modified);
+                } else if (entry->constant && !entry->defined) {
+                    entry->defined = true;
+                    // printf("%d\n",entry->modified);
                 }
                 if (!expr_var_match(exprRet, entry->type)) {
                     return TYPE_COMPATIBILITY_ERROR;
