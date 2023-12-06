@@ -90,10 +90,9 @@ Error find_allFuncDef(Parser_t* parser) {
         if ((err = get_param_def(parser,entry)) != SUCCESS) {
             return err;
         }
-
         NEXT_TOKEN
         if (token->type == TOKEN_LC_BRACKET) {
-            entry->return_type = TOKEN_NIL;
+            entry->return_type = TOKEN_ZERO;
             continue;
         }
 

@@ -20,6 +20,7 @@ void gen_prog() {
     printf("DEFVAR GF@$dest\n");
     printf("DEFVAR GF@$op1\n");
     printf("DEFVAR GF@$op2\n");
+    printf("DEFVAR GF@$type\n");
     jump_cont_label(1);
 
 }
@@ -32,6 +33,7 @@ void gen_prog_end(int exit_code) {
     gen_substring();
     gen_int2double();
     gen_double2int();
+    gen_length();
 }
 
 void gen_assignment(char *identifier, bool global) {
@@ -119,11 +121,17 @@ void gen_expr_binop(char operator) {
         break;
 
     case '/':
-        printf("DIVS\n");
-        break;
-    
-    case '\\':
+        label_num =  get_cond_label();
+        printf("POPS GF@$op1\n");
+        printf("PUSHS GF@$op1\n");
+        printf("TYPE GF@$type GF@$op1\n");
+
+        printf("JUMPIFEQ division%d GF@$type string@float\n",label_num);
         printf("IDIVS\n");
+        printf("JUMP divisionend%d\n",label_num);
+        printf("LABEL division%d\n",label_num);
+        printf("DIVS\n");
+        printf("LABEL divisionend%d\n",label_num);
         break;
 
     case '?':
@@ -419,6 +427,13 @@ void gen_double2int() {
     printf("FLOAT2INT GF@$dest LF@term\n");
     printf("PUSHS GF@$dest\n");
     
+    gen_func_return();
+}
+
+void gen_length() {
+    gen_func_def("length");
+    printf("STRLEN GF@$dest LF@s\n");
+    printf("PUSHS GF@$dest\n");
     gen_func_return();
 }
 

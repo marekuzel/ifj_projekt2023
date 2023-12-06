@@ -30,17 +30,12 @@ int main() {
         return err;
     }
 
-    // for (int i = 0; i < parser->stack->topIndex; i++) {
-    //     print_token(parser->stack->array[i]);
-    // }
     
 
     gen_prog();
     err = parser_rule_stmtMainSeq(parser);
-    
     if (err != SUCCESS) {
         parser_dtor(parser);
-        printf("%d\n",err);
         return err;
     }
 

@@ -28,6 +28,8 @@ void parser_init(Parser_t *parser){
     parser->find_id_type = false;
     parser->assign = false;
     parser->if_while = false;
+    parser->assign_to_double = false;
+    parser->assign_type_expr = false;
     parser->token_extraToken = NULL;
 
     parser->stack = calloc(1,sizeof(Stack));
@@ -65,7 +67,6 @@ Error parser_getNewToken(Parser_t *parser){
         parser->token_current = generate_token();
         #endif
     }
-    // print_token(parser->token_current);
     return SUCCESS;
 }
 
