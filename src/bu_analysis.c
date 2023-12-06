@@ -624,7 +624,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
 
                         if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
                             if (!is_data_type(prevToken)) {
-                                return SYNTAX_ERROR;
+                                return TYPE_COMPATIBILITY_ERROR;
                             }
                             change_type_withQM(&tokenStack, &types);
                             token = stack_read_token_bottom(streamTokens);
