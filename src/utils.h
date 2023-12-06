@@ -95,6 +95,12 @@ void buffer_detor (BufferT *buffer);
 
 buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str);
 
+/**
+ * @brief takes a character and converts into ascii escape sequence
+ * and appends it to the buffer.
+*/
+buff_ret_t buffer_append_ascii(BufferT *buffer, char ascii_code);
+
 typedef union {
     char* str;
     double d;
@@ -135,7 +141,7 @@ typedef enum tokentype_e {
     TOKEN_RC_BRACKET,
     TOKEN_COLON,
     TOKEN_COMMA,
-    TOKEN_ARROW,
+    TOKEN_ARROW, //->
     TOKEN_UNDERSCORE,
 
     TOKEN_EOF

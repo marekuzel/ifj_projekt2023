@@ -99,6 +99,18 @@ buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
 }
 
 
+buff_ret_t buffer_append_ascii(BufferT *buffer, char ascii_code) {
+    char tmp_str[6];
+
+    sprintf(tmp_str,"\\%03d",ascii_code);
+    
+    for (int str_idx = 0; tmp_str[str_idx] != '\0'; str_idx++) {
+        buffer_append(buffer,tmp_str[str_idx]);
+    }
+    return BUFF_NUM_CVT_SUCCES;
+
+}
+
 void Stack_Init(Stack *stack) {
     assert(stack != NULL);
 

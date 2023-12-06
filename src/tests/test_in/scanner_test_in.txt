@@ -95,6 +95,7 @@ $dst
 "\r"
 "\t"
 "\u{04}"
+//write("hello")
 """
 vnksjnv \u{4} 
 \\ nsjdnvk
@@ -114,3 +115,30 @@ func foo(_ par? : String) -> String {
 let ret = bar(with: par)
 return ret
 }
+_
+/*nknvsbkrn
+vsmknsnk
+vsnkvwke*/
+
+/*nknvsbkrn
+vsmknsnk
+vsnkvwke*/
+
+/*
+write("hello")
+/*
+write("hello")
+// helloooo
+*/
+write("hello")
+this should be ignored
+*/
+
+nknjk"""
+"""
+"""
+
+
+
+"""
+let
