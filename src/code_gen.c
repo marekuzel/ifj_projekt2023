@@ -33,6 +33,7 @@ void gen_prog_end(int exit_code) {
     gen_substring();
     gen_int2double();
     gen_double2int();
+    gen_length();
 }
 
 void gen_assignment(char *identifier, bool global) {
@@ -426,6 +427,13 @@ void gen_double2int() {
     printf("FLOAT2INT GF@$dest LF@term\n");
     printf("PUSHS GF@$dest\n");
     
+    gen_func_return();
+}
+
+void gen_length() {
+    gen_func_def("length");
+    printf("STRLEN GF@$dest LF@s\n");
+    printf("PUSHS GF@$dest\n");
     gen_func_return();
 }
 

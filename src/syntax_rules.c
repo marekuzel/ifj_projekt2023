@@ -367,7 +367,7 @@ Error parser_rule_funcRet(Parser_t *parser){
         GET_NEXT_AND_CALL_RULE(parser, stmtSeqRet);
         return SUCCESS;
     }   
-    else if (parser->token_current->type == TOKEN_LC_BRACKET){
+    else if (parser->token_current->type == TOKEN_LC_BRACKET ){
         GET_NEXT_AND_CALL_RULE(parser, stmtVoidSeqRet);
         return SUCCESS;
     }
@@ -385,6 +385,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
             RuleErr = parser_rule_expr(parser);
             gen_func_return();
             RETURN_ERROR;
+            parser->stack->bottomIndex--;
             parser_getNewToken(parser);
             continue;
         }
@@ -555,6 +556,7 @@ Error parser_rule_callFunc(Parser_t *parser){
                 if ((parser->token_current->type == TOKEN_INTEGER && entry->params[param_idx]->type == TOKEN_DT_INT) ||
                         (parser->token_current->type == TOKEN_DOUBLE && entry->params[param_idx]->type == TOKEN_DT_DOUBLE) ||
                         (parser->token_current->type == TOKEN_STRING && entry->params[param_idx]->type == TOKEN_DT_STRING)) {
+                    print_token(parser->token_current);
                     param_value_init(parser->symtable, entry->params[param_idx], parser->token_current->value, parser->token_current->type);
                 } else {
                     return WRONG_NUM_TYPE_ERROR;

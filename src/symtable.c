@@ -415,6 +415,7 @@ void param_value_init(symtable_t *table, param_t *param, litValue value, TokenTy
     assert(table != NULL);
     assert(param != NULL);
 
+    param->var = false;
     switch (type)
     {
     case TOKEN_INTEGER:
@@ -480,13 +481,13 @@ void table_insert_builtin_funcs(symtable_t *table) {
     param_t *params[3];
 
     /**readString*/
-    insert_builtin(table,"readString",TOKEN_DT_STRING,NULL,0);
+    insert_builtin(table,"readString",TOKEN_DT_STRING_NIL,NULL,0);
 
     /**readDouble*/
-    insert_builtin(table,"readDouble",TOKEN_DT_DOUBLE,NULL,0);
+    insert_builtin(table,"readDouble",TOKEN_DT_DOUBLE_NIL,NULL,0);
 
     /**readInt*/
-    insert_builtin(table,"readInt",TOKEN_DT_INT,NULL,0);
+    insert_builtin(table,"readInt",TOKEN_DT_INT_NIL,NULL,0);
 
     /**write*/
     params[0] = param_create("_", "_", TOKEN_ZERO);
@@ -516,7 +517,7 @@ void table_insert_builtin_funcs(symtable_t *table) {
     params[0] = param_create("s", "of", TOKEN_DT_STRING);
     params[1] = param_create("i", "startingAt", TOKEN_DT_INT);
     params[2] = param_create("j", "endingBefore", TOKEN_DT_INT);
-    insert_builtin(table,"substring",TOKEN_DT_STRING,params,3);
+    insert_builtin(table,"substring",TOKEN_DT_STRING_NIL,params,3);
 
 }
 

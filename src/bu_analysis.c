@@ -256,10 +256,6 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
                         types->string_nil++;
                         symbol->type = TOKEN_DT_STRING_NIL;
                         break;
-                    case TOKEN_FUNC:
-                        *next = symbol;
-                        *symbolRet = "$"; 
-                        return SUCCESS;
                     default: 
                         break;
                 }
@@ -482,6 +478,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
         table_add_scope(symTable);
         add_params_to_scope(symTable,entry);
         gen_func_call(func_name,entry);
+        table_remove_scope(symTable);
         return SUCCESS;
     }
 

@@ -263,3 +263,5 @@ int get_cont_label();
 void gen_cont_label(int cont_label_num);
 
 void jump_cont_label(int cont_label_num);
+
+void gen_length();
