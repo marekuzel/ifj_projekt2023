@@ -458,6 +458,9 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
         if (parser->token_current->type == TOKEN_IDENTIFIER) {
             symtable_entry_t* paramIdent;
             if (table_search(parser->symtable, parser->token_current->value.str, &paramIdent)) { // find variable in symtable
+                if (paramIdent->defined == false){
+                    return UNDEFINED_VARIABLE_ERROR;
+                }
                 if (paramIdent->type != TOKEN_FUNC) {
                     param_value_init(parser->symtable, entry->params[param_idx], parser->token_current->value, parser->token_current->type);
                     entry->params[0]->type = TOKEN_VAR;
