@@ -1,4 +1,4 @@
-let a : Int? = 5
+var a : Int? = 5
 
 if let a {
     let a = 2
