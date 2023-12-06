@@ -1,4 +1,3 @@
-let a : Int = 69
 func bar(with param : String) -> String {
 let r : String = foo(param)
 return r

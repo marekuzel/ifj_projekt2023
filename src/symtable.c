@@ -52,7 +52,7 @@ Implementatoin of awl tree - helper functions
 */
 
 int key_cmp(const char *key, const char *cmp) {
-    assert(key != NULL);
+    // assert(key != NULL);
     assert(cmp != NULL);
 
     int key_idx;
@@ -262,9 +262,7 @@ void table_insert(symtable_t *table, char *key, symtable_entry_t **entry) {
     symtable_entry_t *tmp_entry;
     awl_insert(&(table->table_stack[table->top_idx]), key, new_entry);
     table->top_idx--;
-    if (table_search(table,key,&tmp_entry)) {
-        new_entry->redeclared = true;
-    }
+    new_entry->redeclared = table_search(table,key,&tmp_entry);
     table->top_idx++;
     *entry = new_entry;
 }
@@ -294,9 +292,12 @@ bool table_search(symtable_t *table, char *key, symtable_entry_t **entry) {
     assert(table != NULL);
     // assert(key != NULL);
     assert(entry != NULL);
-
+    int table_idx = table->top_idx;
     bool found = false;
-    int table_idx = table->top_idx == -1 ? 0 : table->top_idx;
+    if (table_idx == -1) {
+        return false;
+    }
+
     while(table_idx >= 0 && !found) {
         found = awl_search(table->table_stack[table_idx],key,entry);
         table_idx--;
@@ -520,12 +521,27 @@ void table_insert_builtin_funcs(symtable_t *table) {
 
 }
 
+
+bool table_search_local(symtable_t *table, char *name) {
+    symtable_entry_t *tmp;
+    return awl_search(table->table_stack[table->top_idx],name,&tmp);
+}
+
 bool is_global(symtable_t *table, char *name) {
     assert(table != NULL);
     assert(name);
 
     symtable_entry_t *entry;
-    return table_search_global(table,name,&entry);
+    int scope = table->top_idx;
+    bool found = false;
+    while (scope >0) 
+    {
+        found = awl_search(table->table_stack[scope],name,&entry);
+        if (found) 
+            break;
+        scope--;
+    }
+    return scope == 0;
 }
 
 
@@ -549,5 +565,6 @@ void add_params_to_scope(symtable_t *table, symtable_entry_t *entry) {
     symtable_entry_t *tmp;
     for (int param_idx = 0; entry->params[param_idx] != NULL; param_idx++) {
         table_insert(table,entry->params[param_idx]->id,&tmp);
+        tmp->type = entry->params[param_idx]->type;
     }
 }

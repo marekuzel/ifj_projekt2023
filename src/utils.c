@@ -418,7 +418,7 @@ void print_stack(stack_char_t* stack) {
   }
 }
 
-static const char *tokentype_to_string[] = {
+const char *tokentype_to_string[] = {
     "TOKEN_ZERO",
     "TOKEN_IDENTIFIER",
     "TOKEN_DT_DOUBLE",

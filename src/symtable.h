@@ -380,4 +380,6 @@ param_t **param_buffer_export(ParamBufferT *);
 void add_params_to_scope(symtable_t *table, symtable_entry_t *entry);
 
 char* add_string(char *str);
+
+bool table_search_local(symtable_t *table, char *name);
 #endif

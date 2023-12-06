@@ -122,7 +122,7 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
 Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while) {
     bool convert = false; // convert int to float
     bool conc = false; // concatenate strings
-    Error err;
+    Error err = SUCCESS;
 
     if (if_while) { // check if true or false will be the result
         err = check_comb(ruleStack, false, false, if_while);
@@ -187,7 +187,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
     return err;
 }
 
-Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_t* types, symtable_t* symTable, char** symbolRet) {
+Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_t* types, symtable_t* symTable, char** symbolRet, int* varCounter) {
     if (symbol->type == TOKEN_EOF || symbol->type == TOKEN_DT_DOUBLE || symbol->type == TOKEN_DT_INT || 
     symbol->type == TOKEN_LC_BRACKET || symbol->type == TOKEN_RC_BRACKET ||
     symbol->type == TOKEN_COLON || symbol->type == TOKEN_COMMA || symbol->type == TOKEN_DT_STRING ||
@@ -202,6 +202,12 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
     if (symbol->type == TOKEN_IDENTIFIER || symbol->type == TOKEN_STRING || symbol->type == TOKEN_INTEGER ||
     symbol->type == TOKEN_DOUBLE || symbol->type == TOKEN_NIL) {
         symtable_entry_t* entry;
+        (*varCounter)++;
+        if (*varCounter > 1) {
+            *next = symbol;
+            *symbolRet = "$"; 
+            return SUCCESS;
+        }
 
         switch (symbol->type) {
         case TOKEN_INTEGER:
@@ -247,6 +253,10 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
                         types->string_nil++;
                         symbol->type = TOKEN_DT_STRING_NIL;
                         break;
+                    case TOKEN_FUNC:
+                        *next = symbol;
+                        *symbolRet = "$"; 
+                        return SUCCESS;
                     default: 
                         break;
                 }
@@ -261,7 +271,7 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
         *symbolRet = "i";
         return SUCCESS;
     }
-
+    (*varCounter)--;
     *symbolRet = symbol->value.str;
     return SUCCESS;
 }
@@ -273,7 +283,7 @@ Error check_rule(char* stackRule, stack_char_t* stack, stack_char_t* ruleStack) 
 
     for (int i = 0; i < NUM_OF_EXPR; i++) {
         if (!strcmp(stackRule, expr[i])) { // find rule 
-            fprintf(stderr, "rule: %s\n", expr[i]);
+            // fprintf(stderr, "rule: %s\n", expr[i]);
             stack_char_push(stack, "E");
             stack_char_push(ruleStack, stackRule);
             return SUCCESS;
@@ -303,6 +313,7 @@ Error find_rule(stack_char_t* stack, stack_char_t* ruleStack) {
                 stack_char_pop(&tmp);
             }
             Error err = check_rule(stackRule, stack, ruleStack);
+            // free(stackRule);
             return err;
         } else {
             stack_char_push(&tmp, stackTop);
@@ -554,6 +565,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
     bool checkDivision = false; // set flag when division
     bool check2questionmarks = false; // set flag when ??
     Error err;
+    int var_count = 0;
     *exprRetType = TOKEN_ZERO;
 
     TokenT* token = stack_read_token_bottom(streamTokens);
@@ -573,7 +585,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
     char* symbol;
 
     char* stackTerminal = stack_char_top(&stack);
-    err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol);
+    err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol, &var_count);
     if (err != SUCCESS) {
         if (err == UNDEFINED_VARIABLE_ERROR) {
             token = stack_read_token_bottom(streamTokens);
@@ -643,7 +655,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
                             prevprevToken = prevToken;
                             checkDivision = true; // should check division types
                         }
-                        err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol);
+                        err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol, &var_count);
                         if (err != SUCCESS) {
                             return err;
                         }           
@@ -706,7 +718,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
                             prevprevToken = prevToken;
                             checkDivision = true;
                         }
-                        err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol);
+                        err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol, &var_count);
                         if (err != SUCCESS) {
                             return err;
                         }
@@ -727,5 +739,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
     }
     
     err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable, if_while);
+    // Stack_Dispose(&tokenStack);
+    free(tokenStack.array);
     return err;
 }
