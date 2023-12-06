@@ -1,3 +1,12 @@
+/**
+ * Project: Compliler IFJ23 implementation 
+ * File: scanner.c
+ * 
+ * @brief implementation of lexical analysis
+ * 
+ * @author Markéte Belatková xbelat02
+*/
+
 #include "scanner.h"
 
 char keywords[NOF_KEYWORDS][MAX_DTT_KWD_LEN] = {
