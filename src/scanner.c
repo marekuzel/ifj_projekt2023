@@ -1,13 +1,3 @@
-/**
- * Project: Compliler IFJ23 implementation 
- * File: scanner.c
- * 
- * @brief implementation of lexical analysis
- * 
- * @author Markéte Belatková xbelat02
- *         Tomáš Zgút xzgutt00
-*/
-
 #include "scanner.h"
 
 char keywords[NOF_KEYWORDS][MAX_DTT_KWD_LEN] = {
@@ -141,6 +131,8 @@ TokenT* generate_token() {
     bool multiline_mode = false;
     char number_buffer[3];
     int esc_sqv_cnt = 0;
+    int mlt_comments_cnt = 0;
+    bool mlt_cmt_mode = false;
     // V pripade ze chci vratit charakter do stdin:
     // ungetc(ch, stream);
 
@@ -158,7 +150,7 @@ TokenT* generate_token() {
                     buffer_append(&buffer, ch);
                 }
                 else if (ch == '_') {
-                    state = STATE_TEXT;
+                    state = STATE_UNDERSCORE;
                     buffer_append(&buffer, ch);
                 }
                 else if (isdigit(ch) || ch == '0') {
@@ -260,22 +252,28 @@ TokenT* generate_token() {
 
             case STATE_UNDERSCORE:
                 if (isalpha(ch) || ch == '_' || isdigit(ch)) {
-                    state = STATE_UNDERSCORE;
+                    state = STATE_TEXT;
                     buffer_append(&buffer, ch);
                 } else {
                     token_init(token, TOKEN_UNDERSCORE, &buffer);
                     ungetc(ch, stream);
+                    return token;
                 }
                 break;
 
             case STATE_SLASH:
-                if (ch == '/') {
+                if (ch == '/' && mlt_cmt_mode == false) {
                     state = STATE_LINE_COMMENT;
                     buffer_clear(&buffer);
                 }
                 else if (ch == '*') {
                     state = STATE_BLOCK_COMMENT;
                     buffer_clear(&buffer);
+                    mlt_comments_cnt++;
+                    mlt_cmt_mode = true;
+                }
+                else if (mlt_cmt_mode == true) {
+                    state = STATE_BLOCK_COMMENT;
                 }
                 else {
                     token_init(token, TOKEN_OPERATOR, &buffer);
@@ -294,11 +292,21 @@ TokenT* generate_token() {
                 if (ch == '*') {
                     state = STATE_END_BLOCK_COMMENT;
                 }
+                else if (ch == '/') {
+                    state = STATE_SLASH;
+                }
                 break;
 
             case STATE_END_BLOCK_COMMENT:
                 if (ch == '/') {
-                    state = STATE_START;
+                    mlt_comments_cnt--;
+                    if (mlt_comments_cnt == 0) {
+                        state = STATE_START;
+                        mlt_cmt_mode = false;
+                    }
+                    else {
+                        state = STATE_BLOCK_COMMENT;
+                    }
                 } else {
                     state = STATE_BLOCK_COMMENT;
                 }
@@ -327,6 +335,9 @@ TokenT* generate_token() {
                 else if (ch == '\\') {
                     escape_next = true;
                     break;
+                }
+                else if (ch == '\n') {
+                    SCANNER_ERROR("One-line string containing an illegal new line")
                 }
                 buffer_append(&buffer, ch);
                 break;
@@ -521,4 +532,3 @@ TokenT* generate_token() {
         }
     }
 }
-

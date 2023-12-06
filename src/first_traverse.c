@@ -25,6 +25,12 @@ Error get_param_def(Parser_t *parser, symtable_entry_t *entry) {
 
     do {
         NEXT_TOKEN
+
+        if (token->type == TOKEN_R_BRACKET) {
+            entry->params = param_buffer_export(parser->buffer);
+            return SUCCESS;
+        }
+
         if (token->type != TOKEN_IDENTIFIER && token->type != TOKEN_UNDERSCORE) {
             return SYNTAX_ERROR;
         }   
@@ -44,7 +50,7 @@ Error get_param_def(Parser_t *parser, symtable_entry_t *entry) {
             ADD_AND_CHECK_PARAM
             continue;
         }
-
+        
         CHECK_TOKEN(TOKEN_R_BRACKET)
         ADD_AND_CHECK_PARAM
         entry->params = param_buffer_export(parser->buffer);
@@ -62,10 +68,12 @@ Error find_allFuncDef(Parser_t* parser) {
     NEXT_TOKEN
 
     while (token->type != TOKEN_EOF) {
+
         if (token->type != TOKEN_FUNC) {
             NEXT_TOKEN
             continue;
         }
+
         GET_NEXT_AND_CHEK_TOKEN(TOKEN_IDENTIFIER)
 
         symtable_entry_t* entry;

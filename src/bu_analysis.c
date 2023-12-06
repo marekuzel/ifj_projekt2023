@@ -122,7 +122,7 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
 Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while) {
     bool convert = false; // convert int to float
     bool conc = false; // concatenate strings
-    Error err;
+    Error err = SUCCESS;
 
     if (if_while) { // check if true or false will be the result
         err = check_comb(ruleStack, false, false, if_while);
@@ -313,7 +313,7 @@ Error find_rule(stack_char_t* stack, stack_char_t* ruleStack) {
                 stack_char_pop(&tmp);
             }
             Error err = check_rule(stackRule, stack, ruleStack);
-            free(stackRule);
+            // free(stackRule);
             return err;
         } else {
             stack_char_push(&tmp, stackTop);
@@ -739,6 +739,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
     }
     
     err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable, if_while);
-    Stack_Dispose(&tokenStack);
+    // Stack_Dispose(&tokenStack);
+    free(tokenStack.array);
     return err;
 }
