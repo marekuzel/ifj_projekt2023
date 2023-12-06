@@ -25,6 +25,7 @@ Error RuleErr = SUCCESS; //global value for success of the rules
 Error parser_rule_id(Parser_t *parser){
     //id ->id
     PRINT_RULE(id);
+    // print_token(parser->token_current);
     CHECK_TOKEN_TYPE(parser, TOKEN_IDENTIFIER);
     parser->current_id = parser->token_current->value.str;
     return SUCCESS;
@@ -104,6 +105,7 @@ Error parser_rule_stmt(Parser_t *parser){
             table_add_scope(parser->symtable);
             entry->type--; //changeing datatype to without ?
             gen_local_scope(parser->symtable);
+            GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
             GET_NEXT_AND_CALL_RULE(parser, stmtSeq);
             gen_jmp(IF_END_L,cond_label);
             gen_cond_else_label(cond_label);
@@ -199,7 +201,6 @@ Error parser_rule_stmt(Parser_t *parser){
         }
     }
     else{
-        
         PRINT_RULE(SYNTAX_ERROR);
         return SYNTAX_ERROR;
     }
@@ -421,6 +422,7 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
         } else if (parser->token_current->type == TOKEN_INTEGER || parser->token_current->type == TOKEN_STRING || parser->token_current->type == TOKEN_DOUBLE || parser->token_current->type == TOKEN_NIL) {
             param_value_init(parser->symtable, entry->params[param_idx], parser->token_current->value, parser->token_current->type);
             entry->params[0]->type = parser->token_current->type;
+            // print_token(parser->token_current);
         } else {
             return WRONG_NUM_TYPE_ERROR;
         }

@@ -40,6 +40,7 @@ int main() {
     
     if (err != SUCCESS) {
         parser_dtor(parser);
+        printf("%d\n",err);
         return err;
     }
 

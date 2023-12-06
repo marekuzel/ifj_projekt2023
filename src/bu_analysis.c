@@ -313,7 +313,7 @@ Error find_rule(stack_char_t* stack, stack_char_t* ruleStack) {
                 stack_char_pop(&tmp);
             }
             Error err = check_rule(stackRule, stack, ruleStack);
-            free(stackRule);
+            // free(stackRule);
             return err;
         } else {
             stack_char_push(&tmp, stackTop);
@@ -739,6 +739,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
     }
     
     err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable, if_while);
-    Stack_Dispose(&tokenStack);
+    // Stack_Dispose(&tokenStack);
+    free(tokenStack.array);
     return err;
 }
