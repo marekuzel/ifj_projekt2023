@@ -567,6 +567,7 @@ void add_params_to_scope(symtable_t *table, symtable_entry_t *entry) {
         tmp->type = entry->params[param_idx]->type;
         tmp->defined = true;
         tmp->declared = true;
+        tmp->constant = true;
     }
 
 }
