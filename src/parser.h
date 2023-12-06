@@ -41,18 +41,55 @@ typedef enum {
     PARSER_INVALID_TOKEN,
     } parser_ret_t;
 
+/**
+ * @brief initialize parser structure
+ * @param[in] parser
+ */
 void parser_init(Parser_t *);
 
+/**
+ * @brief clean up after parser structure
+ * @param[in] parser
+ * 
+ */
 void parser_dtor(Parser_t*);
 
+/**
+ * @brief gets new token from stack or stash
+ * 
+ * @param[in] parser
+ * @return SUCCESS if token is valid
+ * @return SYNTAX_ERROR if token is invalid
+ */
 Error parser_getNewToken(Parser_t *);
 
+/**
+ * @brief stash token to extra token
+ * @param[in] parser
+ * @param[in] token
+ */
 void parser_stashExtraToken(Parser_t *, TokenT *);
 
+/**
+ * @brief adds symtable entry to symtable
+ * @param[in] parser
+ */
 void parser_symtableEntry(Parser_t *);
 
+/**
+ * @brief initialize local symtable
+ * @param[in] parser
+ * 
+ * @return Error 
+ */
 Error parser_initLocalSymtable(Parser_t *);
 
+/**
+ * @brief creates param for function
+ * @param[in] parser
+ * 
+ * @return Error 
+ */
 Error parser_createParam (Parser_t *);
 
 #endif
