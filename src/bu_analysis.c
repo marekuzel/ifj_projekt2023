@@ -393,7 +393,6 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
     table_search_global(symTable, token->value.str, &entry);
     char *func_name = token->value.str;
     int param_idx = 0;
-
     while (entry->params[param_idx] != NULL) {
         int tmp_idx = param_idx + 1;
 
@@ -470,7 +469,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
                     }
                 }
             } else {
-                return SYNTAX_ERROR;
+                return WRONG_NUM_TYPE_ERROR;
             }
         }
 
@@ -486,7 +485,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
         return SUCCESS;
     }
 
-    return SYNTAX_ERROR;
+    return WRONG_NUM_TYPE_ERROR;
 }
 
 Error isFunc(TokenT* token, symtable_t* symTable) {
@@ -629,7 +628,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
 
                         if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
                             if (!is_data_type(prevToken)) {
-                                return SYNTAX_ERROR;
+                                return TYPE_COMPATIBILITY_ERROR;
                             }
                             err = change_type_withQM(&tokenStack, &types);
                             if (err != SUCCESS) {

@@ -99,6 +99,39 @@ buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str) {
 }
 
 
+buff_ret_t buffer_append_ascii(BufferT *buffer, char ascii_code) {
+    char tmp_str[6];
+
+    sprintf(tmp_str,"\\%03d",ascii_code);
+    
+    for (int str_idx = 0; tmp_str[str_idx] != '\0'; str_idx++) {
+        buffer_append(buffer,tmp_str[str_idx]);
+    }
+    return BUFF_NUM_CVT_SUCCES;
+
+}
+
+void convert_multilne_strings(BufferT *buffer) {
+    BufferT tmp;
+    buffer_init(&tmp);
+
+    for (int buff_idx = 0; buff_idx < buffer->length && buffer->bytes[buff_idx] != '\0'; buff_idx++) {
+        char ch = buffer->bytes[buff_idx];
+        if ((ch >= 0 && ch <= ' ') || ch == '#') {
+            buffer_append_ascii(&tmp, ch);
+        } else {
+            buffer_append(&tmp,ch);
+        }
+
+    }
+    free(buffer->bytes);
+    buffer->bytes = tmp.bytes;
+    buffer->cap = tmp.cap;
+    buffer->length = tmp.length;
+
+}
+
+
 void Stack_Init(Stack *stack) {
     assert(stack != NULL);
 

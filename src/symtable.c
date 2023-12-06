@@ -243,7 +243,6 @@ void table_add_scope(symtable_t *table) {
 
 void table_remove_scope(symtable_t *table) {
     assert(table != NULL);
-
     if (table->top_idx < 0) {
         fprintf(stderr,"Symtable scope underflow\n");
         exit(INTERNAL_COMPILER_ERROR);
@@ -566,5 +565,9 @@ void add_params_to_scope(symtable_t *table, symtable_entry_t *entry) {
     for (int param_idx = 0; entry->params[param_idx] != NULL; param_idx++) {
         table_insert(table,entry->params[param_idx]->id,&tmp);
         tmp->type = entry->params[param_idx]->type;
+        tmp->defined = true;
+        tmp->declared = true;
+        tmp->constant = true;
     }
+
 }

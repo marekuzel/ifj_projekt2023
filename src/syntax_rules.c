@@ -43,7 +43,6 @@ Error parser_rule_funcID(Parser_t *parser){
 Error parser_rule_stmt(Parser_t *parser){
     //stmt -> let <id> <stmt_assign>
     PRINT_RULE(stmt);
-    // print_token(parser->token_current);
     if (parser->token_current->type == TOKEN_LET){
         PRINT_RULE(Let);
         GET_NEXT_AND_CALL_RULE(parser, id);
@@ -86,12 +85,9 @@ Error parser_rule_stmt(Parser_t *parser){
             if (table_search(parser->symtable, parser->current_id, &entry)) {
                 switch (entry->type) {
                     case TOKEN_DT_DOUBLE_NIL: case TOKEN_DT_INT_NIL: case TOKEN_DT_STRING_NIL:
-                        if (entry->constant != true) {
-                            return TYPE_COMPATIBILITY_ERROR; // TODO check me
-                        } 
                         break;
                     default: 
-                        return TYPE_COMPATIBILITY_ERROR; // TODO check me
+                        return ANOTHER_SEMANTIC_ERROR; // TODO check me
                 }
             } else {
                 return UNDEFINED_VARIABLE_ERROR;
@@ -104,12 +100,14 @@ Error parser_rule_stmt(Parser_t *parser){
             gen_cnd_jump(ELSE_L,cond_label);
             table_add_scope(parser->symtable);
             entry->type--; //changeing datatype to without ?
+            entry->constant = true;
             gen_local_scope(parser->symtable);
             GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_LC_BRACKET);
             GET_NEXT_AND_CALL_RULE(parser, stmtSeq);
             gen_jmp(IF_END_L,cond_label);
             gen_cond_else_label(cond_label);
             entry->type++; //changing datatype back to with ?
+            entry->constant = false;
             parser_getNewToken(parser);
             if (parser->token_current->type == TOKEN_ELSE){
                 RuleErr = parser_rule_elseF(parser);
@@ -121,8 +119,6 @@ Error parser_rule_stmt(Parser_t *parser){
             gen_end_label(IF_L,cond_label);
             gen_drop_local_scope(parser->symtable);
             table_remove_scope(parser->symtable);
-            // GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_RC_BRACKET);
-            // GET_NEXT_AND_CALL_RULE(parser, stmtAssign);
         }
         else{
             parser->if_while = true;
@@ -143,6 +139,7 @@ Error parser_rule_stmt(Parser_t *parser){
             gen_cond_else_label(cnd_label);
             GET_NEXT_AND_CALL_RULE(parser, elseF);
             gen_drop_local_scope(parser->symtable);
+            table_remove_scope(parser->symtable);
             gen_end_label(IF_L,cnd_label);
         }
         goto success;
@@ -180,6 +177,7 @@ Error parser_rule_stmt(Parser_t *parser){
         goto success;
     }
     //stmt -> [id] -> = [expr]
+    //or [callFunction]
     else if (parser->token_current->type == TOKEN_IDENTIFIER){
         symtable_entry_t *tmp;
         if (table_search_global(parser->symtable,parser->token_current->value.str,&tmp) && tmp->type == TOKEN_FUNC) {
@@ -188,16 +186,24 @@ Error parser_rule_stmt(Parser_t *parser){
             RuleErr = parser_rule_callFunc(parser);
             RETURN_ERROR;
             goto success;
-
-        } else {
-            PRINT_RULE(stmtID);
+        } 
+        else {
+            PRINT_RULE(stmtID or uninitialized func);
             parser->current_id = parser->token_current->value.str;
-            GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_ASSIGN);
-            parser->assign = true;
-            RuleErr = parser_rule_expr(parser);
-            RETURN_ERROR;
-            gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
-            goto success;
+            parser_getNewToken(parser);
+            if (parser->token_current->type == TOKEN_L_BRACKET){
+                return UNDEFINED_FUNCTION_ERROR;
+            }
+            else if (parser->token_current->type == TOKEN_ASSIGN){
+                parser->assign = true;
+                RuleErr = parser_rule_expr(parser);
+                RETURN_ERROR;
+                gen_assignment(parser->current_id,is_global(parser->symtable,parser->current_id));
+                goto success;
+            }
+            else{
+                return SYNTAX_ERROR;
+            }
         }
     }
     else{
@@ -308,7 +314,6 @@ Error parser_rule_paramsCallSeq (Parser_t * parser){
         }
     }
     else if (parser->token_current->type == TOKEN_R_BRACKET){
-        table_remove_scope(parser->symtable);
         return SUCCESS;
     }
     return SYNTAX_ERROR;
@@ -329,16 +334,27 @@ Error parser_rule_elseF(Parser_t *parser){
     return SUCCESS;
 }
 
+/*
+********************************
+Definition of the funciton rules
+********************************
+*/
+
 Error parser_rule_defFunc(Parser_t *parser){
     PRINT_RULE(defFunc)
     //func [funcId] ([parameters]) [func_ret]
     // GET_NEXT_AND_CALL_RULE(parser, funcID);
     RuleErr=  parser_rule_funcID(parser);
+    symtable_entry_t *tmp_entry;
+    table_search_global(parser->symtable,parser->token_current->value.str,&tmp_entry);
     RETURN_ERROR;
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
+    table_add_scope(parser->symtable);
+    add_params_to_scope(parser->symtable,tmp_entry);
     gen_func_def(parser->current_function);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
+    table_remove_scope(parser->symtable);
     gen_func_return();
     return SUCCESS;
 }
@@ -367,6 +383,7 @@ Error parser_rule_stmtSeqRet(Parser_t *parser){
         if (parser->token_current->type == TOKEN_RETURN){
             parser->return_in_func = true;
             RuleErr = parser_rule_expr(parser);
+            gen_func_return();
             RETURN_ERROR;
             parser_getNewToken(parser);
             continue;
@@ -403,6 +420,53 @@ Error parser_rule_stmtVoidSeqRet(Parser_t *parser){
     return SUCCESS;
 }
 
+Error parser_rule_paramsDef(Parser_t *parser){
+    PRINT_RULE(paramsDef);
+    //[parameters] →
+    //  | ( [name] [id] : [type]  [parameters_seq]*
+    //  | ( )
+    if (parser_rule_name(parser) == SUCCESS){
+        GET_NEXT_AND_CALL_RULE(parser, id);
+        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
+        GET_NEXT_AND_CALL_RULE(parser, type);
+
+        GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
+        goto success;
+    }
+    else if (parser->token_current->type == TOKEN_R_BRACKET){
+        goto success;
+    }
+    success:
+        return SUCCESS;
+}
+
+Error parser_rule_paramsDefSeq(Parser_t* parser){
+    PRINT_RULE(paramsDefSeq);
+    // [parameters_seq] →
+    //    | , [name] [id] : [type] [parameters_seq]
+    //    | )
+    if (parser->token_current->type == TOKEN_COMMA){
+        GET_NEXT_AND_CALL_RULE(parser, name);
+        GET_NEXT_AND_CALL_RULE(parser, id);
+        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
+        GET_NEXT_AND_CALL_RULE(parser, type);
+        GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
+        return SUCCESS;
+    }
+    else if (parser->token_current->type == TOKEN_R_BRACKET){
+        return SUCCESS;
+    }
+    else{
+        return SYNTAX_ERROR;
+    }
+}
+
+/**
+*******************
+Call function rules
+*******************
+ */
+
 Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term1, term3, .. , termn)
     PRINT_RULE(func_write_call);
     parser_getNewToken(parser);
@@ -411,6 +475,9 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
         if (parser->token_current->type == TOKEN_IDENTIFIER) {
             symtable_entry_t* paramIdent;
             if (table_search(parser->symtable, parser->token_current->value.str, &paramIdent)) { // find variable in symtable
+                if (paramIdent->defined == false){
+                    return UNDEFINED_VARIABLE_ERROR;
+                }
                 if (paramIdent->type != TOKEN_FUNC) {
                     param_value_init(parser->symtable, entry->params[param_idx], parser->token_current->value, parser->token_current->type);
                     entry->params[0]->type = TOKEN_VAR;
@@ -430,6 +497,7 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
         } else {
             return WRONG_NUM_TYPE_ERROR;
         }
+        gen_write_arg(entry->params[param_idx]);
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_COMMA) { // after term has to be comma
             parser_getNewToken(parser);
@@ -438,7 +506,7 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
         if (parser->token_current->type != TOKEN_R_BRACKET) {
             return SYNTAX_ERROR;
         }
-        gen_write_arg(entry->params[param_idx]);
+        
     }
     return SUCCESS;
 }
@@ -450,16 +518,15 @@ Error parser_rule_callFunc(Parser_t *parser){
     if (table_search_global(parser->symtable, parser->token_current->value.str, &entry) == false) {
         return UNDEFINED_FUNCTION_ERROR;
     }
+
     char *func_name = parser->token_current->value.str;
     int param_idx = 0;
-
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
-
     if (!(strcmp(func_name, "write"))) {
         Error err = func_write_call(parser, entry);
         return err;
     }
-
+    table_add_scope(parser->symtable);
     // parameters - check both syntax and semantic
     while (entry->params[param_idx] != NULL) {
         int tmp_idx = param_idx + 1;
@@ -468,10 +535,10 @@ Error parser_rule_callFunc(Parser_t *parser){
         if (entry->params[tmp_idx] == NULL) {
             comma = false;
         }
-
+        
         if (!strcmp(entry->params[param_idx]->name,"_")) { // [expr]
             parser_getNewToken(parser);
-
+            // print_token(parser->token_current);
             if (parser->token_current->type == TOKEN_IDENTIFIER) {
                 symtable_entry_t* paramIdent;
 
@@ -517,7 +584,7 @@ Error parser_rule_callFunc(Parser_t *parser){
                         if (paramIdent->type != entry->params[param_idx]->type) { // parameters in func definition and func call must have same type
                             return WRONG_NUM_TYPE_ERROR;
                         }
-                    param_value_init(parser->symtable, entry->params[param_idx], parser->token_current->value, parser->token_current->type);
+                        param_value_init(parser->symtable, entry->params[param_idx], parser->token_current->value, parser->token_current->type);
                     } else {
                         return UNDEFINED_VARIABLE_ERROR;
                     }
@@ -538,7 +605,7 @@ Error parser_rule_callFunc(Parser_t *parser){
                     }
                 }
             } else {
-                return SYNTAX_ERROR;
+                return WRONG_NUM_TYPE_ERROR;
             }
         }
 
@@ -547,54 +614,12 @@ Error parser_rule_callFunc(Parser_t *parser){
 
     parser_getNewToken(parser);
     if (parser->token_current->type == TOKEN_R_BRACKET) {
-        table_add_scope(parser->symtable);
-        add_params_to_scope(parser->symtable,entry);
         gen_func_call(func_name,entry);
+        table_remove_scope(parser->symtable);
         return SUCCESS;
     }
 
-    return SYNTAX_ERROR;
-}
-
-Error parser_rule_paramsDef(Parser_t *parser){
-    PRINT_RULE(paramsDef);
-    //[parameters] →
-    //  | ( [name] [id] : [type]  [parameters_seq]*
-    //  | ( )
-    if (parser_rule_name(parser) == SUCCESS){
-        GET_NEXT_AND_CALL_RULE(parser, id);
-        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
-        GET_NEXT_AND_CALL_RULE(parser, type);
-
-        GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
-        goto success;
-    }
-    else if (parser->token_current->type == TOKEN_R_BRACKET){
-        goto success;
-    }
-    success:
-        return SUCCESS;
-}
-
-Error parser_rule_paramsDefSeq(Parser_t* parser){
-    PRINT_RULE(paramsDefSeq);
-    // [parameters_seq] →
-    //    | , [name] [id] : [type] [parameters_seq]
-    //    | )
-    if (parser->token_current->type == TOKEN_COMMA){
-        GET_NEXT_AND_CALL_RULE(parser, name);
-        GET_NEXT_AND_CALL_RULE(parser, id);
-        GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_COLON);
-        GET_NEXT_AND_CALL_RULE(parser, type);
-        GET_NEXT_AND_CALL_RULE(parser, paramsDefSeq);
-        return SUCCESS;
-    }
-    else if (parser->token_current->type == TOKEN_R_BRACKET){
-        return SUCCESS;
-    }
-    else{
-        return SYNTAX_ERROR;
-    }
+    return WRONG_NUM_TYPE_ERROR;
 }
 
 Error parser_rule_name(Parser_t *parser){
@@ -698,11 +723,10 @@ Error parser_rule_expr(Parser_t *parser){
             parser->find_id_type = false;
         } else if (parser->assign) { // [id] = [expr]
             table_search(parser->symtable, parser->current_id, &entry);
-            if (entry->constant && entry->modified) {
+            if (entry->constant && entry->defined) {
                 return ANOTHER_SEMANTIC_ERROR;
-            } else if (entry->constant && !entry->modified) {
-                entry->modified = true;
-                printf("%d\n",entry->modified);
+            } else if (entry->constant && !entry->defined) {
+                entry->defined = true;
             }
             if (!expr_var_match(exprRet, entry->type)) {
                 return TYPE_COMPATIBILITY_ERROR;
