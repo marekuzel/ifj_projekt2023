@@ -40,7 +40,7 @@ typedef struct used_types {
  * @param if_while expresion in if/while condition
  * @return result of expression (semantic errors, syntax error or success)
 */
-Error bu_read(TokenT** , Stack* streamTokens, symtable_t* symTable, TokenType* exprRetType, bool if_while);
+Error bu_read(TokenT** , Stack* streamTokens, symtable_t* symTable, TokenType* exprRetType, bool if_while, bool assign_to_double);
 
 /**
  * @brief generate expression
@@ -53,7 +53,7 @@ Error bu_read(TokenT** , Stack* streamTokens, symtable_t* symTable, TokenType* e
  * @return TYPE_COMPATIBILITY_ERROR when trying to convert variable
  * @return SUCCESS otherwise
 */
-Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool conc, symtable_t* symTable);
+Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool conc, symtable_t* symTable, bool assign_to_double);
 
 /**
  * @brief check combination of rules in expression
@@ -80,7 +80,7 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
  * @return TYPE_COMPATIBILITY_ERROR when types cant be used in one expression
  * @return SUCCESS otherwise
 */
-Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while);
+Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while, bool assign_to_double);
 
 /**
  * @brief assing char to be find in precedence table
@@ -180,6 +180,6 @@ Error type_check_2qm(TokenT* prevprev, TokenT* actual, symtable_t* symTable);
  * @param tokenStack stack of variables in expression 
  * @param types used types in expression
 */
-void change_type_withQM(Stack* tokenStack, used_types_t* types);
+Error change_type_withQM(Stack* tokenStack, used_types_t* types);
 
 #endif

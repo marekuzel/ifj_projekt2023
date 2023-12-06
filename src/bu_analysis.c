@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool conc, symtable_t* symTable) {
+Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool conc, symtable_t* symTable, bool assign_to_double) {
     // "i", "(E)", "E+E", "E-E", "E*E", "E/E", "E==E", "E!=E", "E<E", "E<=E", "E>E", "E>=E", "E??E"
     while (!stack_char_empty(ruleStack)) {
         char* rule = stack_bottom_read(ruleStack);
@@ -31,9 +31,9 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
                 gen_push_lit(token->value, token->type);  
             }
 
-            if (convert && token->type == TOKEN_INTEGER) {
+            if ((convert || assign_to_double) && token->type == TOKEN_INTEGER) {
                 gen_expr_conv(IF);
-            } else if (convert && token->type == TOKEN_DT_INT) {
+            } else if ((convert || assign_to_double) && token->type == TOKEN_DT_INT) {
                 return TYPE_COMPATIBILITY_ERROR;
             }
         } else if (!strcmp(rule, "E+E")) {
@@ -119,7 +119,7 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
     return SUCCESS;
 }
 
-Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while) {
+Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while, bool assign_to_double) {
     bool convert = false; // convert int to float
     bool conc = false; // concatenate strings
     Error err = SUCCESS;
@@ -131,16 +131,20 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
         }
     }
     if (types->t_int == true && types->t_double == false && types->t_string == false && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
-        err = generate(tokenStack, ruleStack, convert, conc, symTable);
-        **exprRetType = TOKEN_DT_INT;
+        err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
+        if (assign_to_double) {
+            **exprRetType = TOKEN_DT_DOUBLE;
+        } else {
+            **exprRetType = TOKEN_DT_INT;
+        }
     } else if (types->t_int == false && types->t_double == true && types->t_string == false && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
-        err = generate(tokenStack, ruleStack, convert, conc, symTable);
+        err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
         **exprRetType = TOKEN_DT_DOUBLE;
     } else if (types->t_int == false && types->t_double == false && types->t_string == true && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
         err = check_comb(ruleStack, true, false, false);
         if (err == SUCCESS) {
             conc = true;
-            err = generate(tokenStack, ruleStack, convert, conc, symTable);
+            err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
             **exprRetType = TOKEN_DT_STRING;
         } else {
             return err;
@@ -150,7 +154,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
             err = check_comb(ruleStack, false, false, false);
             if (err == SUCCESS) {
                 convert = true;
-                err = generate(tokenStack, ruleStack, convert, conc, symTable);
+                err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
                 **exprRetType = TOKEN_DT_DOUBLE;
             } else {
                 return err;
@@ -162,7 +166,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
     (types->t_string == true && (types->t_string_nil == true || types->int_nil == true))) {
         err = check_comb(ruleStack, false, true, false);
         if (err == SUCCESS) {
-            err = generate(tokenStack, ruleStack, convert, conc, symTable);
+            err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
             if (types->t_int == true) {
                 **exprRetType = TOKEN_DT_INT;
             } else if (types->t_double == true) {
@@ -177,7 +181,7 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
     } else if (types->t_string == true && (types->t_double == true || types->t_int == true)) {
         return TYPE_COMPATIBILITY_ERROR;
     } else if (types->t_nil == true) {
-        generate(tokenStack, ruleStack, convert, conc, symTable);
+        generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
         **exprRetType = TOKEN_NIL;
     } else {
         return TYPE_COMPATIBILITY_ERROR;
@@ -389,7 +393,6 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
     table_search_global(symTable, token->value.str, &entry);
     char *func_name = token->value.str;
     int param_idx = 0;
-
     while (entry->params[param_idx] != NULL) {
         int tmp_idx = param_idx + 1;
 
@@ -466,7 +469,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
                     }
                 }
             } else {
-                return SYNTAX_ERROR;
+                return WRONG_NUM_TYPE_ERROR;
             }
         }
 
@@ -482,7 +485,7 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
         return SUCCESS;
     }
 
-    return SYNTAX_ERROR;
+    return WRONG_NUM_TYPE_ERROR;
 }
 
 Error isFunc(TokenT* token, symtable_t* symTable) {
@@ -524,7 +527,7 @@ Error type_check_2qm(TokenT* prevprev, TokenT* actual, symtable_t* symTable) {
     return TYPE_COMPATIBILITY_ERROR;
 }
 
-void change_type_withQM(Stack* tokenStack, used_types_t* types) {
+Error change_type_withQM(Stack* tokenStack, used_types_t* types) {
     TokenT* topToken;
     Stack_Top(tokenStack, &topToken); // change type of top token
     Stack_Pop(tokenStack);
@@ -554,9 +557,10 @@ void change_type_withQM(Stack* tokenStack, used_types_t* types) {
             topToken->type = TOKEN_DT_STRING;
             break;
         default:
-            break;
+            return TYPE_COMPATIBILITY_ERROR;
     } 
     Stack_Push(tokenStack, topToken);
+    return SUCCESS;
 }
 
 bool is_data_type(TokenT* token) {
@@ -568,7 +572,7 @@ bool is_data_type(TokenT* token) {
     }
 }
 
-Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenType* exprRetType, bool if_while) {
+Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenType* exprRetType, bool if_while, bool assign_to_double) {
     used_types_t types = {.t_double = false, .t_int = false, .t_string = false, .t_int_nil = false, .int_nil = 0,
                             .t_double_nil = false, .double_nil = 0, .t_string_nil = false, .string_nil = 0};
     used_types_t divTypeResult = {.t_double = false, .t_int = false, .t_string = false, .t_int_nil = false, .int_nil = 0,
@@ -626,7 +630,10 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
                             if (!is_data_type(prevToken)) {
                                 return TYPE_COMPATIBILITY_ERROR;
                             }
-                            change_type_withQM(&tokenStack, &types);
+                            err = change_type_withQM(&tokenStack, &types);
+                            if (err != SUCCESS) {
+                                return err;
+                            }
                             token = stack_read_token_bottom(streamTokens);
                         } 
 
@@ -689,7 +696,10 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
                             if (!is_data_type(prevToken)) {
                                 return SYNTAX_ERROR;
                             }
-                            change_type_withQM(&tokenStack, &types);
+                            err = change_type_withQM(&tokenStack, &types);
+                            if (err != SUCCESS) {
+                                return err;
+                            }
                             token = stack_read_token_bottom(streamTokens);
                         } 
 
@@ -748,8 +758,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
         }
     }
     
-    err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable, if_while);
-    // Stack_Dispose(&tokenStack);
+    err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, &exprRetType, symTable, if_while, assign_to_double);
     free(tokenStack.array);
     return err;
 }
