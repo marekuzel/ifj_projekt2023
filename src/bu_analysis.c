@@ -112,7 +112,7 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
 
     if (if_while && relation_op_counter == 1) {
         return SUCCESS;
-    } else {
+    } else if (if_while && relation_op_counter != 1){
         return TYPE_COMPATIBILITY_ERROR;
     }
 
@@ -130,7 +130,6 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
             return err;
         }
     }
-
     if (types->t_int == true && types->t_double == false && types->t_string == false && types->t_int_nil == false && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
         err = generate(tokenStack, ruleStack, convert, conc, symTable);
         **exprRetType = TOKEN_DT_INT;
@@ -534,6 +533,7 @@ void change_type_withQM(Stack* tokenStack, used_types_t* types) {
             types->int_nil--;
             if (types->int_nil == 0) {
                 types->t_int_nil = false;
+                types->t_int = true;
             }
             topToken->type = TOKEN_DT_INT;
             break;
@@ -541,6 +541,7 @@ void change_type_withQM(Stack* tokenStack, used_types_t* types) {
             types->double_nil--;
             if (types->double_nil == 0) {
                 types->t_double_nil = false;
+                types->t_double = true;
             }
             topToken->type = TOKEN_DT_DOUBLE;
             break;
@@ -548,6 +549,7 @@ void change_type_withQM(Stack* tokenStack, used_types_t* types) {
             types->string_nil--;
             if (types->string_nil == 0) {
                 types->t_string_nil = false;
+                types->t_string = true;
             }
             topToken->type = TOKEN_DT_STRING;
             break;
@@ -555,6 +557,15 @@ void change_type_withQM(Stack* tokenStack, used_types_t* types) {
             break;
     } 
     Stack_Push(tokenStack, topToken);
+}
+
+bool is_data_type(TokenT* token) {
+    switch (token->type) {
+        case TOKEN_DT_INT: case TOKEN_DT_INT_NIL: case TOKEN_DT_DOUBLE: case TOKEN_DT_DOUBLE_NIL: case TOKEN_DT_STRING: case TOKEN_DT_STRING_NIL:
+            return true;
+        default:
+            return false;
+    }
 }
 
 Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenType* exprRetType, bool if_while) {
@@ -606,14 +617,13 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
             switch(action) {
                 case PREC_ACTION_SHIFT: 
                     err = stack_insertAfterTerminal(&stack);
-                    stack_char_push(&stack, symbol);
-
+                    stack_char_push(&stack, symbol);                    
                     if ((*next) == NULL) { // token which does not belog to expr was not found
                         prevToken = token;
                         token = stack_read_token_bottom(streamTokens);
 
                         if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
-                            if (prevToken->type != TOKEN_IDENTIFIER) {
+                            if (!is_data_type(prevToken)) {
                                 return SYNTAX_ERROR;
                             }
                             change_type_withQM(&tokenStack, &types);
@@ -676,7 +686,7 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
                         token = stack_read_token_bottom(streamTokens);
 
                         if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
-                            if (prevToken->type != TOKEN_IDENTIFIER) {
+                            if (!is_data_type(prevToken)) {
                                 return SYNTAX_ERROR;
                             }
                             change_type_withQM(&tokenStack, &types);
