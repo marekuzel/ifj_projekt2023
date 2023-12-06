@@ -127,7 +127,7 @@ void Stack_Top( const Stack *stack, TokenT **dataPtr ) {
     assert(dataPtr != NULL);
     
     if (!Stack_IsEmpty(stack)){
-        *dataPtr = stack->array[stack->topIndex];
+        *dataPtr = stack->array[(stack->topIndex-1)];
     }
 }
 
@@ -143,10 +143,10 @@ void Stack_Pop( Stack *stack) {
 
 	if (!Stack_IsEmpty(stack)){
 		stack->topIndex--;
-	}
-
+	} else {
     fprintf(stderr,"Internal stack underflow\n");
     exit(INTERNAL_COMPILER_ERROR);
+  }
 }
 
 void Stack_Push( Stack *stack, TokenT *data ) {
