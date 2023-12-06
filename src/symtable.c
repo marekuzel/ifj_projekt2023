@@ -175,7 +175,7 @@ void awl_insert(awl_t **awl, char *key, symtable_entry_t *entry) {
         CHECK_MEM_ERR(*awl)
 
 
-        (*awl)->key = add_string(key);
+        (*awl)->key = copy_str(key);
         (*awl)->value = entry;
         (*awl)->left = NULL;
         (*awl)->right = NULL;
@@ -451,8 +451,8 @@ param_t *param_create(char *id, char *name, TokenType type) {
 
     CHECK_MEM_ERR(new_param)
 
-    new_param->id = add_string(id);
-    new_param->name = add_string(name);
+    new_param->id = copy_str(id);
+    new_param->name = copy_str(name);
     new_param->type = type;
 
     return new_param;
@@ -545,7 +545,7 @@ bool is_global(symtable_t *table, char *name) {
 }
 
 
-char* add_string(char *str) {
+char* copy_str(char *str) {
     assert(str != NULL);
 
     size_t str_len = strlen(str);

@@ -374,12 +374,37 @@ void table_insert_builtin_funcs(symtable_t *table);
 */
 bool is_global(symtable_t *table, char *name);
 
-
+/**
+ * @brief exports paramBuffer to an array of param_t
+ * @param buffer: pointer to a paramBuffer
+ * 
+ * @return param_t** 
+ */
 param_t **param_buffer_export(ParamBufferT *);
 
+/**
+ * @brief adding parameter of function to local scope
+ * 
+ * @param table ptr to local symtable
+ * @param entry paramater entry
+ */
 void add_params_to_scope(symtable_t *table, symtable_entry_t *entry);
 
-char* add_string(char *str);
+/**
+ * @brief creates a copy of a string
+ * 
+ * @param str ptr to string
+ * @return char* ptr to copy of string
+ */
+char* copy_str(char *str);
 
+/**
+ * @brief searches local symtable for a given name
+ * 
+ * @param table ptr to local symtable
+ * @param name name to find
+ * @return true if found
+ * @return false if not found
+ */
 bool table_search_local(symtable_t *table, char *name);
 #endif
