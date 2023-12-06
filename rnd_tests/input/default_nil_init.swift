@@ -1,7 +1,7 @@
-var a : Int?
+let a : Int?
 
 if let a {
-    write("not nil!")
+    write("not\u{20}nil!")
 } else {
     write("nil!")
 }
