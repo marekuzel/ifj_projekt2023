@@ -340,6 +340,14 @@ TokenT* generate_token() {
                 else if (ch == '\n') {
                     SCANNER_ERROR("One-line string containing an illegal new line")
                 }
+                else if ((ch >= 0 && ch <= ' ') || ch == '#') {
+                    buff_ret_t ascii_ret;
+                    ascii_ret = buffer_append_ascii(&buffer, ch);
+                    if (ascii_ret != BUFF_NUM_CVT_SUCCES) {
+                        SCANNER_ERROR("Conversion to ascii escape sequence failed")
+                    }
+                    break;
+                }
                 buffer_append(&buffer, ch);
                 break;
 

@@ -142,3 +142,5 @@ nknjk"""
 
 """
 let
+
+"ahoj#jak\\se mas"
