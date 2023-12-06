@@ -239,7 +239,7 @@ void token_dtor(TokenT *token) {
                                                                                \
   void stack_##TNAME##_push(stack_##TNAME##_t *stack, T item) {                \
     if (stack->top == MAXSTACK - 1) {                                          \
-      printf("[W] Stack overflow\n");                                          \
+      fprintf(stderr,"[W] Stack overflow\n");                                          \
     } else {                                                                   \
       stack->items[++stack->top] = item;                                       \
     }                                                                          \
@@ -254,7 +254,7 @@ void token_dtor(TokenT *token) {
                                                                                \
   T stack_##TNAME##_pop(stack_##TNAME##_t *stack) {                            \
     if (stack->top == -1) {                                                    \
-      printf("[W] Stack underflow\n");                                         \
+      fprintf(stderr,"[W] Stack underflow\n");                                         \
       return NULL;                                                             \
     }                                                                          \
     return stack->items[stack->top--];                                         \
@@ -439,7 +439,6 @@ void print_stack(stack_char_t* stack) {
 
   while (!stack_char_empty(stack)) {
     char* item = stack_char_top(stack);
-    printf("%s\n", item);
     stack_char_push(&tmp, item);
     stack_char_pop(stack);
   }
