@@ -10,7 +10,6 @@ compilerPath="../bin/compiler"
 execTest () {
 	echo -e "\e[33m--------------------------------\e[0m"
 	bash -c "$compilerPath < $2 > tmp_output.txt 2>&1"
-	bash -c "$compilerPath < $2 > tmp_output.txt 2>&1"
 	returnCode=$?
 	touch tmp_output2.txt
 	if [ "$returnCode" = "0" ]; then
@@ -41,7 +40,7 @@ execTest "Illegal nil initialization" "input/nil_init_illegal.swift" "output/emp
 execTest "Type deduction" "input/type_deduction.swift" "output/empty.txt" 0 
 execTest "Nil type deduction" "input/nil_type_deduction.swift" "output/empty.txt" 8
 execTest "Comments" "input/comments.swift" "output/empty.txt" 0 
-execTest "Variable redefinition" "input/variable_redefinition.swift" "output/empty.txt" 3 todo 
+execTest "Variable redefinition" "input/variable_redefinition.swift" "output/empty.txt" 3 todo fix 
 execTest "Variable shadowing" "input/variable_shadowing.swift" "output/variable_shadowing.txt" 0
 execTest "Variable out of scope" "input/variable_out_of_scope.swift" "output/empty.txt" 5 
 execTest "Undefined variable" "input/undefined_variable.swift" "output/empty.txt" 5 

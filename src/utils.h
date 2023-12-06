@@ -101,6 +101,8 @@ buff_ret_t buffer_apend_hex_num(BufferT *buffer, char *num_str);
 */
 buff_ret_t buffer_append_ascii(BufferT *buffer, char ascii_code);
 
+
+void convert_multilne_strings(BufferT *buffer);
 typedef union {
     char* str;
     double d;

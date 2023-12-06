@@ -310,7 +310,6 @@ Error parser_rule_paramsCallSeq (Parser_t * parser){
         }
     }
     else if (parser->token_current->type == TOKEN_R_BRACKET){
-        table_remove_scope(parser->symtable);
         return SUCCESS;
     }
     return SYNTAX_ERROR;
@@ -342,11 +341,16 @@ Error parser_rule_defFunc(Parser_t *parser){
     //func [funcId] ([parameters]) [func_ret]
     // GET_NEXT_AND_CALL_RULE(parser, funcID);
     RuleErr=  parser_rule_funcID(parser);
+    symtable_entry_t *tmp_entry;
+    table_search_global(parser->symtable,parser->token_current->value.str,&tmp_entry);
     RETURN_ERROR;
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
     GET_NEXT_AND_CALL_RULE(parser, paramsDef);
+    table_add_scope(parser->symtable);
+    add_params_to_scope(parser->symtable,tmp_entry);
     gen_func_def(parser->current_function);
     GET_NEXT_AND_CALL_RULE(parser, funcRet);
+    table_remove_scope(parser->symtable);
     gen_func_return();
     return SUCCESS;
 }
@@ -489,6 +493,7 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
         } else {
             return WRONG_NUM_TYPE_ERROR;
         }
+        gen_write_arg(entry->params[param_idx]);
         parser_getNewToken(parser);
         if (parser->token_current->type == TOKEN_COMMA) { // after term has to be comma
             parser_getNewToken(parser);
@@ -497,7 +502,7 @@ Error func_write_call(Parser_t *parser, symtable_entry_t* entry) { // write(term
         if (parser->token_current->type != TOKEN_R_BRACKET) {
             return SYNTAX_ERROR;
         }
-        gen_write_arg(entry->params[param_idx]);
+        
     }
     return SUCCESS;
 }
@@ -509,16 +514,15 @@ Error parser_rule_callFunc(Parser_t *parser){
     if (table_search_global(parser->symtable, parser->token_current->value.str, &entry) == false) {
         return UNDEFINED_FUNCTION_ERROR;
     }
+
     char *func_name = parser->token_current->value.str;
     int param_idx = 0;
-
     GET_NEXT_AND_CHECK_TYPE(parser, TOKEN_L_BRACKET);
-
     if (!(strcmp(func_name, "write"))) {
         Error err = func_write_call(parser, entry);
         return err;
     }
-
+    table_add_scope(parser->symtable);
     // parameters - check both syntax and semantic
     while (entry->params[param_idx] != NULL) {
         int tmp_idx = param_idx + 1;
@@ -527,10 +531,10 @@ Error parser_rule_callFunc(Parser_t *parser){
         if (entry->params[tmp_idx] == NULL) {
             comma = false;
         }
-
+        
         if (!strcmp(entry->params[param_idx]->name,"_")) { // [expr]
             parser_getNewToken(parser);
-
+            print_token(parser->token_current);
             if (parser->token_current->type == TOKEN_IDENTIFIER) {
                 symtable_entry_t* paramIdent;
 
@@ -576,7 +580,7 @@ Error parser_rule_callFunc(Parser_t *parser){
                         if (paramIdent->type != entry->params[param_idx]->type) { // parameters in func definition and func call must have same type
                             return WRONG_NUM_TYPE_ERROR;
                         }
-                    param_value_init(parser->symtable, entry->params[param_idx], parser->token_current->value, parser->token_current->type);
+                        param_value_init(parser->symtable, entry->params[param_idx], parser->token_current->value, parser->token_current->type);
                     } else {
                         return UNDEFINED_VARIABLE_ERROR;
                     }
@@ -606,9 +610,8 @@ Error parser_rule_callFunc(Parser_t *parser){
 
     parser_getNewToken(parser);
     if (parser->token_current->type == TOKEN_R_BRACKET) {
-        table_add_scope(parser->symtable);
-        add_params_to_scope(parser->symtable,entry);
         gen_func_call(func_name,entry);
+        table_remove_scope(parser->symtable);
         return SUCCESS;
     }
 

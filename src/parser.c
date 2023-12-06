@@ -65,7 +65,6 @@ Error parser_getNewToken(Parser_t *parser){
         parser->token_current = generate_token();
         #endif
     }
-    // print_token(parser->token_current);
     return SUCCESS;
 }
 

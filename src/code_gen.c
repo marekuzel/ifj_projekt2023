@@ -20,6 +20,7 @@ void gen_prog() {
     printf("DEFVAR GF@$dest\n");
     printf("DEFVAR GF@$op1\n");
     printf("DEFVAR GF@$op2\n");
+    printf("DEFVAR GF@$type\n");
     jump_cont_label(1);
 
 }
@@ -119,11 +120,17 @@ void gen_expr_binop(char operator) {
         break;
 
     case '/':
-        printf("DIVS\n");
-        break;
-    
-    case '\\':
+        label_num =  get_cond_label();
+        printf("POPS GF@$op1\n");
+        printf("PUSHS GF@$op1\n");
+        printf("TYPE GF@$type GF@$op1\n");
+
+        printf("JUMPIFEQ division%d GF@$type string@float\n",label_num);
         printf("IDIVS\n");
+        printf("JUMP divisionend%d\n",label_num);
+        printf("LABEL division%d\n",label_num);
+        printf("DIVS\n");
+        printf("LABEL divisionend%d\n",label_num);
         break;
 
     case '?':

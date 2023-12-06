@@ -111,6 +111,27 @@ buff_ret_t buffer_append_ascii(BufferT *buffer, char ascii_code) {
 
 }
 
+void convert_multilne_strings(BufferT *buffer) {
+    BufferT tmp;
+    buffer_init(&tmp);
+
+    for (int buff_idx = 0; buff_idx < buffer->length && buffer->bytes[buff_idx] != '\0'; buff_idx++) {
+        char ch = buffer->bytes[buff_idx];
+        if ((ch >= 0 && ch <= ' ') || ch == '#') {
+            buffer_append_ascii(&tmp, ch);
+        } else {
+            buffer_append(&tmp,ch);
+        }
+
+    }
+    free(buffer->bytes);
+    buffer->bytes = tmp.bytes;
+    buffer->cap = tmp.cap;
+    buffer->length = tmp.length;
+
+}
+
+
 void Stack_Init(Stack *stack) {
     assert(stack != NULL);
 

@@ -395,6 +395,7 @@ TokenT* generate_token() {
                         } else {
                             buffer.bytes[0] = '\0';
                         }
+                        convert_multilne_strings(&buffer);
                         token_init(token, TOKEN_STRING, &buffer);
                         return token;
                     }
