@@ -140,6 +140,7 @@ Error parser_rule_stmt(Parser_t *parser){
             gen_cond_else_label(cnd_label);
             GET_NEXT_AND_CALL_RULE(parser, elseF);
             gen_drop_local_scope(parser->symtable);
+            table_remove_scope(parser->symtable);
             gen_end_label(IF_L,cnd_label);
         }
         goto success;
