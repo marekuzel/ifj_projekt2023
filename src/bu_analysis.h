@@ -17,6 +17,11 @@
 #define NUM_OF_EXPR 14
 #define MAX_EXP_LEN 5
 
+#define CHECK_SUCCES        \
+    if (err != SUCCESS) {   \
+        return err;         \
+    }                       \
+    
 typedef struct used_types {
     bool t_int;
     bool t_double;
@@ -80,7 +85,7 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
  * @return TYPE_COMPATIBILITY_ERROR when types cant be used in one expression
  * @return SUCCESS otherwise
 */
-Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType** exprRetType, symtable_t* symTable, bool if_while, bool assign_to_double);
+Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType* exprRetType, symtable_t* symTable, bool if_while, bool assign_to_double);
 
 /**
  * @brief assing char to be find in precedence table

@@ -502,3 +502,7 @@ void print_token(TokenT *token) {
         break;
     }
 }
+
+bool is_token_data_type(TokenT *token) {
+    return TOKEN_DT_DOUBLE <= token->type  && token->type <= TOKEN_DT_STRING_NIL;
+}

@@ -331,4 +331,6 @@ void print_stack(stack_char_t* stack);
 */
 void print_token(TokenT *token);
 extern const char *tokentype_to_string[30];
+
+bool is_token_data_type(TokenT *token);
 #endif
