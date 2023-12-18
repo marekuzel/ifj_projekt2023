@@ -174,11 +174,17 @@ Error parser_rule_stmtMainSeq (Parser_t *);
  */
 Error parser_rule_name (Parser_t *);
 
-#define CHECK_TOKEN_TYPE(parser, expected_type) \
+#define CHECK_TOKEN_TYPE(parser, expected_type, returnErr) \
     do { \
         if ((parser)->token_current->type != (expected_type)) { \
-            return SYNTAX_ERROR; \
+            return returnErr; \
         } \
+    } while(0)
+
+#define CALL_RULE(parser, rule) \
+    do { \
+        RuleErr = parser_rule_##rule(parser); \
+        if (RuleErr != SUCCESS) return RuleErr; \
     } while(0)
 
 #define GET_NEXT_AND_CALL_RULE(parser, rule) \
@@ -194,13 +200,7 @@ Error parser_rule_name (Parser_t *);
 #define GET_NEXT_AND_CHECK_TYPE(parser, expected_type) \
     do { \
         parser_getNewToken(parser); \
-        CHECK_TOKEN_TYPE(parser, expected_type); \
+        CHECK_TOKEN_TYPE(parser, expected_type, SYNTAX_ERROR); \
     } while(0)
 
-#define RETURN_ERROR   \
-    do{ \
-        if (RuleErr != SUCCESS){ \
-         return RuleErr; \
-        } \
-    }while(0)
 #endif

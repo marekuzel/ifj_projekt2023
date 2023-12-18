@@ -25,7 +25,7 @@ typedef struct Parser {
     bool return_in_func;
     bool find_id_type;
     bool assign;
-    bool if_while;
+    bool if_while; 
     bool assign_to_double;
     bool assign_type_expr;
     Stack *stack;
