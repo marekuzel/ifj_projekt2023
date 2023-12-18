@@ -359,6 +359,9 @@ void gen_substring() {
     printf("LT GF@$boolflag LF@i LF@strlen\n");
     printf("JUMPIFNEQ substringend GF@$boolflag bool@true\n");
 
+    printf("GT GF@$boolflag LF@i LF@j\n");
+    printf("JUMPIFEQ substringend GF@$boolflag bool@true\n");
+
     printf("GT GF@$boolflag LF@j LF@strlen\n");
     printf("JUMPIFEQ substringend GF@$boolflag bool@true\n");
 
