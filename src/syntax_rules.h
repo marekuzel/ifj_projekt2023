@@ -174,6 +174,9 @@ Error parser_rule_stmtMainSeq (Parser_t *);
  */
 Error parser_rule_name (Parser_t *);
 
+
+Error _id_symtable (Parser_t *, param_t*);
+
 #define CHECK_TOKEN_TYPE(parser, expected_type, returnErr) \
     do { \
         if ((parser)->token_current->type != (expected_type)) { \
@@ -202,5 +205,7 @@ Error parser_rule_name (Parser_t *);
         parser_getNewToken(parser); \
         CHECK_TOKEN_TYPE(parser, expected_type, SYNTAX_ERROR); \
     } while(0)
+    
+#define currTokenType parser->token_current->type
 
 #endif

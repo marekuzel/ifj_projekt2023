@@ -409,11 +409,6 @@ Error deal_with_func(TokenT* token, symtable_t* symTable, TokenType** resType, S
                 symtable_entry_t* paramIdent;
 
                 if (table_search(symTable, token->value.str, &paramIdent)) { // find variable in symtable
-                    if (paramIdent->type == TOKEN_ZERO) {
-                        symTable->top_idx--;
-                        table_search(symTable, token->value.str, &paramIdent);
-                        symTable->top_idx++;
-                    }
                     if (paramIdent->type != entry->params[param_idx]->type) { // parameters in func definition and func call must have same type
                         return WRONG_NUM_TYPE_ERROR;
                     }

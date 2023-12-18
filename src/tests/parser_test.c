@@ -36,7 +36,7 @@ static const char *tokentype_to_string[] = {
 };
 
 
-void print_token(TokenT *token) {
+void _print_token(TokenT *token) {
     if (token == NULL) {
         printf("Invalid input\n");
         return;
@@ -74,8 +74,8 @@ void test_1(){
     TEST("Test declaration of variable\n");
     Error err = parser_rule_stmtMainSeq(parser);
     if (err==SYNTAX_ERROR){
-        print_token(parser->token_current);
-        // print_token(parser->stack->array[parser->stack->topIndex]);
+        _print_token(parser->token_current);
+        // _print_token(parser->stack->array[parser->stack->topIndex]);
         printf("error\n");
     }
     parser_dtor(parser);

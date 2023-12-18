@@ -13,7 +13,7 @@ int main() {
         if (next_token->type == TOKEN_EOF) {
             break;
         }
-        print_token (next_token);
+        _print_token (next_token);
         next_token = generate_token();
     }
     return 0;

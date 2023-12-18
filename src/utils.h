@@ -329,6 +329,9 @@ void print_stack(stack_char_t* stack);
  * 
  * @param token pointer to token
 */
-void print_token(TokenT *token);
+void _print_token(TokenT *token);
+
+bool _expr_var_match(TokenType, TokenType);
+
 extern const char *tokentype_to_string[30];
 #endif

@@ -483,8 +483,17 @@ const char *tokentype_to_string[] = {
     "TOKEN_EOF"
 };
 
+bool _expr_var_match(TokenType exprRet, TokenType entry_type) {
+    if ((exprRet == TOKEN_DT_INT && (entry_type == TOKEN_DT_INT || entry_type == TOKEN_DT_INT_NIL)) || 
+    (exprRet == TOKEN_DT_DOUBLE && (entry_type == TOKEN_DT_DOUBLE || entry_type == TOKEN_DT_DOUBLE_NIL)) || 
+    (exprRet == TOKEN_DT_STRING && (entry_type == TOKEN_DT_STRING || entry_type == TOKEN_DT_STRING_NIL)) || 
+    (exprRet == TOKEN_NIL && (entry_type == TOKEN_DT_INT_NIL || entry_type == TOKEN_DT_DOUBLE_NIL || entry_type == TOKEN_DT_STRING_NIL))){
+        return true;
+    }
+    return false;
+}
 
-void print_token(TokenT *token) {
+void _print_token(TokenT *token) {
     if (token == NULL) {
         fprintf(stderr,"Invalid input\n");
         return;
