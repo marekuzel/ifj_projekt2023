@@ -15,9 +15,7 @@
 #include "first_traverse.h"
 #include "utils.h"
 
-bool is_token_data_type(TokenT *token) {
-    return TOKEN_DT_DOUBLE <= token->type  && token->type <= TOKEN_DT_STRING_NIL;
-}
+
 
 
 Error get_param_def(Parser_t *parser, symtable_entry_t *entry) {
