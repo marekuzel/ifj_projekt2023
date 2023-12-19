@@ -21,11 +21,9 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
     // "i", "(E)", "E+E", "E-E", "E*E", "E/E", "E==E", "E!=E", "E<E", "E<=E", "E>E", "E>=E", "E??E"
     while (!stack_char_empty(ruleStack)) {
         char* rule = stack_bottom_read(ruleStack);
-        TokenT* token;
         if(!strcmp(rule, "i")) {
-            token = stack_read_token_bottom(tokenStack);
-            if (token->type == TOKEN_DT_DOUBLE || token->type == TOKEN_DT_INT || token->type == TOKEN_DT_STRING || 
-            token->type == TOKEN_DT_STRING_NIL || token->type == TOKEN_DT_INT_NIL || token->type == TOKEN_DT_DOUBLE_NIL) {
+            TokenT *token = stack_read_token_bottom(tokenStack);
+            if (is_token_data_type(token)) {
                 gen_push_var(token->value.str, is_global(symTable, token->value.str));
             } else {
                 gen_push_lit(token->value, token->type);  
@@ -37,11 +35,8 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
                 return TYPE_COMPATIBILITY_ERROR;
             }
         } else if (!strcmp(rule, "E+E")) {
-            if (conc) {
-                gen_expr_binop('|');
-            } else {
-                gen_expr_binop('+');
-            }
+            gen_expr_binop(conc ? '|': '+');
+
         } else if (!strcmp(rule, "E*E")) {
             gen_expr_binop('*');
         } else if (!strcmp(rule, "E/E")) {
@@ -71,12 +66,10 @@ Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool co
 
 Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_while) {
     // "i", "(E)", "E+E", "E-E", "E*E", "E/E", "E==E", "E!=E", "E<E", "E<=E", "E>E", "E>=E", "E??E"
-    stack_char_t tmp;
-    stack_char_init(&tmp);
     int relation_op_counter = 0;
 
-    while (!stack_char_empty(stack)) {
-        char* rule = stack_char_top(stack);
+    for (int stack_idx = stack->top; stack_idx >= 0; stack_idx--) {
+        char* rule = stack->items[stack_idx];
         if (if_while) { // have to have at least one relation op
             if (!strcmp(rule, "E==E") || !strcmp(rule, "E!=E") || !strcmp(rule, "E<E") || !strcmp(rule, "E<=E") || !strcmp(rule, "E>E") || 
             !strcmp(rule, "E>=E")) {
@@ -92,30 +85,14 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
             if (!strcmp(rule, "E/E") || !strcmp(rule, "E-E") || !strcmp(rule, "E*E")) {
                 return TYPE_COMPATIBILITY_ERROR;
             }
-        } else if (only_strings == false && typeNil == false && if_while == false) {
+        } else if (!strcmp(rule, "E<E") || !strcmp(rule, "E<=E") || !strcmp(rule, "E>E") || !strcmp(rule, "E>=E")) {
             // check if right operators are used with double and int in one expr
-            if (!strcmp(rule, "E<E") || !strcmp(rule, "E<=E") ||
-            !strcmp(rule, "E>E") || !strcmp(rule, "E>=E")) {
                 return TYPE_COMPATIBILITY_ERROR;
-            }
         }
-
-        stack_char_push(&tmp, rule);
-        stack_char_pop(stack);
     }
 
-    while (!stack_char_empty(&tmp)) { // push back all rules
-        char* rule = stack_char_top(&tmp);
-        stack_char_push(stack, rule);
-        stack_char_pop(&tmp);
-    }
-
-
-    if (if_while && relation_op_counter == 1) {
-        return SUCCESS;
-    } else if (if_while && relation_op_counter != 1){
+    if (if_while && relation_op_counter != 1)
         return TYPE_COMPATIBILITY_ERROR;
-    }
 
     return SUCCESS;
 }
@@ -123,57 +100,48 @@ Error check_comb(stack_char_t* stack, bool only_strings, bool typeNil, bool if_w
 Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* types, used_types_t* division_types, TokenType* exprRetType, symtable_t* symTable, bool if_while, bool assign_to_double) {
     bool convert = false; // convert int to float
     bool conc = false; // concatenate strings
-    Error err = SUCCESS;
+    Error err;
 
     if (if_while) { // check if true or false will be the result
-        err = check_comb(ruleStack, false, false, if_while);
-        CHECK_SUCCES
+        CHECK_SUCCES(check_comb,ruleStack, false, false, if_while)
     }
     if (types->t_int == true && types->t_double == false && types->t_string == false && types->t_int_nil == false 
         && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
 
-        err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
+        CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
         *exprRetType = assign_to_double ? TOKEN_DT_DOUBLE : TOKEN_DT_INT;
 
     } else if (types->t_int == false && types->t_double == true && types->t_string == false && types->t_int_nil == false 
             && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
 
-        err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
+        CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
         *exprRetType = TOKEN_DT_DOUBLE;
 
     } else if (types->t_int == false && types->t_double == false && types->t_string == true && types->t_int_nil == false 
             && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
-
-        err = check_comb(ruleStack, true, false, false);
-        CHECK_SUCCES
-
+        CHECK_SUCCES(check_comb,ruleStack, true, false, false)
         conc = true;
-        err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
+        CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
         *exprRetType = TOKEN_DT_STRING;
 
     } else if (types->t_int == true && types->t_double == true && types->t_string == false && types->t_int_nil == false 
             && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
 
-        if (division_types->t_double == true || (division_types->t_double == false && division_types->t_int == false)) {
-            err = check_comb(ruleStack, false, false, false);
-            CHECK_SUCCES
-
+        if (division_types->t_double == true || division_types->t_int == false) {
+            CHECK_SUCCES(check_comb,ruleStack, false, false, false)
             convert = true;
-            err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
+            CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
             *exprRetType = TOKEN_DT_DOUBLE;
 
         } else if (division_types->t_int == true) {
             return TYPE_COMPATIBILITY_ERROR;
         }
-    } else if ((types->t_int == true && (types->t_int_nil == true || types->int_nil == true)) 
+    } else if ((types->t_int == true && types->t_int_nil == true ) 
             || (types->t_double == true && (types->double_nil == true || types->int_nil == true)) 
             || (types->t_string == true && (types->t_string_nil == true|| types->int_nil == true))) {
 
-        err = check_comb(ruleStack, false, true, false);
-
-        CHECK_SUCCES
-
-        err = generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
+        CHECK_SUCCES(check_comb,ruleStack, false, true, false)
+        CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
 
         if (types->t_int == true) {
             *exprRetType = TOKEN_DT_INT;
@@ -182,18 +150,15 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
         } else if (types->t_string == true) {
             *exprRetType = TOKEN_DT_STRING;
         }
-
-
-    } else if (types->t_string == true && (types->t_double == true || types->t_int == true)) {
-        return TYPE_COMPATIBILITY_ERROR;
+        
     } else if (types->t_nil == true) {
-        generate(tokenStack, ruleStack, convert, conc, symTable, assign_to_double);
+        CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
         *exprRetType = TOKEN_NIL;
     } else {
         return TYPE_COMPATIBILITY_ERROR;
     }
 
-    return err;
+    return SUCCESS;
 }
 
 Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_t* types, symtable_t* symTable, char** symbolRet, int* varCounter) {
@@ -213,17 +178,25 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
         return SUCCESS;
     }
 
-    if (symbol->type == TOKEN_IDENTIFIER || symbol->type == TOKEN_STRING || symbol->type == TOKEN_INTEGER ||
-    symbol->type == TOKEN_DOUBLE || symbol->type == TOKEN_NIL) {
-        symtable_entry_t* entry;
-        (*varCounter)++;
-        if (*varCounter > 1) {
-            *next = symbol;
-            *symbolRet = "$"; 
-            return SUCCESS;
-        }
+    if (symbol->type != TOKEN_IDENTIFIER && symbol->type != TOKEN_STRING && symbol->type != TOKEN_INTEGER
+        && symbol->type != TOKEN_DOUBLE && symbol->type != TOKEN_NIL) {
 
-        switch (symbol->type) {
+        (*varCounter)--;
+        *symbolRet = symbol->value.str;
+        return SUCCESS;
+
+    }
+
+    symtable_entry_t* entry;
+
+    (*varCounter)++;
+    if (*varCounter > 1) {
+        *next = symbol;
+        *symbolRet = "$"; 
+        return SUCCESS;
+    }
+
+    switch (symbol->type) {
         case TOKEN_INTEGER:
             types->t_int = true;
             break;
@@ -237,54 +210,47 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
             types->t_nil = true;
             break;
         case TOKEN_IDENTIFIER:
-            // token is not literal try to find him in tables
-            if (!table_search(symTable, symbol->value.str, &entry)) {
-                return UNDEFINED_VARIABLE_ERROR;
+        // token is not literal try to find him in tables
+        if (!table_search(symTable, symbol->value.str, &entry)) {
+            return UNDEFINED_VARIABLE_ERROR;
+        }
+        if (entry->type != TOKEN_FUNC) {
+            symbol->type = entry->type;
+        }
+        switch (entry->type) {
+            case TOKEN_DT_DOUBLE: 
+                types->t_double = true;
+                break;
+            case TOKEN_DT_INT:
+                types->t_int = true;
+                break;
+            case TOKEN_DT_STRING:
+                types->t_string = true;
+                break;
+            case TOKEN_DT_DOUBLE_NIL: 
+                types->t_double_nil = true;
+                types->double_nil++;
+                break;
+            case TOKEN_DT_INT_NIL:
+                types->t_int_nil = true;
+                types->int_nil++;
+                break;
+            case TOKEN_DT_STRING_NIL:
+                types->t_string_nil = true;
+                types->string_nil++;
+                break;
+            default: 
+                break;
             }
-
-            switch (entry->type) {
-                case TOKEN_DT_DOUBLE: 
-                    types->t_double = true;
-                    symbol->type = TOKEN_DT_DOUBLE;
-                    break;
-                case TOKEN_DT_INT:
-                    types->t_int = true;
-                    symbol->type = TOKEN_DT_INT;
-                    break;
-                case TOKEN_DT_STRING:
-                    types->t_string = true;
-                    symbol->type = TOKEN_DT_STRING;
-                    break;
-                case TOKEN_DT_DOUBLE_NIL: 
-                    types->t_double_nil = true;
-                    types->double_nil++;
-                    symbol->type = TOKEN_DT_DOUBLE_NIL;
-                    break;
-                case TOKEN_DT_INT_NIL:
-                    types->t_int_nil = true;
-                    types->int_nil++;
-                    symbol->type = TOKEN_DT_INT_NIL;
-                    break;
-                case TOKEN_DT_STRING_NIL:
-                    types->t_string_nil = true;
-                    types->string_nil++;
-                    symbol->type = TOKEN_DT_STRING_NIL;
-                    break;
-                default: 
-                    break;
-                }
             break;
         default:
             break;
         }
-        Stack_Push(tokenStack, symbol);
-        *symbolRet = "i";
-        return SUCCESS;
-    }
-
-    (*varCounter)--;
-    *symbolRet = symbol->value.str;
+    Stack_Push(tokenStack, symbol);
+    *symbolRet = "i";
     return SUCCESS;
+
+
 }
 
 Error check_rule(char* stackRule, stack_char_t* stack, stack_char_t* ruleStack) {
@@ -329,7 +295,6 @@ Error find_rule(stack_char_t* stack, stack_char_t* ruleStack) {
             stack_char_pop(stack);
         }
     }
-
     return SYNTAX_ERROR;
 }
 
@@ -354,10 +319,9 @@ Error type_check_div(TokenT* prevprev, TokenT* actual, used_types_t* usedTypes, 
     TokenType before;
     TokenType after;
 
-    Error err = type_in_special_expr(prevprev, symTable, &before);
-    CHECK_SUCCES
-    err = type_in_special_expr(actual, symTable, &after);
-    CHECK_SUCCES
+    Error err;
+    CHECK_SUCCES(type_in_special_expr,prevprev, symTable, &before)
+    CHECK_SUCCES(type_in_special_expr,actual, symTable, &after)
 
     if ((before == TOKEN_INTEGER || before == TOKEN_DT_INT) && (after == TOKEN_INTEGER || after == TOKEN_DT_INT) && usedTypes->t_double == false) {
         // int/int
@@ -495,10 +459,9 @@ Error isFunc(TokenT* token, symtable_t* symTable) {
 Error type_check_2qm(TokenT* prevprev, TokenT* actual, symtable_t* symTable) {
     TokenType before;
     TokenType after;
-    Error err = type_in_special_expr(prevprev, symTable, &before);
-    CHECK_SUCCES
-    err = type_in_special_expr(actual, symTable, &after);
-    CHECK_SUCCES
+    Error err;
+    CHECK_SUCCES(type_in_special_expr,prevprev, symTable, &before)
+    CHECK_SUCCES(type_in_special_expr,actual, symTable, &after)
 
     if (before == TOKEN_NIL && (after == TOKEN_INTEGER || after == TOKEN_DOUBLE || after == TOKEN_STRING || after == TOKEN_DT_DOUBLE ||
         after == TOKEN_DT_INT || after == TOKEN_DT_STRING)) {
@@ -516,7 +479,6 @@ Error type_check_2qm(TokenT* prevprev, TokenT* actual, symtable_t* symTable) {
 Error change_type_withQM(Stack* tokenStack, used_types_t* types) {
     TokenT* topToken;
     Stack_Top(tokenStack, &topToken); // change type of top token
-    Stack_Pop(tokenStack);
     switch(topToken->type) {
         case TOKEN_DT_INT_NIL:
             types->int_nil--;
@@ -545,7 +507,6 @@ Error change_type_withQM(Stack* tokenStack, used_types_t* types) {
         default:
             return TYPE_COMPATIBILITY_ERROR;
     } 
-    Stack_Push(tokenStack, topToken);
     return SUCCESS;
 }
 
@@ -586,147 +547,67 @@ Error bu_read(TokenT** next, Stack* streamTokens, symtable_t* symTable, TokenTyp
         return err;
     }
     PrecAction action;
-    err = get(stackTerminal, symbol, &action);
-    CHECK_SUCCES
+    CHECK_SUCCES(get,stackTerminal, symbol, &action)
 
     while (strcmp(symbol, "$") != 0 || stack_char_2oftop(&stack) == false) {
-        if (err == SUCCESS) {
-            switch(action) {
-                case PREC_ACTION_SHIFT: 
-                    err = stack_insertAfterTerminal(&stack);
-                    stack_char_push(&stack, symbol);                    
-                    if ((*next) == NULL) { // token which does not belog to expr was not found
-                        prevToken = token;
-                        token = stack_read_token_bottom(streamTokens);
+        switch(action) {
+            case PREC_ACTION_SHIFT: 
+                CHECK_SUCCES(stack_insertAfterTerminal,&stack)
+                //fall through
+            case PREC_ACTION_EQ:
+                stack_char_push(&stack, symbol);                    
+                if ((*next) != NULL) {  // token which does not belog to expr was not found
+                    continue;
+                }
+                prevToken = token;
+                token = stack_read_token_bottom(streamTokens);
 
-                        if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
-                            if (!is_token_data_type(prevToken)) {
-                                return TYPE_COMPATIBILITY_ERROR;
-                            }
-                            err = change_type_withQM(&tokenStack, &types);
-                            if (err != SUCCESS) {
-                                return err;
-                            }
-                            token = stack_read_token_bottom(streamTokens);
-                        } 
-
-                        if (prevToken->type == TOKEN_IDENTIFIER && token->type == TOKEN_L_BRACKET) { // function call
-                            err = isFunc(prevToken, symTable);
-                            if (err == SUCCESS) {
-                                err = deal_with_func(prevToken, symTable, &exprRetType, streamTokens);
-                                *next = stack_read_token_bottom(streamTokens);
-                                return err;
-                            } else {
-                                return err;
-                            }
-                        }
-                        if (checkDivision) {
-                            err = type_check_div(prevprevToken, token, &divTypeResult, symTable);
-                            if (err != SUCCESS) {
-                                return err;
-                            }
-                            checkDivision = false;
-                        }
-
-                        if (check2questionmarks) {
-                            err = type_check_2qm(prevprevToken, token, symTable);
-                            if (err != SUCCESS) {
-                                return err;
-                            }
-                            check2questionmarks = false;
-                        }
-
-                        if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "??")) {
-                            prevprevToken = prevToken;
-                            check2questionmarks = true; // should check division types
-                        }
-
-                        if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "/")) {
-                            prevprevToken = prevToken;
-                            checkDivision = true; // should check division types
-                        }
-                        err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol, &var_count);
-                        if (err != SUCCESS) {
-                            return err;
-                        }           
+                if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
+                    if (!is_token_data_type(prevToken)) {
+                        return TYPE_COMPATIBILITY_ERROR;
                     }
-                    break;
-                case PREC_ACTION_REDUCE: // pop from stack and find rule
-                    err = find_rule(&stack, &ruleStack);
-                    if (err != SUCCESS) {
-                        return err;
-                    }
+                    CHECK_SUCCES(change_type_withQM,&tokenStack, &types)
 
-                    break;
-                case PREC_ACTION_EQ:
-                    stack_char_push(&stack, symbol);
+                    token = stack_read_token_bottom(streamTokens);
+                } 
 
-                    if ((*next) == NULL) { // token which does not belog to expr was not found  
-                        prevToken = token;
-                        token = stack_read_token_bottom(streamTokens);
+                if (prevToken->type == TOKEN_IDENTIFIER && token->type == TOKEN_L_BRACKET) { // function call
+                    CHECK_SUCCES(isFunc,prevToken, symTable)                        
+                    err = deal_with_func(prevToken, symTable, &exprRetType, streamTokens);
+                    *next = stack_read_token_bottom(streamTokens);
+                    return err;
+                }
+                if (checkDivision) {
+                    CHECK_SUCCES(type_check_div,prevprevToken, token, &divTypeResult, symTable)
+                    checkDivision = false;
+                }
 
-                        if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "!")) { // from [type]? to [type]
-                            if (!is_token_data_type(prevToken)) {
-                                return SYNTAX_ERROR;
-                            }
-                            err = change_type_withQM(&tokenStack, &types);
-                            if (err != SUCCESS) {
-                                return err;
-                            }
-                            token = stack_read_token_bottom(streamTokens);
-                        } 
+                if (check2questionmarks) {
+                    CHECK_SUCCES(type_check_2qm,prevprevToken, token, symTable)
+                    check2questionmarks = false;
+                }
 
-                        if (prevToken->type == TOKEN_STRING && token->type == TOKEN_L_BRACKET) { // function call
-                            err = isFunc(prevToken, symTable);
-                            if (err == SUCCESS) {
-                                err = deal_with_func(prevToken, symTable, &exprRetType, streamTokens);
-                                *next = stack_read_token_bottom(streamTokens);
-                                return err;
-                            } else {
-                                return err;
-                            }
-                        }
-                        if (checkDivision) {
-                            err = type_check_div(prevprevToken, token, &divTypeResult, symTable);
-                            if (err != SUCCESS) {
-                                return err;
-                            }
-                            checkDivision = false;
-                        }
+                if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "??")) {
+                    prevprevToken = prevToken;
+                    check2questionmarks = true; // should check division types
+                }
 
-                        if (check2questionmarks) {
-                            err = type_check_2qm(prevprevToken, token, symTable);
-                            if (err != SUCCESS) {
-                                return err;
-                            }
-                            check2questionmarks = false;
-                        }
-                        
-                        if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "??")) {
-                            prevprevToken = prevToken;
-                            check2questionmarks = true; // should check division types
-                        }
+                if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "/")) {
+                    prevprevToken = prevToken;
+                    checkDivision = true; // should check division types
+                }
+                CHECK_SUCCES(check_symbol,token, next, &tokenStack, &types, symTable, &symbol, &var_count)
+                break;
+            case PREC_ACTION_REDUCE: // pop from stack and find rule
+                CHECK_SUCCES(find_rule,&stack, &ruleStack)
+                break;
 
-                        if (token->type == TOKEN_OPERATOR && !strcmp(token->value.str, "/")) {
-                            prevprevToken = prevToken;
-                            checkDivision = true;
-                        }
-                        err = check_symbol(token, next, &tokenStack, &types, symTable, &symbol, &var_count);
-                        if (err != SUCCESS) {
-                            return err;
-                        }
-                    }
-                    break;
-                case PREC_ACTION_ERROR:
-                    return SYNTAX_ERROR;
-            }
-        } else {
-            return err;
+            case PREC_ACTION_ERROR:
+                return SYNTAX_ERROR;
         }
 
         stack_topTerminal(&stack, &stackTerminal);
-        err = get(stackTerminal, symbol, &action);
-        CHECK_SUCCES
+        CHECK_SUCCES(get,stackTerminal, symbol, &action)
     }
     
     err = check_semantic(&tokenStack, &ruleStack, &types, &divTypeResult, exprRetType, symTable, if_while, assign_to_double);
