@@ -17,11 +17,12 @@
 #define NUM_OF_EXPR 14
 #define MAX_EXP_LEN 5
 
-#define CHECK_SUCCES        \
-    if (err != SUCCESS) {   \
-        return err;         \
-    }                       \
-    
+#define CHECK_SUCCES(func,...)      \
+    err = func(__VA_ARGS__);        \
+    if (err != SUCCESS) {           \
+        return err;                 \
+    }                               \
+
 typedef struct used_types {
     bool t_int;
     bool t_double;
