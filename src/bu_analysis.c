@@ -17,6 +17,23 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+bool just_type(used_types_t *types, TokenType type) {
+    return types->types_used == 1 << (type % 7);
+}
+bool just_two_types(used_types_t *types, TokenType type1, TokenType type2) {
+    return types->types_used == ((1 << (type1 % 7)) | (1 << (type2 % 7)));
+}
+bool check_type(used_types_t *types, TokenType type) {
+    return types->types_used & 1 << (type % 7);
+}
+
+void set_type(used_types_t *types, TokenType type) {
+    if (type == TOKEN_DT_INT_NIL || type == TOKEN_DT_DOUBLE_NIL || type == TOKEN_DT_STRING_NIL) {
+        types->nil_cnts[type]++;
+    }
+    types->types_used |= 1 << (type % 7);
+}
+
 Error generate(Stack* tokenStack, stack_char_t* ruleStack, bool convert, bool conc, symtable_t* symTable, bool assign_to_double) {
     // "i", "(E)", "E+E", "E-E", "E*E", "E/E", "E==E", "E!=E", "E<E", "E<=E", "E>E", "E>=E", "E??E"
     while (!stack_char_empty(ruleStack)) {
@@ -105,53 +122,48 @@ Error check_semantic(Stack* tokenStack, stack_char_t* ruleStack, used_types_t* t
     if (if_while) { // check if true or false will be the result
         CHECK_SUCCES(check_comb,ruleStack, false, false, if_while)
     }
-    if (types->t_int == true && types->t_double == false && types->t_string == false && types->t_int_nil == false 
-        && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
+    if (just_type(types,TOKEN_DT_INT)) {
 
         CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
         *exprRetType = assign_to_double ? TOKEN_DT_DOUBLE : TOKEN_DT_INT;
 
-    } else if (types->t_int == false && types->t_double == true && types->t_string == false && types->t_int_nil == false 
-            && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
+    } else if (just_type(types,TOKEN_DT_DOUBLE)) {
 
         CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
         *exprRetType = TOKEN_DT_DOUBLE;
 
-    } else if (types->t_int == false && types->t_double == false && types->t_string == true && types->t_int_nil == false 
-            && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
+    } else if (just_type(types,TOKEN_DT_STRING)) {
         CHECK_SUCCES(check_comb,ruleStack, true, false, false)
         conc = true;
         CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
         *exprRetType = TOKEN_DT_STRING;
 
-    } else if (types->t_int == true && types->t_double == true && types->t_string == false && types->t_int_nil == false 
-            && types->t_double_nil == false && types->t_string_nil == false && types->t_nil == false) {
+    } else if (just_two_types(types,TOKEN_DT_INT,TOKEN_DT_DOUBLE)) {
 
-        if (division_types->t_double == true || division_types->t_int == false) {
+        if (check_type(division_types,TOKEN_DT_DOUBLE)|| !check_type(division_types,TOKEN_DT_INT)) {
             CHECK_SUCCES(check_comb,ruleStack, false, false, false)
             convert = true;
             CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
             *exprRetType = TOKEN_DT_DOUBLE;
 
-        } else if (division_types->t_int == true) {
+        } else if (check_type(division_types,TOKEN_DT_INT)) {
             return TYPE_COMPATIBILITY_ERROR;
         }
-    } else if ((types->t_int == true && types->t_int_nil == true ) 
-            || (types->t_double == true && (types->double_nil == true || types->int_nil == true)) 
-            || (types->t_string == true && (types->t_string_nil == true|| types->int_nil == true))) {
-
+    } else if ((check_type(types, TOKEN_DT_INT) && check_type(types, TOKEN_DT_INT_NIL))
+        || (check_type(types, TOKEN_DT_DOUBLE) && (check_type(types,TOKEN_DT_DOUBLE_NIL) || check_type(types,TOKEN_DT_INT_NIL)))
+        || (check_type(types, TOKEN_DT_STRING) && (check_type(types,TOKEN_DT_DOUBLE_NIL) || check_type(types,TOKEN_DT_INT_NIL)))) {
         CHECK_SUCCES(check_comb,ruleStack, false, true, false)
         CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
 
-        if (types->t_int == true) {
+        if (check_type(types,TOKEN_DT_INT)) {
             *exprRetType = TOKEN_DT_INT;
-        } else if (types->t_double == true) {
+        } else if (check_type(types,TOKEN_DT_DOUBLE)) {
             *exprRetType = TOKEN_DT_DOUBLE;
-        } else if (types->t_string == true) {
+        } else if (check_type(types,TOKEN_DT_STRING)) {
             *exprRetType = TOKEN_DT_STRING;
         }
         
-    } else if (types->t_nil == true) {
+    } else if (check_type(types,TOKEN_NIL)) {
         CHECK_SUCCES(generate,tokenStack, ruleStack, convert, conc, symTable, assign_to_double)
         *exprRetType = TOKEN_NIL;
     } else {
@@ -198,16 +210,17 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
 
     switch (symbol->type) {
         case TOKEN_INTEGER:
-            types->t_int = true;
+            types->types_used |= 1 << TOKEN_DT_INT;
+            set_type(types,TOKEN_DT_INT);
             break;
         case TOKEN_STRING:
-            types->t_string = true;
+            set_type(types,TOKEN_DT_STRING);
             break;
         case TOKEN_DOUBLE:
-            types->t_double = true;
+            set_type(types,TOKEN_DT_DOUBLE);
             break;
         case TOKEN_NIL:
-            types->t_nil = true;
+            set_type(types,TOKEN_NIL);
             break;
         case TOKEN_IDENTIFIER:
         // token is not literal try to find him in tables
@@ -216,32 +229,8 @@ Error check_symbol(TokenT* symbol, TokenT** next, Stack* tokenStack, used_types_
         }
         if (entry->type != TOKEN_FUNC) {
             symbol->type = entry->type;
+            set_type(types, entry->type);
         }
-        switch (entry->type) {
-            case TOKEN_DT_DOUBLE: 
-                types->t_double = true;
-                break;
-            case TOKEN_DT_INT:
-                types->t_int = true;
-                break;
-            case TOKEN_DT_STRING:
-                types->t_string = true;
-                break;
-            case TOKEN_DT_DOUBLE_NIL: 
-                types->t_double_nil = true;
-                types->double_nil++;
-                break;
-            case TOKEN_DT_INT_NIL:
-                types->t_int_nil = true;
-                types->int_nil++;
-                break;
-            case TOKEN_DT_STRING_NIL:
-                types->t_string_nil = true;
-                types->string_nil++;
-                break;
-            default: 
-                break;
-            }
             break;
         default:
             break;
@@ -323,13 +312,13 @@ Error type_check_div(TokenT* prevprev, TokenT* actual, used_types_t* usedTypes, 
     CHECK_SUCCES(type_in_special_expr,prevprev, symTable, &before)
     CHECK_SUCCES(type_in_special_expr,actual, symTable, &after)
 
-    if ((before == TOKEN_INTEGER || before == TOKEN_DT_INT) && (after == TOKEN_INTEGER || after == TOKEN_DT_INT) && usedTypes->t_double == false) {
+    if ((before == TOKEN_INTEGER || before == TOKEN_DT_INT) && (after == TOKEN_INTEGER || after == TOKEN_DT_INT) && !check_type(usedTypes, TOKEN_DT_DOUBLE)) {
         // int/int
-        usedTypes->t_int = true;
+        usedTypes->types_used |= 1 << TOKEN_DT_INT;
         return SUCCESS;
-    } else if ((before == TOKEN_DOUBLE || before == TOKEN_DT_DOUBLE) && (after == TOKEN_DOUBLE || after == TOKEN_DT_DOUBLE) && usedTypes->t_int == false) {
+    } else if ((before == TOKEN_DOUBLE || before == TOKEN_DT_DOUBLE) && (after == TOKEN_DOUBLE || after == TOKEN_DT_DOUBLE) && !check_type(usedTypes,TOKEN_DT_INT)) {
         // doule/doule
-        usedTypes->t_double = true;
+        usedTypes->types_used |= 1 << TOKEN_DT_DOUBLE;
         return SUCCESS;
     }
 
@@ -479,34 +468,20 @@ Error type_check_2qm(TokenT* prevprev, TokenT* actual, symtable_t* symTable) {
 Error change_type_withQM(Stack* tokenStack, used_types_t* types) {
     TokenT* topToken;
     Stack_Top(tokenStack, &topToken); // change type of top token
-    switch(topToken->type) {
-        case TOKEN_DT_INT_NIL:
-            types->int_nil--;
-            if (types->int_nil == 0) {
-                types->t_int_nil = false;
-                types->t_int = true;
-            }
-            topToken->type = TOKEN_DT_INT;
-            break;
-        case TOKEN_DT_DOUBLE_NIL:
-            types->double_nil--;
-            if (types->double_nil == 0) {
-                types->t_double_nil = false;
-                types->t_double = true;
-            }
-            topToken->type = TOKEN_DT_DOUBLE;
-            break;
-        case TOKEN_DT_STRING_NIL:
-            types->string_nil--;
-            if (types->string_nil == 0) {
-                types->t_string_nil = false;
-                types->t_string = true;
-            }
-            topToken->type = TOKEN_DT_STRING;
-            break;
-        default:
-            return TYPE_COMPATIBILITY_ERROR;
-    } 
+
+    if (topToken->type != TOKEN_DT_INT_NIL && topToken->type != TOKEN_DT_DOUBLE_NIL && topToken->type != TOKEN_DT_STRING_NIL) {
+        return TYPE_COMPATIBILITY_ERROR; 
+    }
+
+    types->nil_cnts[topToken->type]--;
+
+    if (types->nil_cnts[topToken->type] == 0) {
+        types->types_used ^= topToken->type;
+        types->types_used |= topToken->type-1;
+    }
+
+    topToken->type--;    
+
     return SUCCESS;
 }
 

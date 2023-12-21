@@ -10,7 +10,7 @@
 #include "errors.h"
 #include "symtable.h"
 #include <stdbool.h>
-
+#include <stdint.h>
 #ifndef BOTTOM_UP_ANALYSIS_H
 #define BOTTOM_UP_ANALYSIS_H
 
@@ -22,18 +22,12 @@
     if (err != SUCCESS) {           \
         return err;                 \
     }                               \
-
+/**
+ * @brief struct holding information about types in use
+*/
 typedef struct used_types {
-    bool t_int;
-    bool t_double;
-    bool t_string;
-    bool t_int_nil;
-    int int_nil;
-    bool t_double_nil;
-    int double_nil;
-    bool t_string_nil;
-    int string_nil;
-    bool t_nil;
+    uint8_t types_used;
+    int nil_cnts[7];
 } used_types_t;
 
 /**
@@ -187,5 +181,46 @@ Error type_check_2qm(TokenT* prevprev, TokenT* actual, symtable_t* symTable);
  * @param types used types in expression
 */
 Error change_type_withQM(Stack* tokenStack, used_types_t* types);
+
+/**
+ * @brief function for cheking if only a given type is beeing used
+ * 
+ * @param types: @see used_types_t
+ * @param type: type to check against
+ * 
+ * @return true if given type is the only one currently in use, flase otherwise.
+*/
+bool just_type(used_types_t *types, TokenType type); 
+
+
+/**
+ * @brief function for checking if only 2 given types are beeing used
+ * 
+ * @param types: @see used_types_t
+ * @param type1: first type to check against
+ * @param type2: second type to check against
+ * 
+ * @return true if both of given types are the only ones in use, false otherwise.
+*/
+bool just_two_types(used_types_t *types, TokenType type1, TokenType type2)
+
+/**
+ * @brief function for checking if a given type is in use
+ * 
+ * @param types: @see used_types_t
+ * @param type: type to check against
+ * 
+ * @return true if given type is in use, false otherwise.
+*/
+bool check_type(used_types_t *types, TokenType type);
+
+/**
+ * @brief function for adding a type to use.
+ * 
+ * @param types: @see used_types_t
+ * @param type: type to add to use
+ * 
+*/
+void set_type(used_types_t *types, TokenType type);
 
 #endif
